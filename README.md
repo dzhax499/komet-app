@@ -105,26 +105,28 @@ Gunakan akun berikut untuk testing. Jangan ubah password tanpa koordinasi tim.
 ## Struktur Folder
 
 ```
-lib/
-├── core/              # Base classes, constants, tema
-├── data/              # Models, HiveService, MongoDB service
-│   ├── models/        # UserModel, KelasModel, AssignmentModel, dll
-│   └── services/      # HiveService, MongoService, SyncManager
-└── features/
-    ├── auth/          # Login, Register (PIC A)
-    ├── kelas/         # Manajemen kelas guru (PIC A)
-    ├── assignment/    # Manajemen tugas (PIC A)
-    ├── editor/        # Canvas editor, blok visual (PIC A + C)
-    ├── submission/    # Submit, revisi, lihat nilai (PIC B + C)
-    ├── review/        # Halaman review guru (PIC A)
-    ├── sync/          # Sync manager, offline queue (PIC B)
-    └── notifikasi/    # Notifikasi in-app (PIC A)
-
-docs/
-├── spesifikasi.md
-├── wireframe.md
-├── arsitektur.md
-└── logbook/
+KOMET/
+  lib/
+    core/           — PIC A (Base classes, constants, theme)
+    data/           — PIC B (Models, Hive service, MongoDB)
+    features/
+      auth/         — PIC A
+      kelas/        — PIC A
+      assignment/   — PIC A
+      editor_core/  — PIC A (Logic & basic editor)
+      editor_ext/   — PIC C (Advanced plugins/extension editor)
+      submission/   — PIC B (Data handling submission)
+      subm_ui/      — PIC C (Interface & interaction submission)
+      review/       — PIC A
+      sync/         — PIC B
+      notifikasi/   — PIC A
+  docs/             
+    tech_specs/     — PIC D (Spesifikasi & Arsitektur)
+    design/         — PIC C (Wireframe & UI Docs)
+    logbook/        — PIC D
+  README.md         — PIC D
+  .gitignore
+  pubspec.yaml
 ```
 
 ---
