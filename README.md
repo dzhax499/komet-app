@@ -105,32 +105,31 @@ Gunakan akun berikut untuk testing. Jangan ubah password tanpa koordinasi tim.
 ## Struktur Folder
 
 ```
-KOMET/
+komet-app/
   lib/
-    core/             — PIC D (Base classes, folder structure setup, service locator)
-    data/             — PIC B (Models, Hive service, MongoDB)
+    core/             — PIC D (Foundation: Routing, DI, Theme, Base Classes) 
+    data/             — PIC B (Models, Hive service, MongoDB Atlas setup) 
     features/
-      auth/           — PIC A (Fullstack UI/UX)
-      kelas/          — PIC A (Management Guru/Siswa)
-      assignment/     — PIC A (CRUD Tugas)
-      editor_core/    — PIC D (Logic interpreter blok & Canvas foundation)
-      editor_audio/   — PIC D (Blok musik & SFX - Minggu 3)
-      editor_visual/  — PIC C (Blok karakter & background - Minggu 3)
-      editor_logic/   — PIC C (Scripting: alur & variabel - Minggu 4)
-      submission/     — PIC B (Data handling & Offline storage)
-      subm_ui/        — PIC C (Interface pengerjaan siswa)
-      review/         — PIC A (Sistem penilaian guru)
-      sync/           — PIC B (Logic sinkronisasi & deteksi koneksi)
-      notifikasi/     — PIC A (In-app notification)
+      auth/           — PIC A (Login, Register Guru/Siswa, Persistence) 
+      kelas/          — PIC A (Manajemen Kelas & Daftar Siswa) 
+      assignment/     — PIC A (Manajemen Tugas & Deadline) 
+      editor_engine/  — PIC D (Logic Interpreter: Cara blok diproses jadi cerita) 
+      editor_canvas/  — PIC D (UI Foundation: Drag-and-drop & Canvas area) 
+      editor_assets/  — PIC C (Manajemen Karakter & Background) 
+      editor_script/  — PIC C (Logika Alur: Percabangan & Variabel Karakter) 
+      submission/     — PIC B (Local storage handling & Submit logic) 
+      subm_view/      — PIC C (Interface pengerjaan & preview siswa) 
+      review/         — PIC A (Interface penilaian & feedback guru) [cite: 4]
+      sync/           — PIC B (Sync Manager: Antrian & Deteksi Koneksi) 
+      notifikasi/     — PIC A (In-app notification system) [cite: 4]
   docs/               
-    architecture/     — PIC D (Diagram sistem, ERD, & Flowchart)
-    technical_spec/   — PIC D (Dokumen spesifikasi v1.0 & v2.0)
-    design/           — PIC C (Wireframe & UI Design)
-    test_reports/     — PIC D (Laporan Unit Testing & Bug Report)
-    logbook/          — PIC D (Manajemen progress harian)
-  README.md           — PIC D (Setup, Run, & Dokumentasi akhir)
+    spec_arch/        — PIC D (Spesifikasi teknis & Diagram Arsitektur) 
+    ui_design/        — PIC C (Wireframe & Design System) 
+    test_report/      — PIC D (Unit Testing & Laporan Bug) [cite: 4]
+    logbook/          — PIC D (Manajemen Progress Tim) 
+  README.md           — PIC D (Dokumentasi Setup & Run) 
   .gitignore
-  pubspec.yaml        — PIC D (Management dependencies)
+  pubspec.yaml        — PIC D (Dependency Management)
 ```
 
 ---
