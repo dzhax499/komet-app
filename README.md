@@ -106,27 +106,31 @@ Gunakan akun berikut untuk testing. Jangan ubah password tanpa koordinasi tim.
 
 ```
 KOMET/
-  lib/
-    core/           — PIC A (Base classes, constants, theme)
-    data/           — PIC B (Models, Hive service, MongoDB)
-    features/
-      auth/         — PIC A
-      kelas/        — PIC A
-      assignment/   — PIC A
-      editor_core/  — PIC A (Logic & basic editor)
-      editor_ext/   — PIC C (Advanced plugins/extension editor)
-      submission/   — PIC B (Data handling submission)
-      subm_ui/      — PIC C (Interface & interaction submission)
-      review/       — PIC A
-      sync/         — PIC B
-      notifikasi/   — PIC A
-  docs/             
-    tech_specs/     — PIC D (Spesifikasi & Arsitektur)
-    design/         — PIC C (Wireframe & UI Docs)
-    logbook/        — PIC D
-  README.md         — PIC D
-  .gitignore
-  pubspec.yaml
+  lib/
+    core/             — PIC D (Base classes, folder structure setup, service locator)
+    data/             — PIC B (Models, Hive service, MongoDB)
+    features/
+      auth/           — PIC A (Fullstack UI/UX)
+      kelas/          — PIC A (Management Guru/Siswa)
+      assignment/     — PIC A (CRUD Tugas)
+      editor_core/    — PIC D (Logic interpreter blok & Canvas foundation)
+      editor_audio/   — PIC D (Blok musik & SFX - Minggu 3)
+      editor_visual/  — PIC C (Blok karakter & background - Minggu 3)
+      editor_logic/   — PIC C (Scripting: alur & variabel - Minggu 4)
+      submission/     — PIC B (Data handling & Offline storage)
+      subm_ui/        — PIC C (Interface pengerjaan siswa)
+      review/         — PIC A (Sistem penilaian guru)
+      sync/           — PIC B (Logic sinkronisasi & deteksi koneksi)
+      notifikasi/     — PIC A (In-app notification)
+  docs/               
+    architecture/     — PIC D (Diagram sistem, ERD, & Flowchart)
+    technical_spec/   — PIC D (Dokumen spesifikasi v1.0 & v2.0)
+    design/           — PIC C (Wireframe & UI Design)
+    test_reports/     — PIC D (Laporan Unit Testing & Bug Report)
+    logbook/          — PIC D (Manajemen progress harian)
+  README.md           — PIC D (Setup, Run, & Dokumentasi akhir)
+  .gitignore
+  pubspec.yaml        — PIC D (Management dependencies)
 ```
 
 ---
