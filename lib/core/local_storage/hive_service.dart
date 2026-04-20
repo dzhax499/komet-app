@@ -1,4 +1,5 @@
 import 'package:hive_flutter/hive_flutter.dart';
+import '../utils/constants.dart';
 import '../models/user_model.dart';
 import '../models/kelas_model.dart';
 import '../models/assignment_model.dart';
@@ -7,13 +8,13 @@ import '../models/notification_model.dart';
 import '../models/sync_queue_item_model.dart';
 
 class HiveService {
-  static const String userBox = 'userBox';
-  static const String kelasBox = 'kelasBox';
-  static const String assignmentBox = 'assignmentBox';
-  static const String submissionBox = 'submissionBox';
-  static const String notificationBox = 'notificationBox';
-  static const String syncQueueBox = 'syncQueueBox';
-  static const String authBox = 'authBox'; // Untuk simpan session/token
+  static const String userBox = KometBoxNames.users;
+  static const String kelasBox = KometBoxNames.kelas;
+  static const String assignmentBox = KometBoxNames.assignments;
+  static const String submissionBox = KometBoxNames.submissions;
+  static const String notificationBox = KometBoxNames.notifications;
+  static const String syncQueueBox = KometBoxNames.syncQueue;
+  static const String authBox = KometBoxNames.settings; // Menggunakan box settings untuk auth data
 
   Future<void> init() async {
     await Hive.initFlutter();
@@ -72,6 +73,40 @@ class HiveService {
 
   Future<void> saveUser(UserModel user) async {
     await Hive.box<UserModel>(userBox).put(user.id, user);
+  }
+
+  Future<void> saveKelas(KelasModel kelas) async {
+    await Hive.box<KelasModel>(kelasBox).put(kelas.id, kelas);
+  }
+
+  // Helper methods untuk Sync Queue
+  Future<void> addSyncItem(SyncQueueItemModel item) async {
+    await Hive.box<SyncQueueItemModel>(syncQueueBox).put(item.id, item);
+  }
+
+  List<SyncQueueItemModel> getSyncQueue() {
+    return Hive.box<SyncQueueItemModel>(syncQueueBox).values.toList()
+      ..sort((a, b) => a.dibuatPada.compareTo(b.dibuatPada));
+  }
+
+  Future<void> removeSyncItem(String id) async {
+    await Hive.box<SyncQueueItemModel>(syncQueueBox).delete(id);
+  }
+
+  List<KelasModel> getKelasByGuruId(String guruId) {
+    return Hive.box<KelasModel>(kelasBox).values.where((k) => k.guruId == guruId).toList();
+  }
+
+  List<KelasModel> getKelasBySiswaId(String siswaId) {
+    return Hive.box<KelasModel>(kelasBox).values.where((k) => k.siswaIds.contains(siswaId)).toList();
+  }
+
+  KelasModel? getKelasByKode(String kode) {
+    try {
+      return Hive.box<KelasModel>(kelasBox).values.firstWhere((k) => k.kodeKelas == kode);
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> logout() async {

@@ -12,6 +12,9 @@ import '../utils/constants.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_siswa_page.dart';
 import '../../features/auth/presentation/pages/register_guru_page.dart';
+import '../../features/kelas/presentation/pages/dashboard_guru_page.dart';
+import '../../features/kelas/presentation/pages/dashboard_siswa_page.dart';
+import '../../features/kelas/presentation/pages/kelas_list_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 
@@ -80,28 +83,19 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: KometRoutes.dashboardGuru,
       name: 'dashboardGuru',
-      builder: (context, state) => const _PlaceholderScreen(
-        title: 'Dashboard Guru',
-        pic: 'PIC A (Wyandhanu)',
-      ),
+      builder: (context, state) => const DashboardGuruPage(),
     ),
     GoRoute(
       path: KometRoutes.dashboardSiswa,
       name: 'dashboardSiswa',
-      builder: (context, state) => const _PlaceholderScreen(
-        title: 'Dashboard Siswa',
-        pic: 'PIC A (Wyandhanu)',
-      ),
+      builder: (context, state) => const DashboardSiswaPage(),
     ),
 
     // ── Kelas (PIC A) ─────────────────────────────────────────────
     GoRoute(
       path: KometRoutes.kelasList,
       name: 'kelasList',
-      builder: (context, state) => const _PlaceholderScreen(
-        title: 'Daftar Kelas',
-        pic: 'PIC A (Wyandhanu)',
-      ),
+      builder: (context, state) => const KelasListPage(),
     ),
     GoRoute(
       path: KometRoutes.kelasDetail,

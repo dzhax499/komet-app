@@ -44,8 +44,19 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
 
   @override
   Future<UserModel> registerSiswa(UserModel user, String kodeKelas) async {
-    // TODO: Validasi kode kelas (F-02)
-    await hiveService.persistUser(user);
-    return user;
+    final kelas = hiveService.getKelasByKode(kodeKelas);
+    if (kelas == null) {
+      throw Exception('Kode kelas tidak ditemukan');
+    }
+
+    // Update user dengan ID kelas
+    final updatedUser = user.copyWith(kelasIds: [kelas.id]);
+    await hiveService.persistUser(updatedUser);
+
+    // Update kelas dengan ID siswa
+    final updatedSiswaIds = List<String>.from(kelas.siswaIds)..add(user.id);
+    await hiveService.saveKelas(kelas.copyWith(siswaIds: updatedSiswaIds));
+
+    return updatedUser;
   }
 }
