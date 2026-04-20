@@ -11,6 +11,7 @@ import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import '../network/connectivity_service.dart';
 import '../router/app_router.dart';
+import '../local_storage/hive_service.dart';
 
 /// Instance global GetIt. Gunakan alias [sl] (short: service locator).
 final GetIt sl = GetIt.instance;
@@ -34,9 +35,8 @@ Future<void> setupServiceLocator() async {
   // ── Core: Router ────────────────────────────────────────────────────────
   sl.registerLazySingleton<GoRouter>(() => appRouter);
 
-  // ── PIC B: Hive Service ──────────────────────────────────────────────────
-  // TODO PIC B: Uncomment dan implementasikan HiveService
-  // sl.registerLazySingleton<HiveService>(() => HiveServiceImpl());
+  // ── Core: Local Storage (Hive) ──────────────────────────────────────────
+  sl.registerLazySingleton<HiveService>(() => HiveService());
 
   // ── PIC B: MongoDB Service ───────────────────────────────────────────────
   // TODO PIC B: Implementasikan MongoDBService
