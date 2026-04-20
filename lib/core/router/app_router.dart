@@ -9,6 +9,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../utils/constants.dart';
+import '../../features/auth/presentation/pages/login_page.dart';
+import '../../features/auth/presentation/pages/register_siswa_page.dart';
+import '../../features/auth/presentation/pages/register_guru_page.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../features/auth/presentation/bloc/auth_bloc.dart';
 
 // ── Placeholder screens untuk route milik PIC lain ──────────────────────────
 // Akan diganti oleh implementasi real saat ready.
@@ -58,26 +63,17 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: KometRoutes.login,
       name: 'login',
-      builder: (context, state) => const _PlaceholderScreen(
-        title: 'Login',
-        pic: 'PIC A (Wyandhanu)',
-      ),
+      builder: (context, state) => const LoginPage(),
     ),
     GoRoute(
       path: KometRoutes.registerSiswa,
       name: 'registerSiswa',
-      builder: (context, state) => const _PlaceholderScreen(
-        title: 'Register Siswa',
-        pic: 'PIC A (Wyandhanu)',
-      ),
+      builder: (context, state) => const RegisterSiswaPage(),
     ),
     GoRoute(
       path: KometRoutes.registerGuru,
       name: 'registerGuru',
-      builder: (context, state) => const _PlaceholderScreen(
-        title: 'Register Guru',
-        pic: 'PIC A (Wyandhanu)',
-      ),
+      builder: (context, state) => const RegisterGuruPage(),
     ),
 
     // ── Dashboard (PIC A) ─────────────────────────────────────────
@@ -227,11 +223,17 @@ class _SplashScreenState extends State<_SplashScreen> {
   Future<void> _navigate() async {
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
-    // TODO PIC A: Ganti dengan logika cek sesi login (F-04, Hive KometSettingsKeys)
-    // Contoh: bool isLoggedIn = sl<HiveService>().get(KometSettingsKeys.isLoggedIn);
-    // if (isLoggedIn) context.go(KometRoutes.dashboardGuru / dashboardSiswa)
-    // else context.go(KometRoutes.login)
-    context.go(KometRoutes.login);
+    
+    final authState = context.read<AuthBloc>().state;
+    if (authState is AuthAuthenticated) {
+      if (authState.user.role == 'guru') {
+        context.go(KometRoutes.dashboardGuru);
+      } else {
+        context.go(KometRoutes.dashboardSiswa);
+      }
+    } else {
+      context.go(KometRoutes.login);
+    }
   }
 
   @override

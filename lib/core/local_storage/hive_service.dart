@@ -61,6 +61,19 @@ class HiveService {
     return Hive.box<UserModel>(userBox).get(userId);
   }
 
+  UserModel? getUserByEmail(String email) {
+    final box = Hive.box<UserModel>(userBox);
+    try {
+      return box.values.firstWhere((user) => user.email == email);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> saveUser(UserModel user) async {
+    await Hive.box<UserModel>(userBox).put(user.id, user);
+  }
+
   Future<void> logout() async {
     await Hive.box(authBox).delete('currentUser');
   }

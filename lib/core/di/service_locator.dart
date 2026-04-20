@@ -12,6 +12,12 @@ import 'package:go_router/go_router.dart';
 import '../network/connectivity_service.dart';
 import '../router/app_router.dart';
 import '../local_storage/hive_service.dart';
+import '../../features/auth/data/datasources/auth_local_data_source.dart';
+import '../../features/auth/data/repositories/auth_repository_impl.dart';
+import '../../features/auth/domain/repositories/auth_repository.dart';
+import '../../features/auth/domain/usecases/auth_usecases.dart';
+import '../../features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:uuid/uuid.dart';
 
 /// Instance global GetIt. Gunakan alias [sl] (short: service locator).
 final GetIt sl = GetIt.instance;
@@ -47,11 +53,32 @@ Future<void> setupServiceLocator() async {
   // sl.registerLazySingleton<SubmissionRepository>(...)
   // sl.registerLazySingleton<SyncRepository>(...)
 
-  // ── PIC A: Repository ────────────────────────────────────────────────────
-  // TODO PIC A:
-  // sl.registerLazySingleton<UserRepository>(...)
-  // sl.registerLazySingleton<KelasRepository>(...)
-  // sl.registerLazySingleton<AssignmentRepository>(...)
+  // ── Auth Module (PIC A) ────────────────────────────────────────────────
+  sl.registerLazySingleton<Uuid>(() => const Uuid());
+  
+  sl.registerLazySingleton<AuthLocalDataSource>(
+    () => AuthLocalDataSourceImpl(hiveService: sl()),
+  );
+  
+  sl.registerLazySingleton<AuthRepository>(
+    () => AuthRepositoryImpl(localDataSource: sl(), uuid: sl()),
+  );
+  
+  sl.registerLazySingleton(() => LoginUseCase(sl()));
+  sl.registerLazySingleton(() => RegisterGuruUseCase(sl()));
+  sl.registerLazySingleton(() => RegisterSiswaUseCase(sl()));
+  sl.registerLazySingleton(() => LogoutUseCase(sl()));
+  sl.registerLazySingleton(() => GetCurrentUserUseCase(sl()));
+
+  sl.registerFactory(
+    () => AuthBloc(
+      loginUseCase: sl(),
+      registerGuruUseCase: sl(),
+      registerSiswaUseCase: sl(),
+      logoutUseCase: sl(),
+      getCurrentUserUseCase: sl(),
+    ),
+  );
 
   // ── PIC D: Editor Engine Use Cases ─────────────────────────────────────
   // Didaftarkan setelah editor_engine selesai
