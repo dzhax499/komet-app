@@ -1,10 +1,14 @@
+// lib/features/editor_engine/presentation/bloc/editor_bloc.dart
+// PIC D — Dzakir Tsabit Asy Syafiq
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:uuid/uuid.dart';
 import '../../domain/entities/story_project_data.dart';
 import '../../domain/entities/page_model.dart';
 import '../../domain/entities/block_data.dart';
 
-// ── EVENTS ──────────────────────────────────────────────────────────────────
+// ── EVENTS ───────────────────────────────────────────────────────────────────
 abstract class EditorEvent extends Equatable {
   @override
   List<Object?> get props => [];
@@ -12,9 +16,17 @@ abstract class EditorEvent extends Equatable {
 
 class EditorLoadRequested extends EditorEvent {
   final String submissionId;
-  EditorLoadRequested(this.submissionId);
+  final String assignmentId;
+  final String namaPenulis;
+
+  EditorLoadRequested(
+    this.submissionId, {
+    this.assignmentId = '',
+    this.namaPenulis = '',
+  });
+
   @override
-  List<Object?> get props => [submissionId];
+  List<Object?> get props => [submissionId, assignmentId, namaPenulis];
 }
 
 class EditorPageAdded extends EditorEvent {}
@@ -29,14 +41,16 @@ class EditorBlockAdded extends EditorEvent {
 
 class EditorSaveRequested extends EditorEvent {}
 
-// ── STATES ──────────────────────────────────────────────────────────────────
+// ── STATES ───────────────────────────────────────────────────────────────────
 abstract class EditorState extends Equatable {
   @override
   List<Object?> get props => [];
 }
 
 class EditorInitial extends EditorState {}
+
 class EditorLoading extends EditorState {}
+
 class EditorLoaded extends EditorState {
   final StoryProjectData project;
   final String? activePageId;
@@ -46,13 +60,18 @@ class EditorLoaded extends EditorState {
   @override
   List<Object?> get props => [project, activePageId];
 }
+
 class EditorError extends EditorState {
   final String message;
   EditorError(this.message);
+  @override
+  List<Object?> get props => [message];
 }
 
-// ── BLOC ────────────────────────────────────────────────────────────────────
+// ── BLOC ─────────────────────────────────────────────────────────────────────
 class EditorBloc extends Bloc<EditorEvent, EditorState> {
+  final _uuid = const Uuid();
+
   EditorBloc() : super(EditorInitial()) {
     on<EditorLoadRequested>(_onLoad);
     on<EditorPageAdded>(_onPageAdded);
@@ -62,38 +81,82 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
 
   Future<void> _onLoad(EditorLoadRequested event, Emitter<EditorState> emit) async {
     emit(EditorLoading());
-    // TODO: Load from Hive/Local Storage
-    // Simulasi data baru
+
+    // TODO: coba load dari Hive dulu, kalau tidak ada buat baru
+    final now = DateTime.now();
+    final openingPageId = _uuid.v4();
+
+    // FIX: constructor PageModel sesuai entity
+    // required: id, judul, tipe, blocks, connections
+    final halamanPembuka = PageModel(
+      id: openingPageId,
+      judul: 'Halaman Pembuka',
+      tipe: PageTipe.pembuka,
+      blocks: const [],
+      connections: const {},
+    );
+
+    // FIX: constructor StoryProjectData sesuai entity
+    // required: id, assignmentId, judulCerita, namaPenulis,
+    //           halamanPembuka, pages, variabelKarakter, createdAt, updatedAt
     final initialProject = StoryProjectData(
       id: event.submissionId,
-      title: 'Cerita Tanpa Judul',
-      pages: [],
-      variables: {},
-      lastModified: DateTime.now(),
+      assignmentId: event.assignmentId,
+      judulCerita: 'Cerita Tanpa Judul',
+      namaPenulis: event.namaPenulis,
+      halamanPembuka: openingPageId,
+      pages: [halamanPembuka],
+      variabelKarakter: const {},
+      createdAt: now,
+      updatedAt: now,
     );
-    emit(EditorLoaded(project: initialProject));
+
+    emit(EditorLoaded(
+      project: initialProject,
+      activePageId: openingPageId,
+    ));
   }
 
   void _onPageAdded(EditorPageAdded event, Emitter<EditorState> emit) {
-    if (state is EditorLoaded) {
-      final curr = state as EditorLoaded;
-      final newPage = PageModel(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        name: 'Halaman ${curr.project.pages.length + 1}',
-        blocks: [],
-      );
-      final updatedProject = curr.project.copyWith(
+    if (state is! EditorLoaded) return;
+    final curr = state as EditorLoaded;
+
+    final newPage = PageModel(
+      id: _uuid.v4(),
+      judul: 'Halaman ${curr.project.pages.length + 1}',
+      tipe: PageTipe.normal,
+      blocks: const [],
+      connections: const {},
+    );
+
+    emit(EditorLoaded(
+      project: curr.project.copyWith(
         pages: [...curr.project.pages, newPage],
-      );
-      emit(EditorLoaded(project: updatedProject, activePageId: newPage.id));
-    }
+        updatedAt: DateTime.now(),
+      ),
+      activePageId: newPage.id,
+    ));
   }
 
   void _onBlockAdded(EditorBlockAdded event, Emitter<EditorState> emit) {
-    // Logic penambahan blok
+    if (state is! EditorLoaded) return;
+    final curr = state as EditorLoaded;
+
+    final updatedPages = curr.project.pages.map((page) {
+      if (page.id != event.pageId) return page;
+      return page.copyWith(blocks: [...page.blocks, event.block]);
+    }).toList();
+
+    emit(EditorLoaded(
+      project: curr.project.copyWith(
+        pages: updatedPages,
+        updatedAt: DateTime.now(),
+      ),
+      activePageId: curr.activePageId,
+    ));
   }
 
   Future<void> _onSave(EditorSaveRequested event, Emitter<EditorState> emit) async {
-    // Logic simpan ke Hive
+    // TODO: simpan ke Hive
   }
 }

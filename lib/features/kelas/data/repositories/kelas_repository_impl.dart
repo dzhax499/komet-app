@@ -7,6 +7,7 @@ import '../../../../core/models/user_model.dart';
 import '../../domain/repositories/kelas_repository.dart';
 import '../datasources/kelas_local_data_source.dart';
 
+// FIX: Hapus unused import failures.dart (sudah di-import ulang dengan benar)
 class KelasRepositoryImpl implements KelasRepository {
   final KelasLocalDataSource localDataSource;
   final Uuid uuid;
@@ -29,7 +30,8 @@ class KelasRepositoryImpl implements KelasRepository {
       final result = await localDataSource.createKelas(kelas);
       return kometSuccess(result);
     } catch (e) {
-      return kometFailure(CacheFailure(message: e.toString()));
+      // FIX: CacheFailure → LocalStorageFailure (positional param)
+      return kometFailure(LocalStorageFailure(e.toString()));
     }
   }
 
@@ -39,7 +41,7 @@ class KelasRepositoryImpl implements KelasRepository {
       await localDataSource.deleteKelas(kelasId);
       return kometSuccess(null);
     } catch (e) {
-      return kometFailure(CacheFailure(message: e.toString()));
+      return kometFailure(LocalStorageFailure(e.toString()));
     }
   }
 
@@ -49,7 +51,7 @@ class KelasRepositoryImpl implements KelasRepository {
       final result = await localDataSource.getKelasGuru(guruId);
       return kometSuccess(result);
     } catch (e) {
-      return kometFailure(CacheFailure(message: e.toString()));
+      return kometFailure(LocalStorageFailure(e.toString()));
     }
   }
 
@@ -59,7 +61,7 @@ class KelasRepositoryImpl implements KelasRepository {
       final result = await localDataSource.getKelasSiswa(siswaId);
       return kometSuccess(result);
     } catch (e) {
-      return kometFailure(CacheFailure(message: e.toString()));
+      return kometFailure(LocalStorageFailure(e.toString()));
     }
   }
 
@@ -69,7 +71,7 @@ class KelasRepositoryImpl implements KelasRepository {
       final result = await localDataSource.getSiswaInKelas(kelasId);
       return kometSuccess(result);
     } catch (e) {
-      return kometFailure(CacheFailure(message: e.toString()));
+      return kometFailure(LocalStorageFailure(e.toString()));
     }
   }
 
@@ -79,7 +81,7 @@ class KelasRepositoryImpl implements KelasRepository {
       final result = await localDataSource.joinKelas(kodeKelas, siswaId);
       return kometSuccess(result);
     } catch (e) {
-      return kometFailure(CacheFailure(message: e.toString()));
+      return kometFailure(LocalStorageFailure(e.toString()));
     }
   }
 

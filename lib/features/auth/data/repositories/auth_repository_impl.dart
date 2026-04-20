@@ -20,7 +20,9 @@ class AuthRepositoryImpl implements AuthRepository {
       final user = await localDataSource.getCurrentUser();
       return kometSuccess(user);
     } catch (e) {
-      return kometFailure(CacheFailure(message: e.toString()));
+      // FIX: CacheFailure tidak ada → gunakan LocalStorageFailure
+      // FIX: parameter positional bukan named
+      return kometFailure(LocalStorageFailure(e.toString()));
     }
   }
 
@@ -30,7 +32,8 @@ class AuthRepositoryImpl implements AuthRepository {
       final user = await localDataSource.login(email, password);
       return kometSuccess(user);
     } catch (e) {
-      return kometFailure(AuthFailure(message: e.toString()));
+      // FIX: AuthFailure parameter positional
+      return kometFailure(AuthFailure(e.toString()));
     }
   }
 
@@ -40,7 +43,7 @@ class AuthRepositoryImpl implements AuthRepository {
       await localDataSource.logout();
       return kometSuccess(null);
     } catch (e) {
-      return kometFailure(CacheFailure(message: e.toString()));
+      return kometFailure(LocalStorageFailure(e.toString()));
     }
   }
 
@@ -60,7 +63,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final result = await localDataSource.registerGuru(user);
       return kometSuccess(result);
     } catch (e) {
-      return kometFailure(AuthFailure(message: e.toString()));
+      return kometFailure(AuthFailure(e.toString()));
     }
   }
 
@@ -73,14 +76,14 @@ class AuthRepositoryImpl implements AuthRepository {
         email: email,
         password: password,
         role: 'siswa',
-        kelasIds: [], // Nanti diupdate setelah join kelas sukses
+        kelasIds: [],
         createdAt: DateTime.now(),
         lastLoginAt: DateTime.now(),
       );
       final result = await localDataSource.registerSiswa(user, kodeKelas);
       return kometSuccess(result);
     } catch (e) {
-      return kometFailure(AuthFailure(message: e.toString()));
+      return kometFailure(AuthFailure(e.toString()));
     }
   }
 }

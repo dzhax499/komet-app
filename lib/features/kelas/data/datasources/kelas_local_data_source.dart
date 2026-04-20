@@ -1,74 +1,60 @@
 import '../../../../core/local_storage/hive_service.dart';
-import '../../../../core/models/kelas_model.dart';
 import '../../../../core/models/user_model.dart';
-import 'package:hive/hive.dart';
+// FIX: Hapus unused import exceptions.dart
 
-abstract class KelasLocalDataSource {
-  Future<KelasModel> createKelas(KelasModel kelas);
-  Future<List<KelasModel>> getKelasGuru(String guruId);
-  Future<List<KelasModel>> getKelasSiswa(String siswaId);
-  Future<KelasModel> joinKelas(String kodeKelas, String siswaId);
-  Future<void> deleteKelas(String kelasId);
-  Future<List<UserModel>> getSiswaInKelas(String kelasId);
+abstract class AuthLocalDataSource {
+  Future<UserModel> login(String email, String password);
+  Future<UserModel> registerGuru(UserModel user);
+  Future<UserModel> registerSiswa(UserModel user, String kodeKelas);
+  Future<void> logout();
+  Future<UserModel?> getCurrentUser();
 }
 
-class KelasLocalDataSourceImpl implements KelasLocalDataSource {
+class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   final HiveService hiveService;
 
-  KelasLocalDataSourceImpl({required this.hiveService});
+  AuthLocalDataSourceImpl({required this.hiveService});
 
   @override
-  Future<KelasModel> createKelas(KelasModel kelas) async {
-    await Hive.box<KelasModel>(HiveService.kelasBox).put(kelas.id, kelas);
-    return kelas;
+  Future<UserModel> login(String email, String password) async {
+    final user = hiveService.getUserByEmail(email);
+    if (user != null && user.password == password) {
+      await hiveService.persistUser(user);
+      return user;
+    } else {
+      throw Exception('Email atau password salah');
+    }
   }
 
   @override
-  Future<void> deleteKelas(String kelasId) async {
-    await Hive.box<KelasModel>(HiveService.kelasBox).delete(kelasId);
+  Future<UserModel?> getCurrentUser() async {
+    return hiveService.getCurrentUser();
   }
 
   @override
-  Future<List<KelasModel>> getKelasGuru(String guruId) async {
-    return hiveService.getKelasByGuruId(guruId);
+  Future<void> logout() async {
+    await hiveService.logout();
   }
 
   @override
-  Future<List<KelasModel>> getKelasSiswa(String siswaId) async {
-    return hiveService.getKelasBySiswaId(siswaId);
+  Future<UserModel> registerGuru(UserModel user) async {
+    await hiveService.persistUser(user);
+    return user;
   }
 
   @override
-  Future<List<UserModel>> getSiswaInKelas(String kelasId) async {
-    final kelas = Hive.box<KelasModel>(HiveService.kelasBox).get(kelasId);
-    if (kelas == null) return [];
-    
-    final userBox = Hive.box<UserModel>(HiveService.userBox);
-    return kelas.siswaIds.map((id) => userBox.get(id)).whereType<UserModel>().toList();
-  }
-
-  @override
-  Future<KelasModel> joinKelas(String kodeKelas, String siswaId) async {
+  Future<UserModel> registerSiswa(UserModel user, String kodeKelas) async {
     final kelas = hiveService.getKelasByKode(kodeKelas);
-    if (kelas == null) throw Exception('Kode kelas tidak valid');
-    
-    if (kelas.siswaIds.contains(siswaId)) {
-      return kelas; // Sudah join
+    if (kelas == null) {
+      throw Exception('Kode kelas tidak ditemukan');
     }
 
-    final updatedSiswaIds = List<String>.from(kelas.siswaIds)..add(siswaId);
-    final updatedKelas = kelas.copyWith(siswaIds: updatedSiswaIds);
-    
-    await Hive.box<KelasModel>(HiveService.kelasBox).put(kelas.id, updatedKelas);
-    
-    // Update user's kelasIds
-    final userBox = Hive.box<UserModel>(HiveService.userBox);
-    final user = userBox.get(siswaId);
-    if (user != null) {
-      final updatedUserKelasIds = List<String>.from(user.kelasIds)..add(kelas.id);
-      await userBox.put(user.id, user.copyWith(kelasIds: updatedUserKelasIds));
-    }
+    final updatedUser = user.copyWith(kelasIds: [kelas.id]);
+    await hiveService.persistUser(updatedUser);
 
-    return updatedKelas;
+    final updatedSiswaIds = List<String>.from(kelas.siswaIds)..add(user.id);
+    await hiveService.saveKelas(kelas.copyWith(siswaIds: updatedSiswaIds));
+
+    return updatedUser;
   }
 }
