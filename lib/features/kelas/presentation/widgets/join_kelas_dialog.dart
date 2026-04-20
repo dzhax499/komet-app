@@ -49,7 +49,7 @@ class _JoinKelasDialogState extends State<JoinKelasDialog> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.blue.withOpacity(0.1),
-                  shape: BoxCircle,
+                  shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.group_add_outlined, color: Colors.blue, size: 32),
               ),

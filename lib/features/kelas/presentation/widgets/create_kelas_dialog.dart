@@ -49,7 +49,7 @@ class _CreateKelasDialogState extends State<CreateKelasDialog> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: AppColors.primary.withOpacity(0.1),
-                  shape: BoxCircle,
+                  shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.add_business_outlined, color: AppColors.primary, size: 32),
               ),

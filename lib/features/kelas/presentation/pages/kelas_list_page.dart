@@ -217,7 +217,7 @@ class _KelasListPageState extends State<KelasListPage> {
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
               color: Colors.grey[100],
-              shape: BoxCircle,
+              shape: BoxShape.circle,
             ),
             child: Icon(Icons.class_outlined, size: 64, color: Colors.grey[400]),
           ),
