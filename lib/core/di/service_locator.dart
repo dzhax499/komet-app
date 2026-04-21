@@ -39,6 +39,12 @@ final GetIt sl = GetIt.instance;
 /// }
 /// ```
 Future<void> setupServiceLocator() async {
+
+  // ── Core: Local Storage (Hive) — HARUS PERTAMA ────────────────────────
+  final hiveService = HiveService();
+  await hiveService.init(); // ✅ WAIT FOR INIT
+  sl.registerSingleton<HiveService>(hiveService);
+  
   // ── Core: Network ───────────────────────────────────────────────────────
   // ConnectivityService: singleton — satu instance untuk seluruh app (F-53)
   sl.registerLazySingleton<ConnectivityService>(
@@ -55,8 +61,6 @@ Future<void> setupServiceLocator() async {
   // ── Core: Router ────────────────────────────────────────────────────────
   sl.registerLazySingleton<GoRouter>(() => appRouter);
 
-  // ── Core: Local Storage (Hive) ──────────────────────────────────────────
-  sl.registerLazySingleton<HiveService>(() => HiveService());
 
   // ── PIC B: MongoDB Service ───────────────────────────────────────────────
   // TODO PIC B: Implementasikan MongoDBService

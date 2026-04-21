@@ -44,7 +44,7 @@ class DashboardGuruPage extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final kelas = state.kelasList[index];
                   return Card(
-                    margin: const EdgeInsets.bottom(16),
+                    margin: const EdgeInsets.only(bottom: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     child: ListTile(
                       contentPadding: const EdgeInsets.all(16),

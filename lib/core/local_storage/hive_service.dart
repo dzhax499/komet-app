@@ -79,6 +79,10 @@ class HiveService {
     await Hive.box<KelasModel>(kelasBox).put(kelas.id, kelas);
   }
 
+  Future<void> deleteKelas(String kelasId) async {
+    await Hive.box<KelasModel>(kelasBox).delete(kelasId);
+  }
+
   // Helper methods untuk Sync Queue
   Future<void> addSyncItem(SyncQueueItemModel item) async {
     await Hive.box<SyncQueueItemModel>(syncQueueBox).put(item.id, item);
@@ -92,6 +96,14 @@ class HiveService {
   Future<void> removeSyncItem(String id) async {
     await Hive.box<SyncQueueItemModel>(syncQueueBox).delete(id);
   }
+
+  KelasModel? getKelasById(String kelasId) {
+    try {
+      return Hive.box<KelasModel>(kelasBox).get(kelasId);
+    } catch (_) {
+      return null;
+    }
+  } 
 
   List<KelasModel> getKelasByGuruId(String guruId) {
     return Hive.box<KelasModel>(kelasBox).values.where((k) => k.guruId == guruId).toList();
@@ -107,6 +119,11 @@ class HiveService {
     } catch (_) {
       return null;
     }
+  }
+
+  List<UserModel> getUsersByIds(List<String> ids) {
+    final box = Hive.box<UserModel>(userBox);
+    return ids.map((id) => box.get(id)).whereType<UserModel>().toList();
   }
 
   Future<void> logout() async {

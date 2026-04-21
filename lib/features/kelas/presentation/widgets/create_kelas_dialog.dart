@@ -34,7 +34,7 @@ class _CreateKelasDialogState extends State<CreateKelasDialog> {
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -48,7 +48,7 @@ class _CreateKelasDialogState extends State<CreateKelasDialog> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.add_business_outlined, color: AppColors.primary, size: 32),
@@ -80,7 +80,7 @@ class _CreateKelasDialogState extends State<CreateKelasDialog> {
                   hintText: 'Misal: XII RPL 1',
                   prefixIcon: const Icon(Icons.class_outlined),
                   filled: true,
-                  fillColor: Colors.grey[50].withOpacity(0.5),
+                  fillColor: Colors.grey[50]!.withValues(alpha: 0.5),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide.none,

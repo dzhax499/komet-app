@@ -1,60 +1,73 @@
 import '../../../../core/local_storage/hive_service.dart';
 import '../../../../core/models/user_model.dart';
-// FIX: Hapus unused import exceptions.dart
+import '../../../../core/models/kelas_model.dart';
 
-abstract class AuthLocalDataSource {
-  Future<UserModel> login(String email, String password);
-  Future<UserModel> registerGuru(UserModel user);
-  Future<UserModel> registerSiswa(UserModel user, String kodeKelas);
-  Future<void> logout();
-  Future<UserModel?> getCurrentUser();
+abstract class KelasLocalDataSource {
+  Future<KelasModel> createKelas(KelasModel kelas);
+  Future<List<KelasModel>> getKelasGuru(String guruId);
+  Future<List<KelasModel>> getKelasSiswa(String siswaId);
+  Future<KelasModel> joinKelas(String kodeKelas, String siswaId);
+  Future<void> deleteKelas(String kelasId);
+  Future<List<UserModel>> getSiswaInKelas(String kelasId);
 }
 
-class AuthLocalDataSourceImpl implements AuthLocalDataSource {
+class KelasLocalDataSourceImpl implements KelasLocalDataSource {
   final HiveService hiveService;
 
-  AuthLocalDataSourceImpl({required this.hiveService});
+  KelasLocalDataSourceImpl({required this.hiveService});
 
   @override
-  Future<UserModel> login(String email, String password) async {
-    final user = hiveService.getUserByEmail(email);
-    if (user != null && user.password == password) {
-      await hiveService.persistUser(user);
-      return user;
-    } else {
-      throw Exception('Email atau password salah');
-    }
+  Future<KelasModel> createKelas(KelasModel kelas) async {
+    await hiveService.saveKelas(kelas);
+    return kelas;
   }
 
   @override
-  Future<UserModel?> getCurrentUser() async {
-    return hiveService.getCurrentUser();
+  Future<List<KelasModel>> getKelasGuru(String guruId) async {
+    return hiveService.getKelasByGuruId(guruId);
   }
 
   @override
-  Future<void> logout() async {
-    await hiveService.logout();
+  Future<List<KelasModel>> getKelasSiswa(String siswaId) async {
+    return hiveService.getKelasBySiswaId(siswaId);
   }
 
   @override
-  Future<UserModel> registerGuru(UserModel user) async {
-    await hiveService.persistUser(user);
-    return user;
-  }
-
-  @override
-  Future<UserModel> registerSiswa(UserModel user, String kodeKelas) async {
+  Future<KelasModel> joinKelas(String kodeKelas, String siswaId) async {
     final kelas = hiveService.getKelasByKode(kodeKelas);
     if (kelas == null) {
       throw Exception('Kode kelas tidak ditemukan');
     }
 
-    final updatedUser = user.copyWith(kelasIds: [kelas.id]);
-    await hiveService.persistUser(updatedUser);
+    if (kelas.siswaIds.contains(siswaId)) {
+      return kelas;
+    }
 
-    final updatedSiswaIds = List<String>.from(kelas.siswaIds)..add(user.id);
-    await hiveService.saveKelas(kelas.copyWith(siswaIds: updatedSiswaIds));
+    final updatedSiswaIds = List<String>.from(kelas.siswaIds)..add(siswaId);
+    final updatedKelas = kelas.copyWith(siswaIds: updatedSiswaIds);
+    await hiveService.saveKelas(updatedKelas);
 
-    return updatedUser;
+    // Update user juga
+    final user = hiveService.getCurrentUser();
+    if (user != null && user.id == siswaId) {
+      final updatedKelasIds = List<String>.from(user.kelasIds)..add(kelas.id);
+      await hiveService.saveUser(user.copyWith(kelasIds: updatedKelasIds));
+    }
+
+    return updatedKelas;
+  }
+
+  @override
+  Future<void> deleteKelas(String kelasId) async {
+    await hiveService.deleteKelas(kelasId);
+  }
+
+  @override
+  Future<List<UserModel>> getSiswaInKelas(String kelasId) async {
+    final kelas = hiveService.getKelasById(kelasId);
+    if (kelas == null) return [];
+    
+    // Ini agak tidak efisien tapi Hive local box biasanya kecil
+    return hiveService.getUsersByIds(kelas.siswaIds);
   }
 }

@@ -123,7 +123,7 @@ class _KelasListPageState extends State<KelasListPage> {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                AppColors.primary.withOpacity(0.05),
+                AppColors.primary.withValues(alpha: 0.05),
                 Colors.white,
               ],
             ),
@@ -135,13 +135,13 @@ class _KelasListPageState extends State<KelasListPage> {
 
   Widget _buildKelasCard(BuildContext context, KelasModel kelas, UserModel user) {
     return Container(
-      margin: const EdgeInsets.bottom(16),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -160,7 +160,7 @@ class _KelasListPageState extends State<KelasListPage> {
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(18),
                   ),
                   child: const Icon(Icons.class_outlined, color: AppColors.primary, size: 28),

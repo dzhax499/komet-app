@@ -34,7 +34,7 @@ class _JoinKelasDialogState extends State<JoinKelasDialog> {
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -48,7 +48,7 @@ class _JoinKelasDialogState extends State<JoinKelasDialog> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
+                  color: Colors.blue.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.group_add_outlined, color: Colors.blue, size: 32),
@@ -90,7 +90,7 @@ class _JoinKelasDialogState extends State<JoinKelasDialog> {
                     letterSpacing: 8,
                   ),
                   filled: true,
-                  fillColor: Colors.grey[50].withOpacity(0.5),
+                  fillColor: Colors.grey[50]!.withValues(alpha: 0.5),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide.none,
