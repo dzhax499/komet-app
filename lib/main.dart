@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'core/di/service_locator.dart';
 import 'core/theme/app_theme.dart';
-import 'features/auth/presentation/pages/login_page.dart';
+import 'features/auth/presentation/bloc/auth_bloc.dart';
+import 'features/kelas/presentation/bloc/kelas_bloc.dart';
 
-void main() {
+void main() async {
+  // WAJIB: harus dipanggil sebelum apapun yang async/plugin
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Inisialisasi semua dependency: Hive, GetIt, dll
+  await setupServiceLocator();
+
   runApp(const MyApp());
 }
 
@@ -11,53 +21,25 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Komet App',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      home: const HomePage(),
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const HomePage(),
-        '/login': (context) => const LoginPage(),
-      },
-    );
-  }
-}
-
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Home'),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('App berhasil jalan...', style: TextStyle(fontSize: 18)),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pushNamed(context, '/login');
-              },
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text(
-                'Get Started',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
+    return MultiBlocProvider(
+      providers: [
+        // AuthBloc diambil dari GetIt (sudah terdaftar di service_locator.dart)
+        // Langsung dispatch CheckStatus agar SplashScreen bisa cek login
+        BlocProvider<AuthBloc>(
+          create: (_) => sl<AuthBloc>()..add(AuthCheckStatusRequested()),
         ),
+        // KelasBloc juga dari GetIt
+        BlocProvider<KelasBloc>(create: (_) => sl<KelasBloc>()),
+      ],
+      // Gunakan MaterialApp.router + GoRouter — BUKAN MaterialApp biasa
+      // karena LoginPage, Dashboard, dll sudah pakai context.go() dari GoRouter
+      child: MaterialApp.router(
+        title: 'Komet App',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        // Ambil GoRouter yang sudah dikonfigurasi di app_router.dart via GetIt
+        routerConfig: sl<GoRouter>(),
       ),
     );
   }

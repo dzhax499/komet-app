@@ -9,16 +9,15 @@ class AuthRepositoryImpl implements AuthRepository {
   final AuthLocalDataSource localDataSource;
   final Uuid uuid;
 
-  AuthRepositoryImpl({
-    required this.localDataSource,
-    required this.uuid,
-  });
+  AuthRepositoryImpl({required this.localDataSource, required this.uuid});
 
   @override
   KometResult<UserModel?> getCurrentUser() async {
     try {
       final user = await localDataSource.getCurrentUser();
-      return kometSuccess(user);
+      return kometSuccess<UserModel?>(
+        user,
+      ); // explicit type agar Dart tidak salah infer T=UserModel
     } catch (e) {
       // FIX: CacheFailure tidak ada → gunakan LocalStorageFailure
       // FIX: parameter positional bukan named
@@ -48,7 +47,11 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  KometResult<UserModel> registerGuru(String nama, String email, String password) async {
+  KometResult<UserModel> registerGuru(
+    String nama,
+    String email,
+    String password,
+  ) async {
     try {
       final user = UserModel(
         id: uuid.v4(),
@@ -68,7 +71,12 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  KometResult<UserModel> registerSiswa(String nama, String email, String password, String kodeKelas) async {
+  KometResult<UserModel> registerSiswa(
+    String nama,
+    String email,
+    String password,
+    String kodeKelas,
+  ) async {
     try {
       final user = UserModel(
         id: uuid.v4(),
