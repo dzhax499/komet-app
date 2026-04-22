@@ -1,0 +1,57 @@
+name: komet_app
+description: "KOMET — Media Pembelajaran Kreativitas Digital. Aplikasi Android visual block programming untuk cerita interaktif bercabang (offline-first)."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.8
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # ── Service Locator (PIC D) ──────────────────────────────────────
+  get_it: ^8.0.3
+
+  # ── Routing (PIC D) ─────────────────────────────────────────────
+  go_router: ^14.6.3
+
+  # ── State Management (PIC D – Canvas; PIC lain bebas adopsi) ────
+  flutter_bloc: ^9.1.1
+  equatable: ^2.0.7
+
+  # ── Local Storage / Offline-First (PIC B – interface dari PIC D)
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
+  # ── Network / Connectivity (PIC D interface → PIC B implementasi)
+  connectivity_plus: ^6.1.4
+
+  # ── Utilities ───────────────────────────────────────────────────
+  uuid: ^4.5.1
+  google_fonts: ^6.2.1
+  shared_preferences: ^2.3.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+
+  # ── Code Generation (Hive adapters) ─────────────────────────────
+  build_runner: 2.4.13
+  hive_generator: ^2.0.1
+
+flutter:
+  uses-material-design: true
+
+  # Fonts: dikonfigurasi PIC C setelah UI Design final
+  # fonts:
+  #   - family: Nunito
+  #     fonts:
+  #       - asset: assets/fonts/Nunito-Regular.ttf
+  #       - asset: assets/fonts/Nunito-Bold.ttf
+  #         weight: 700
