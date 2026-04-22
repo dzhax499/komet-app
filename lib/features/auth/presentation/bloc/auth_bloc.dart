@@ -30,12 +30,12 @@ class AuthRegisterSiswaRequested extends AuthEvent {
   final String nama;
   final String email;
   final String password;
-  final String kodeKelas;
+  final String? kodeKelas;
   AuthRegisterSiswaRequested({
     required this.nama,
     required this.email,
     required this.password,
-    required this.kodeKelas,
+    this.kodeKelas,
   });
   @override
   List<Object?> get props => [nama, email, password, kodeKelas];

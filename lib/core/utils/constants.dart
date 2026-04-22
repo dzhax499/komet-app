@@ -24,6 +24,7 @@ class KometRoutes {
 
   // Auth — PIC A
   static const String splash = '/';
+  static const String getStarted = '/get-started';
   static const String login = '/login';
   static const String registerSiswa = '/register/siswa';
   static const String registerGuru = '/register/guru';

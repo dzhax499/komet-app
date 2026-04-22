@@ -75,7 +75,7 @@ class AuthRepositoryImpl implements AuthRepository {
     String nama,
     String email,
     String password,
-    String kodeKelas,
+    String? kodeKelas,
   ) async {
     try {
       final user = UserModel(
