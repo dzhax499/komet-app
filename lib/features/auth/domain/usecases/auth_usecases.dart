@@ -39,12 +39,12 @@ class RegisterSiswaParams {
   final String nama;
   final String email;
   final String password;
-  final String kodeKelas;
+  final String? kodeKelas;
   RegisterSiswaParams({
     required this.nama,
     required this.email,
     required this.password,
-    required this.kodeKelas,
+    this.kodeKelas,
   });
 }
 
