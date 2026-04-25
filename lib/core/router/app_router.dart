@@ -20,6 +20,7 @@ import '../../features/kelas/presentation/pages/kelas_list_page.dart';
 import '../../features/kelas/presentation/pages/kelas_detail_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../features/kelas/presentation/pages/review_submission_page.dart';
 
 class _PlaceholderScreen extends StatelessWidget {
   final String title;
@@ -110,7 +111,12 @@ final GoRouter appRouter = GoRouter(
         return KelasDetailPage(kelasId: kelasId);
       },
     ),
-
+    // ── Review Submission (PIC B - Helga) ──────────────────────────
+    GoRoute(
+      path: '/review-submission', 
+      name: 'reviewDetail', // Pastikan nama ini cuma muncul 1x di seluruh file app_router
+      builder: (context, state) => const ReviewSubmissionPage(),
+    ),
     // ── Assignment (PIC A) ────────────────────────────────────────
     GoRoute(
       path: KometRoutes.assignmentDetail,
@@ -159,15 +165,6 @@ final GoRouter appRouter = GoRouter(
       },
     ),
 
-    // ── Review (PIC A) ────────────────────────────────────────────
-    GoRoute(
-      path: KometRoutes.reviewDetail,
-      name: 'reviewDetail',
-      builder: (context, state) => const _PlaceholderScreen(
-        title: 'Review & Penilaian',
-        pic: 'PIC A (Wyandhanu)',
-      ),
-    ),
 
     // ── Notifikasi (PIC A) ────────────────────────────────────────
     GoRoute(

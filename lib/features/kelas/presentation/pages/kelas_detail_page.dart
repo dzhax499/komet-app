@@ -4,8 +4,9 @@ import '../widgets/task_card.dart';
 import '../widgets/create_task_dialog.dart'; 
 
 class KelasDetailPage extends StatefulWidget {
-  final String kelasId;
-  const KelasDetailPage({super.key, required this.kelasId});
+  final String kelasId; 
+
+  const KelasDetailPage({super.key, required this.kelasId}); 
 
   @override
   State<KelasDetailPage> createState() => _KelasDetailPageState();
@@ -102,25 +103,18 @@ class _KelasDetailPageState extends State<KelasDetailPage> {
         children: [
           Row(
             children: [
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: const Row(
-                  children: [
-                    Icon(
-                      Icons.arrow_back_ios_new,
-                      color: Colors.white,
-                      size: 16,
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      'Back to Hub',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ],
+              const Icon(
+                Icons.school_outlined,
+                color: Colors.white,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Teacher Hub',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ],

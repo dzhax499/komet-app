@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class SubmissionCard extends StatelessWidget {
   const SubmissionCard({super.key});
@@ -7,7 +8,7 @@ class SubmissionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // Navigasi ke halaman review nanti ditaruh di sini
+        context.pushNamed('reviewDetail'); 
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
