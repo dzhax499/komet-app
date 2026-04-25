@@ -4,7 +4,8 @@ import '../widgets/task_card.dart';
 import '../widgets/create_task_dialog.dart'; 
 
 class KelasDetailPage extends StatefulWidget {
-  const KelasDetailPage({super.key});
+  final String kelasId;
+  const KelasDetailPage({super.key, required this.kelasId});
 
   @override
   State<KelasDetailPage> createState() => _KelasDetailPageState();

@@ -17,6 +17,7 @@ import '../../features/auth/presentation/pages/get_started_page.dart';
 import '../../features/kelas/presentation/pages/dashboard_guru_page.dart';
 import '../../features/kelas/presentation/pages/dashboard_siswa_page.dart';
 import '../../features/kelas/presentation/pages/kelas_list_page.dart';
+import '../../features/kelas/presentation/pages/kelas_detail_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 
@@ -83,19 +84,19 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const RegisterGuruPage(),
     ),
 
-    // ── Dashboard (PIC A) ─────────────────────────────────────────
+    // ── Dashboard ─────────────────────────────────────────────────
     GoRoute(
       path: KometRoutes.dashboardGuru,
       name: 'dashboardGuru',
-      builder: (context, state) => const DashboardGuruPage(),
+      builder: (context, state) => const DashboardGuruPage(), // PIC B (Helga)
     ),
     GoRoute(
       path: KometRoutes.dashboardSiswa,
       name: 'dashboardSiswa',
-      builder: (context, state) => const DashboardSiswaPage(),
+      builder: (context, state) => const DashboardSiswaPage(), // PIC C (Nike)
     ),
 
-    // ── Kelas (PIC A) ─────────────────────────────────────────────
+    // ── Kelas (PIC B - Helga) ─────────────────────────────────────
     GoRoute(
       path: KometRoutes.kelasList,
       name: 'kelasList',
@@ -106,10 +107,7 @@ final GoRouter appRouter = GoRouter(
       name: 'kelasDetail',
       builder: (context, state) {
         final kelasId = state.pathParameters['kelasId']!;
-        return _PlaceholderScreen(
-          title: 'Detail Kelas: $kelasId',
-          pic: 'PIC A (Wyandhanu)',
-        );
+        return KelasDetailPage(kelasId: kelasId);
       },
     ),
 
