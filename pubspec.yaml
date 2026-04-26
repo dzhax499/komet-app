@@ -35,6 +35,10 @@ dependencies:
   google_fonts: ^6.2.1
   shared_preferences: ^2.3.5
 
+  # ── Cloud Database (PIC B) ──────────────────────────────────────
+  mongo_dart: ^0.10.8
+  flutter_dotenv: ^5.2.1
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -47,6 +51,9 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  assets:                
+    - .env
 
   # Fonts: dikonfigurasi PIC C setelah UI Design final
   # fonts:
