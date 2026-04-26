@@ -72,15 +72,12 @@ class KelasRepositoryImpl implements KelasRepository {
   @override
   KometResult<List<KelasModel>> getKelasGuru(String guruId) async {
     try {
-      // Ambil dari server
       final remoteData = await remoteDataSource.getKelasGuru(guruId);
-      // Cache ke lokal
       for (final kelas in remoteData) {
         await localDataSource.createKelas(kelas); 
       }
       return kometSuccess(remoteData);
     } catch (e) {
-      // Fallback ke lokal jika gagal (misal: offline)
       try {
         final localData = await localDataSource.getKelasGuru(guruId);
         return kometSuccess(localData);
@@ -94,15 +91,12 @@ class KelasRepositoryImpl implements KelasRepository {
   @override
   KometResult<List<KelasModel>> getKelasSiswa(String siswaId) async {
     try {
-      // Ambil dari server
       final remoteData = await remoteDataSource.getKelasSiswa(siswaId);
-      // Cache ke lokal
       for (final kelas in remoteData) {
         await localDataSource.createKelas(kelas);
       }
       return kometSuccess(remoteData);
     } catch (e) {
-      // Fallback lokal
       try {
         final localData = await localDataSource.getKelasSiswa(siswaId);
         return kometSuccess(localData);
@@ -135,7 +129,7 @@ class KelasRepositoryImpl implements KelasRepository {
       // Update di MongoDB
       final remoteKelas = await remoteDataSource.joinKelas(kodeKelas, siswaId);
       // Cache ke lokal
-      final result = await localDataSource.joinKelas(kodeKelas, siswaId);
+      await localDataSource.joinKelas(kodeKelas, siswaId);
       return kometSuccess(remoteKelas);
     } catch (e) {
       return kometFailure(LocalStorageFailure(e.toString()));
