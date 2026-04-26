@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/di/service_locator.dart';
+import '../../../../core/models/submission_model.dart';
+import '../../../submission/presentation/bloc/submission_bloc.dart';
+import '../../../submission/presentation/bloc/submission_event.dart';
+import '../../../submission/presentation/bloc/submission_state.dart';
 
 class ReviewSubmissionPage extends StatefulWidget {
-  const ReviewSubmissionPage({super.key});
+  final SubmissionModel submission;
+  const ReviewSubmissionPage({super.key, required this.submission});
 
   @override
   State<ReviewSubmissionPage> createState() => _ReviewSubmissionPageState();
@@ -9,45 +16,85 @@ class ReviewSubmissionPage extends StatefulWidget {
 
 class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
   double _assessmentValue = 0;
+  final TextEditingController _feedbackController = TextEditingController();
+  late SubmissionBloc _submissionBloc;
+
+  @override
+  void initState() {
+    super.initState();
+    _submissionBloc = sl<SubmissionBloc>();
+    _assessmentValue = (widget.submission.nilai ?? 0).toDouble();
+    _feedbackController.text = widget.submission.komentarUmum ?? '';
+  }
+
+  @override
+  void dispose() {
+    _feedbackController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF86B3C0), // Light blue-grey
-              Color(0xFFE3E2E0), // Light grey
-            ],
-            stops: [0.0, 1.0],
-          ),
-        ),
-        child: Column(
-          children: [
-            _buildHeader(context),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                child: Column(
-                  children: [
-                    _buildStudentInfoCard(),
-                    const SizedBox(height: 20),
-                    _buildAudioPlayerCard(),
-                    const SizedBox(height: 20),
-                    _buildAssessmentCard(),
-                    const SizedBox(height: 24),
-                    _buildApproveButton(),
-                    const SizedBox(height: 12),
-                    _buildRevisionButton(),
-                    const SizedBox(height: 40),
-                  ],
-                ),
+    return BlocProvider.value(
+      value: _submissionBloc,
+      child: BlocListener<SubmissionBloc, SubmissionState>(
+        listener: (context, state) {
+          if (state is SubmissionGradedSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Penilaian berhasil disimpan!'),
+              ),
+            );
+            Navigator.pop(context);
+          } else if (state is SubmissionFailure) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Gagal menilai: ${state.message}'),
+              ),
+            );
+          }
+        },
+        child: Scaffold(
+          body: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0xFF86B3C0),
+                  Color(0xFFE3E2E0),
+                ],
+                stops: [0.0, 1.0],
               ),
             ),
-          ],
+            child: Column(
+              children: [
+                _buildHeader(context),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 20,
+                    ),
+                    child: Column(
+                      children: [
+                        _buildStudentInfoCard(),
+                        const SizedBox(height: 20),
+                        _buildAudioPlayerCard(),
+                        const SizedBox(height: 20),
+                        _buildAssessmentCard(),
+                        const SizedBox(height: 24),
+                        _buildApproveButton(),
+                        const SizedBox(height: 12),
+                        _buildRevisionButton(),
+                        const SizedBox(height: 40),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -55,7 +102,12 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
 
   Widget _buildHeader(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.only(top: 50, left: 24, right: 24, bottom: 20),
+      padding: const EdgeInsets.only(
+        top: 50,
+        left: 24,
+        right: 24,
+        bottom: 20,
+      ),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
@@ -70,7 +122,10 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
           bottomRight: Radius.circular(24),
         ),
         border: const Border(
-          bottom: BorderSide(color: Colors.white, width: 2),
+          bottom: BorderSide(
+            color: Colors.white,
+            width: 2,
+          ),
         ),
         boxShadow: [
           BoxShadow(
@@ -89,7 +144,11 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
                 onTap: () => Navigator.pop(context),
                 child: const Row(
                   children: [
-                    Icon(Icons.school_outlined, color: Colors.white, size: 20),
+                    Icon(
+                      Icons.school_outlined,
+                      color: Colors.white,
+                      size: 20,
+                    ),
                     SizedBox(width: 8),
                     Text(
                       'Teacher Hub',
@@ -109,7 +168,11 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
             onTap: () => Navigator.pop(context),
             child: const Row(
               children: [
-                Icon(Icons.reply, color: Colors.white, size: 28),
+                Icon(
+                  Icons.reply,
+                  color: Colors.white,
+                  size: 28,
+                ),
                 SizedBox(width: 12),
                 Text(
                   'Review Submission',
@@ -167,25 +230,29 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
                 CircleAvatar(
                   radius: 28,
                   backgroundColor: Colors.blue[100],
-                  child: const Icon(Icons.person, color: Colors.blueGrey, size: 36),
+                  child: const Icon(
+                    Icons.person,
+                    color: Colors.blueGrey,
+                    size: 36,
+                  ),
                 ),
                 const SizedBox(width: 16),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Andi\'s Story',
-                        style: TextStyle(
+                        'Student ID: ${widget.submission.siswaId.substring(0, 8)}',
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
-                        'andi@gmail.com',
-                        style: TextStyle(
+                        'Status: ${widget.submission.status.name}',
+                        style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 14,
                         ),
@@ -200,17 +267,33 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Table(
               border: const TableBorder(
-                horizontalInside: BorderSide(color: Colors.white54, width: 1),
-                verticalInside: BorderSide(color: Colors.white54, width: 1),
+                horizontalInside: BorderSide(
+                  color: Colors.white54,
+                  width: 1,
+                ),
+                verticalInside: BorderSide(
+                  color: Colors.white54,
+                  width: 1,
+                ),
               ),
               columnWidths: const {
                 0: FlexColumnWidth(1),
                 1: FlexColumnWidth(2.5),
               },
               children: [
-                _buildTableRow('Task', 'Create Story About Yourself'),
-                _buildTableRow('Blok', '15'),
-                _buildTableRow('Submit', '13/04/2026 13:45'),
+                _buildTableRow(
+                  'Assignment',
+                  widget.submission.assignmentId.substring(0, 8),
+                ),
+                _buildTableRow(
+                  'Blok',
+                  'Check Logic',
+                ),
+                _buildTableRow(
+                  'Submit',
+                  widget.submission.submittedAt?.toString().split('.')[0] ??
+                      '-',
+                ),
               ],
             ),
           ),
@@ -223,14 +306,23 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
     return TableRow(
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 8,
+          ),
           child: Text(
             label,
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 8,
+          ),
           child: Text(
             value,
             textAlign: TextAlign.right,
@@ -334,7 +426,10 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(30),
@@ -384,6 +479,7 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
                 borderRadius: BorderRadius.circular(16),
               ),
               child: TextField(
+                controller: _feedbackController,
                 maxLines: null,
                 expands: true,
                 textAlignVertical: TextAlignVertical.top,
@@ -419,7 +515,15 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {},
+          onTap: () {
+            _submissionBloc.add(
+              GradeSubmissionEvent(
+                submissionId: widget.submission.id,
+                grade: _assessmentValue.toInt(),
+                teacherComment: _feedbackController.text,
+              ),
+            );
+          },
           borderRadius: BorderRadius.circular(20),
           child: const Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
@@ -445,7 +549,10 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
       decoration: BoxDecoration(
         color: const Color(0xFFD3D8CA),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF19320C), width: 1.5),
+        border: Border.all(
+          color: const Color(0xFF19320C),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.1),
@@ -457,7 +564,15 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {},
+          onTap: () {
+            _submissionBloc.add(
+              GradeSubmissionEvent(
+                submissionId: widget.submission.id,
+                grade: _assessmentValue.toInt(),
+                teacherComment: _feedbackController.text,
+              ),
+            );
+          },
           borderRadius: BorderRadius.circular(20),
           child: const Padding(
             padding: EdgeInsets.symmetric(vertical: 16),

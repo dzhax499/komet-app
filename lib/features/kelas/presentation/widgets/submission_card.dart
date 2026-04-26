@@ -1,14 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/models/submission_model.dart';
 
 class SubmissionCard extends StatelessWidget {
-  const SubmissionCard({super.key});
+  final SubmissionModel submission;
+  final String studentName;
+  final String assignmentTitle;
+
+  const SubmissionCard({
+    super.key,
+    required this.submission,
+    required this.studentName,
+    required this.assignmentTitle,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        context.pushNamed('reviewDetail'); 
+        context.pushNamed('reviewDetail', extra: submission);
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
@@ -33,8 +43,8 @@ class SubmissionCard extends StatelessWidget {
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                   colors: [
-                    Color(0xFF19320C), 
-                    Color(0xFF6F8226), 
+                    Color(0xFF19320C),
+                    Color(0xFF6F8226),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(16),
@@ -51,23 +61,31 @@ class SubmissionCard extends StatelessWidget {
                   CircleAvatar(
                     radius: 24,
                     backgroundColor: Colors.blue[100],
-                    child: const Icon(Icons.person, color: Colors.blueGrey, size: 32),
+                    child: Text(
+                      studentName.isNotEmpty
+                          ? studentName[0].toUpperCase()
+                          : '?',
+                      style: const TextStyle(
+                        color: Colors.blueGrey,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 16),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Andi\'s Story',
-                          style: TextStyle(
+                          studentName,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(height: 4),
-                        Text(
+                        const SizedBox(height: 4),
+                        const Text(
                           'Review',
                           style: TextStyle(
                             color: Colors.white70,
@@ -78,7 +96,10 @@ class SubmissionCard extends StatelessWidget {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
@@ -109,12 +130,15 @@ class SubmissionCard extends StatelessWidget {
                 ],
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
               child: Center(
                 child: Text(
-                  'Task : Create Story About ...',
-                  style: TextStyle(
+                  'Task : $assignmentTitle',
+                  style: const TextStyle(
                     color: Colors.black87,
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
