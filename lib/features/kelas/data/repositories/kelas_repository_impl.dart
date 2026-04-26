@@ -6,31 +6,54 @@ import '../../../../core/models/kelas_model.dart';
 import '../../../../core/models/user_model.dart';
 import '../../domain/repositories/kelas_repository.dart';
 import '../datasources/kelas_local_data_source.dart';
+import '../datasources/kelas_remote_data_source.dart';
 
-// FIX: Hapus unused import failures.dart (sudah di-import ulang dengan benar)
 class KelasRepositoryImpl implements KelasRepository {
   final KelasLocalDataSource localDataSource;
+  final KelasRemoteDataSource remoteDataSource;
   final Uuid uuid;
 
-  KelasRepositoryImpl({required this.localDataSource, required this.uuid});
+  KelasRepositoryImpl({
+    required this.localDataSource, 
+    required this.remoteDataSource,
+    required this.uuid,
+  });
 
   @override
   KometResult<KelasModel> createKelas(String nama, String guruId) async {
     try {
+      String finalCode = _generateKodeKelas();
+      bool isUnique = false;
+      int attempts = 0;
+
+      while (!isUnique && attempts < 5) {
+        final available = await remoteDataSource.isKodeKelasAvailable(finalCode);
+        if (available) {
+          isUnique = true;
+        } else {
+          finalCode = _generateKodeKelas();
+          attempts++;
+        }
+      }
+
       final kelas = KelasModel(
         id: uuid.v4(),
         nama: nama,
         guruId: guruId,
-        kodeKelas: _generateKodeKelas(),
+        kodeKelas: finalCode,
         siswaIds: [],
         assignmentIds: [],
         isAktif: true,
         dibuatPada: DateTime.now(),
       );
-      final result = await localDataSource.createKelas(kelas);
+      
+      // 1. Simpan ke server (MongoDB)
+      final remoteKelas = await remoteDataSource.createKelas(kelas);
+      
+      // 2. Simpan ke lokal
+      final result = await localDataSource.createKelas(remoteKelas);
       return kometSuccess(result);
     } catch (e) {
-      // FIX: CacheFailure → LocalStorageFailure (positional param)
       return kometFailure(LocalStorageFailure(e.toString()));
     }
   }
@@ -38,6 +61,7 @@ class KelasRepositoryImpl implements KelasRepository {
   @override
   KometResult<void> deleteKelas(String kelasId) async {
     try {
+      await remoteDataSource.deleteKelas(kelasId);
       await localDataSource.deleteKelas(kelasId);
       return kometSuccess(null);
     } catch (e) {
@@ -48,40 +72,89 @@ class KelasRepositoryImpl implements KelasRepository {
   @override
   KometResult<List<KelasModel>> getKelasGuru(String guruId) async {
     try {
-      final result = await localDataSource.getKelasGuru(guruId);
-      return kometSuccess(result);
+      // Ambil dari server
+      final remoteData = await remoteDataSource.getKelasGuru(guruId);
+      // Cache ke lokal
+      for (final kelas in remoteData) {
+        await localDataSource.createKelas(kelas); 
+      }
+      return kometSuccess(remoteData);
     } catch (e) {
-      return kometFailure(LocalStorageFailure(e.toString()));
+      // Fallback ke lokal jika gagal (misal: offline)
+      try {
+        final localData = await localDataSource.getKelasGuru(guruId);
+        return kometSuccess(localData);
+      } catch (e2) {
+        return kometFailure(LocalStorageFailure(e2.toString()));
+      }
     }
   }
+
 
   @override
   KometResult<List<KelasModel>> getKelasSiswa(String siswaId) async {
     try {
-      final result = await localDataSource.getKelasSiswa(siswaId);
-      return kometSuccess(result);
+      // Ambil dari server
+      final remoteData = await remoteDataSource.getKelasSiswa(siswaId);
+      // Cache ke lokal
+      for (final kelas in remoteData) {
+        await localDataSource.createKelas(kelas);
+      }
+      return kometSuccess(remoteData);
     } catch (e) {
-      return kometFailure(LocalStorageFailure(e.toString()));
+      // Fallback lokal
+      try {
+        final localData = await localDataSource.getKelasSiswa(siswaId);
+        return kometSuccess(localData);
+      } catch (e2) {
+        return kometFailure(LocalStorageFailure(e2.toString()));
+      }
     }
   }
+
 
   @override
   KometResult<List<UserModel>> getSiswaInKelas(String kelasId) async {
     try {
-      final result = await localDataSource.getSiswaInKelas(kelasId);
-      return kometSuccess(result);
+      final remoteData = await remoteDataSource.getSiswaInKelas(kelasId);
+      return kometSuccess(remoteData);
+    } catch (e) {
+      try {
+        final localData = await localDataSource.getSiswaInKelas(kelasId);
+        return kometSuccess(localData);
+      } catch (e2) {
+        return kometFailure(LocalStorageFailure(e2.toString()));
+      }
+    }
+  }
+
+
+  @override
+  KometResult<KelasModel> joinKelas(String kodeKelas, String siswaId) async {
+    try {
+      // Update di MongoDB
+      final remoteKelas = await remoteDataSource.joinKelas(kodeKelas, siswaId);
+      // Cache ke lokal
+      final result = await localDataSource.joinKelas(kodeKelas, siswaId);
+      return kometSuccess(remoteKelas);
     } catch (e) {
       return kometFailure(LocalStorageFailure(e.toString()));
     }
   }
 
   @override
-  KometResult<KelasModel> joinKelas(String kodeKelas, String siswaId) async {
+  KometResult<KelasModel> getKelasById(String kelasId) async {
     try {
-      final result = await localDataSource.joinKelas(kodeKelas, siswaId);
-      return kometSuccess(result);
+      final remoteData = await remoteDataSource.getKelasById(kelasId);
+      await localDataSource.createKelas(remoteData);
+      return kometSuccess(remoteData);
     } catch (e) {
-      return kometFailure(LocalStorageFailure(e.toString()));
+      try {
+        final localData = await localDataSource.getKelasById(kelasId);
+        return kometSuccess(localData);
+      } catch (e2) {
+        return kometFailure(LocalStorageFailure(e2.toString()));
+      }
     }
   }
 

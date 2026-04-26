@@ -2,8 +2,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../../../core/models/kelas_model.dart';
 import '../../domain/usecases/kelas_usecases.dart';
+import '../../domain/usecases/get_kelas_by_id_use_case.dart';
 
-// ── EVENTS ──────────────────────────────────────────────────────────────────
+// EVENTS
 abstract class KelasEvent extends Equatable {
   @override
   List<Object?> get props => [];
@@ -41,13 +42,20 @@ class KelasJoinRequested extends KelasEvent {
 
 class KelasDeleteRequested extends KelasEvent {
   final String kelasId;
-  final String guruId; // Untuk refresh list setelah delete
+  final String guruId; 
   KelasDeleteRequested({required this.kelasId, required this.guruId});
   @override
   List<Object?> get props => [kelasId, guruId];
 }
 
-// ── STATES ──────────────────────────────────────────────────────────────────
+class KelasFetchDetailRequested extends KelasEvent {
+  final String kelasId;
+  KelasFetchDetailRequested(this.kelasId);
+  @override
+  List<Object?> get props => [kelasId];
+}
+
+// STATES 
 abstract class KelasState extends Equatable {
   @override
   List<Object?> get props => [];
@@ -74,7 +82,14 @@ class KelasActionSuccess extends KelasState {
   List<Object?> get props => [message];
 }
 
-// ── BLOC ────────────────────────────────────────────────────────────────────
+class KelasDetailLoaded extends KelasState {
+  final KelasModel kelas;
+  KelasDetailLoaded(this.kelas);
+  @override
+  List<Object?> get props => [kelas];
+}
+
+// BLOC
 class KelasBloc extends Bloc<KelasEvent, KelasState> {
   final CreateKelasUseCase createKelasUseCase;
   final GetKelasGuruUseCase getKelasGuruUseCase;
@@ -88,13 +103,17 @@ class KelasBloc extends Bloc<KelasEvent, KelasState> {
     required this.getKelasSiswaUseCase,
     required this.joinKelasUseCase,
     required this.deleteKelasUseCase,
+    required this.getKelasByIdUseCase,
   }) : super(KelasInitial()) {
     on<KelasFetchGuruRequested>(_onFetchGuru);
     on<KelasFetchSiswaRequested>(_onFetchSiswa);
     on<KelasCreateRequested>(_onCreate);
     on<KelasJoinRequested>(_onJoin);
     on<KelasDeleteRequested>(_onDelete);
+    on<KelasFetchDetailRequested>(_onFetchDetail);
   }
+
+  final GetKelasByIdUseCase getKelasByIdUseCase;
 
   Future<void> _onFetchGuru(KelasFetchGuruRequested event, Emitter<KelasState> emit) async {
     emit(KelasLoading());
@@ -146,6 +165,16 @@ class KelasBloc extends Bloc<KelasEvent, KelasState> {
       add(KelasFetchGuruRequested(event.guruId));
     } else {
       emit(KelasError(result.failure!.message));
+    }
+  }
+
+  Future<void> _onFetchDetail(KelasFetchDetailRequested event, Emitter<KelasState> emit) async {
+    emit(KelasLoading());
+    final result = await getKelasByIdUseCase(event.kelasId);
+    if (result.data != null) {
+      emit(KelasDetailLoaded(result.data!));
+    } else {
+      emit(KelasError(result.failure?.message ?? 'Gagal memuat detail kelas'));
     }
   }
 }
