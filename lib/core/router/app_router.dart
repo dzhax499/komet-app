@@ -21,6 +21,7 @@ import '../../features/kelas/presentation/pages/kelas_detail_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/kelas/presentation/pages/review_submission_page.dart';
+import '../models/submission_model.dart';
 
 class _PlaceholderScreen extends StatelessWidget {
   final String title;
@@ -114,8 +115,11 @@ final GoRouter appRouter = GoRouter(
     // ── Review Submission (PIC B - Helga) ──────────────────────────
     GoRoute(
       path: '/review-submission', 
-      name: 'reviewDetail', // Pastikan nama ini cuma muncul 1x di seluruh file app_router
-      builder: (context, state) => const ReviewSubmissionPage(),
+      name: 'reviewDetail', 
+      builder: (context, state) {
+        final submission = state.extra as SubmissionModel;
+        return ReviewSubmissionPage(submission: submission);
+      },
     ),
     // ── Assignment (PIC A) ────────────────────────────────────────
     GoRoute(

@@ -28,6 +28,9 @@ class KelasModel extends HiveObject {
   @HiveField(7)
   final DateTime dibuatPada;
 
+  @HiveField(8)
+  final DateTime? deletedAt;
+
   KelasModel({
     required this.id,
     required this.nama,
@@ -37,6 +40,7 @@ class KelasModel extends HiveObject {
     required this.assignmentIds,
     required this.isAktif,
     required this.dibuatPada,
+    this.deletedAt,
   });
 
   KelasModel copyWith({
@@ -48,6 +52,7 @@ class KelasModel extends HiveObject {
     List<String>? assignmentIds,
     bool? isAktif,
     DateTime? dibuatPada,
+    DateTime? deletedAt,
   }) {
     return KelasModel(
       id: id ?? this.id,
@@ -58,6 +63,46 @@ class KelasModel extends HiveObject {
       assignmentIds: assignmentIds ?? this.assignmentIds,
       isAktif: isAktif ?? this.isAktif,
       dibuatPada: dibuatPada ?? this.dibuatPada,
+      deletedAt: deletedAt ?? this.deletedAt,
+    );
+  }
+
+  // Konversi ke MongoDB Map 
+  Map<String, dynamic> toMap() {
+    return {
+      '_id': id,
+      'teacherId': guruId,
+      'className': nama,
+      'classCode': kodeKelas,
+      'isOpen': isAktif,
+      'students': siswaIds,
+      'assignments': assignmentIds,
+      'createdAt': dibuatPada.toIso8601String(),
+      'deletedAt': deletedAt?.toIso8601String(),
+    };
+  }
+
+  // Buat KelasModel dari data MongoDB 
+  factory KelasModel.fromMap(Map<String, dynamic> map) {
+    return KelasModel(
+      id: map['_id']?.toString() ?? '',
+      guruId: map['teacherId']?.toString() ?? '',
+      nama: map['className'] ?? '',
+      kodeKelas: map['classCode'] ?? '',
+      isAktif: map['isOpen'] ?? true,
+      siswaIds: List<String>.from(
+        (map['students'] ?? []).map((e) => e.toString()),
+      ),
+      assignmentIds: List<String>.from(
+        (map['assignments'] ?? []).map((e) => e.toString()),
+      ),
+      dibuatPada: map['createdAt'] != null
+          ? DateTime.parse(map['createdAt'].toString())
+          : DateTime.now(),
+      deletedAt: map['deletedAt'] != null
+          ? DateTime.parse(map['deletedAt'].toString())
+          : null,
     );
   }
 }
+

@@ -25,13 +25,14 @@ class KelasModelAdapter extends TypeAdapter<KelasModel> {
       assignmentIds: (fields[5] as List).cast<String>(),
       isAktif: fields[6] as bool,
       dibuatPada: fields[7] as DateTime,
+      deletedAt: fields[8] as DateTime?,
     );
   }
 
   @override
   void write(BinaryWriter writer, KelasModel obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -47,7 +48,9 @@ class KelasModelAdapter extends TypeAdapter<KelasModel> {
       ..writeByte(6)
       ..write(obj.isAktif)
       ..writeByte(7)
-      ..write(obj.dibuatPada);
+      ..write(obj.dibuatPada)
+      ..writeByte(8)
+      ..write(obj.deletedAt);
   }
 
   @override

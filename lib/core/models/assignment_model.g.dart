@@ -26,13 +26,14 @@ class AssignmentModelAdapter extends TypeAdapter<AssignmentModel> {
       nilaiMaksimal: fields[6] as int,
       status: fields[7] as AssignmentStatus,
       dibuatPada: fields[8] as DateTime,
+      deletedAt: fields[9] as DateTime?,
     );
   }
 
   @override
   void write(BinaryWriter writer, AssignmentModel obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -50,7 +51,9 @@ class AssignmentModelAdapter extends TypeAdapter<AssignmentModel> {
       ..writeByte(7)
       ..write(obj.status)
       ..writeByte(8)
-      ..write(obj.dibuatPada);
+      ..write(obj.dibuatPada)
+      ..writeByte(9)
+      ..write(obj.deletedAt);
   }
 
   @override
