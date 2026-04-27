@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/models/user_model.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
 import '../bloc/auth_bloc.dart';
@@ -41,6 +42,8 @@ class _LoginPageState extends State<LoginPage> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.message), backgroundColor: AppColors.error),
             );
+          } else if (state is AuthGoogleNeedsRole) {
+            _showGoogleRoleSelection(context, state.user);
           }
         },
         child: Column(
@@ -186,7 +189,9 @@ class _LoginPageState extends State<LoginPage> {
                         width: double.infinity,
                         height: 54,
                         child: OutlinedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            context.read<AuthBloc>().add(AuthGoogleLoginRequested());
+                          },
                           style: OutlinedButton.styleFrom(
                             backgroundColor: Colors.white.withValues(alpha: 0.76),
                             side: BorderSide(color: Colors.white.withValues(alpha: 0.88), width: 1.5),
@@ -413,6 +418,124 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  void _showGoogleRoleSelection(BuildContext context, UserModel user) {
+    showModalBottomSheet(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: AppColors.secondary,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Selamat Datang!',
+                style: GoogleFonts.outfit(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Silakan pilih peran Anda untuk melanjutkan pendaftaran.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.dmSans(
+                  fontSize: 14,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    context.read<AuthBloc>().add(AuthGoogleCompleteRegistrationRequested(
+                          user: user,
+                          role: 'guru',
+                        ));
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryDark,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                  ),
+                  child: Text(
+                    'Saya seorang Guru',
+                    style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _showStudentCodeDialog(context, user);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryDark,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                  ),
+                  child: Text(
+                    'Saya seorang Siswa',
+                    style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showStudentCodeDialog(BuildContext context, UserModel user) {
+    final codeController = TextEditingController();
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Kode Kelas (Opsional)'),
+          content: TextField(
+            controller: codeController,
+            decoration: const InputDecoration(hintText: 'Masukkan kode kelas jika ada'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                context.read<AuthBloc>().add(AuthGoogleCompleteRegistrationRequested(
+                      user: user,
+                      role: 'siswa',
+                      kodeKelas: codeController.text.isEmpty ? null : codeController.text,
+                    ));
+              },
+              child: const Text('Lanjutkan'),
+            ),
+          ],
         );
       },
     );

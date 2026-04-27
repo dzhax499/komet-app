@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "514431532526",
+    "project_id": "komet-7f48b",
+    "storage_bucket": "komet-7f48b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:514431532526:android:f6f02152b20637d1ce22ff",
+        "android_client_info": {
+          "package_name": "com.dnhsquad.komet"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "514431532526-7tunelqplf2mjf126dvsj646g9c42nj4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBf_H2LzdT9TvGWSQm57mkebFzXSWSQ2dM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "514431532526-7tunelqplf2mjf126dvsj646g9c42nj4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
