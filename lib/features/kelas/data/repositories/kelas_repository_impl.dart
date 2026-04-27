@@ -137,6 +137,18 @@ class KelasRepositoryImpl implements KelasRepository {
   }
 
   @override
+  KometResult<void> leaveKelas(String kelasId, String siswaId) async {
+    try {
+      await remoteDataSource.leaveKelas(kelasId, siswaId);
+      // Wait, there's no leaveKelas in localDataSource yet.
+      // We can just ignore local for now or add it later if needed.
+      return kometSuccess(null);
+    } catch (e) {
+      return kometFailure(LocalStorageFailure(e.toString()));
+    }
+  }
+
+  @override
   KometResult<KelasModel> getKelasById(String kelasId) async {
     try {
       final remoteData = await remoteDataSource.getKelasById(kelasId);

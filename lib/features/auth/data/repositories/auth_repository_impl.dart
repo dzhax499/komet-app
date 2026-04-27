@@ -115,7 +115,6 @@ class AuthRepositoryImpl implements AuthRepository {
       return kometFailure(AuthFailure(e.toString()));
     }
   }
-
   @override
   KometResult<UserModel> signInWithGoogle() async {
     try {

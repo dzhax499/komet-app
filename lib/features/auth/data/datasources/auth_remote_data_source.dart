@@ -73,7 +73,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       throw Exception("Gagal login: ${e.toString()}");
     }
   }
-
   @override
   Future<UserModel> signInWithGoogle() async {
     try {
