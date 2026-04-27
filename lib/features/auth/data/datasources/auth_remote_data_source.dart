@@ -5,6 +5,8 @@ import '../../../../core/error/failures.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
+import 'package:crypto/crypto.dart';
+import 'dart:convert';
 import '../../../../firebase_options.dart';
 
 abstract class AuthRemoteDataSource {
@@ -41,8 +43,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       }
 
       // 2. Insert user ke MongoDB
-      final userMap = user.toMap();
-      await collection.insertOne(userMap);
+      final hashedUser = user.copyWith(password: _hashPassword(user.password));
+      await collection.insertOne(hashedUser.toMap());
 
       return user;
     } catch (e) {
@@ -55,8 +57,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     try {
       final collection = await mongoService.userCollection;
 
+      final hashedLocalPassword = _hashPassword(password);
       final userMap = await collection.findOne(
-        where.eq('email', email).eq('password', password)
+        where.eq('email', email).eq('password', hashedLocalPassword)
       );
 
       if (userMap == null) {
@@ -96,8 +99,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       if (existingUserMap != null) {
         return UserModel.fromMap(existingUserMap);
       } else {
-        // User baru via Google - jangan simpan dulu ke MongoDB
-        // Set role 'NEW_USER' agar Bloc tahu harus minta pilihan role
         return UserModel(
           id: firebaseUser.uid,
           nama: firebaseUser.displayName ?? "User Google",
@@ -112,5 +113,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     } catch (e) {
       throw Exception("Gagal Login Google: ${e.toString()}");
     }
+  }
+
+  String _hashPassword(String password) {
+    if (password == "GOOGLE_AUTH") return password; 
+    final bytes = utf8.encode(password);
+    final digest = sha256.convert(bytes);
+    return digest.toString();
   }
 }
