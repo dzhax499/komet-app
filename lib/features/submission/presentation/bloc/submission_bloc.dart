@@ -3,6 +3,7 @@ import '../../domain/usecases/get_submissions_by_assignment_use_case.dart';
 import '../../domain/usecases/get_submissions_by_class_use_case.dart';
 import '../../domain/usecases/get_review_count_use_case.dart';
 import '../../domain/usecases/grade_submission_use_case.dart';
+import '../../domain/usecases/get_submissions_by_student_use_case.dart';
 import 'submission_event.dart';
 import 'submission_state.dart';
 
@@ -11,17 +12,20 @@ class SubmissionBloc extends Bloc<SubmissionEvent, SubmissionState> {
   final GetSubmissionsByClassUseCase getSubmissionsByClassUseCase;
   final GetReviewCountUseCase getReviewCountUseCase;
   final GradeSubmissionUseCase gradeSubmissionUseCase;
+  final GetSubmissionsByStudentUseCase getSubmissionsByStudentUseCase;
 
   SubmissionBloc({
     required this.getSubmissionsByAssignmentUseCase,
     required this.getSubmissionsByClassUseCase,
     required this.getReviewCountUseCase,
     required this.gradeSubmissionUseCase,
+    required this.getSubmissionsByStudentUseCase,
   }) : super(SubmissionInitial()) {
     on<GetSubmissionsByAssignmentEvent>(_onGetSubmissionsByAssignment);
     on<GetSubmissionsByClassEvent>(_onGetSubmissionsByClass);
     on<GetReviewCountEvent>(_onGetReviewCount);
     on<GradeSubmissionEvent>(_onGradeSubmission);
+    on<GetSubmissionsByStudentEvent>(_onGetSubmissionsByStudent);
   }
 
   Future<void> _onGetReviewCount(
@@ -81,6 +85,20 @@ class SubmissionBloc extends Bloc<SubmissionEvent, SubmissionState> {
       emit(SubmissionFailure(result.failure!.message));
     } else {
       emit(SubmissionGradedSuccess(result.data!));
+    }
+  }
+
+  Future<void> _onGetSubmissionsByStudent(
+    GetSubmissionsByStudentEvent event,
+    Emitter<SubmissionState> emit,
+  ) async {
+    emit(SubmissionLoading());
+    final result = await getSubmissionsByStudentUseCase(event.studentId);
+
+    if (result.failure != null) {
+      emit(SubmissionFailure(result.failure!.message));
+    } else {
+      emit(SubmissionSuccess(result.data ?? []));
     }
   }
 }
