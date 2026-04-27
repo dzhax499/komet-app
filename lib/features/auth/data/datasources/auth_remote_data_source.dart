@@ -43,7 +43,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       }
 
       // 2. Insert user ke MongoDB
+      print("DEBUG: Menjalankan registerUser untuk ${user.email}");
       final hashedUser = user.copyWith(password: _hashPassword(user.password));
+      print("DEBUG: Password setelah di-hash: ${hashedUser.password}");
       await collection.insertOne(hashedUser.toMap());
 
       return user;
@@ -117,6 +119,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   String _hashPassword(String password) {
     if (password == "GOOGLE_AUTH") return password; 
+    print("DEBUG: Sedang me-hash password...");
     final bytes = utf8.encode(password);
     final digest = sha256.convert(bytes);
     return digest.toString();
