@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/service_locator.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../submission/presentation/bloc/submission_bloc.dart';
+import '../../../submission/presentation/bloc/submission_event.dart';
+import '../../../submission/presentation/bloc/submission_state.dart';
 import '../bloc/kelas_bloc.dart';
+import '../widgets/create_kelas_dialog.dart';
+import '../widgets/kelas_card.dart';
 
 class DashboardGuruPage extends StatelessWidget {
   const DashboardGuruPage({super.key});
@@ -15,109 +18,386 @@ class DashboardGuruPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = (context.read<AuthBloc>().state as AuthAuthenticated).user;
 
-    return BlocProvider(
-      create: (context) => sl<KelasBloc>()..add(KelasFetchGuruRequested(user.id)),
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text('KOMET Guru', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.logout),
-              onPressed: () {
-                context.read<AuthBloc>().add(AuthLogoutRequested());
-                context.go(KometRoutes.login);
-              },
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<KelasBloc>(
+          create: (context) => sl<KelasBloc>()
+            ..add(
+              KelasFetchGuruRequested(user.id),
             ),
-          ],
         ),
-        body: BlocBuilder<KelasBloc, KelasState>(
-          builder: (context, state) {
-            if (state is KelasLoading) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (state is KelasLoaded) {
-              if (state.kelasList.isEmpty) {
-                return _buildEmptyState(context);
-              }
-              return ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: state.kelasList.length,
-                itemBuilder: (context, index) {
-                  final kelas = state.kelasList[index];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.all(16),
-                      title: Text(kelas.nama, style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold)),
-                      subtitle: Text('Kode: ${kelas.kodeKelas}', style: GoogleFonts.inter(color: AppColors.primary, fontWeight: FontWeight.bold)),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () {
-                        context.pushNamed('kelasDetail', pathParameters: {'kelasId': kelas.id});
+        BlocProvider<SubmissionBloc>(
+          create: (context) => sl<SubmissionBloc>(),
+        ),
+      ],
+      child: Scaffold(
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Color(0xFF86B3C0),
+                Color(0xFFE3E2E0),
+              ],
+              stops: [0.0, 1.0],
+            ),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 20.0,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(
+                            Icons.school_outlined,
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'Teacher Hub',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.logout,
+                          color: Colors.white,
+                        ),
+                        onPressed: () {
+                          context.read<AuthBloc>().add(AuthLogoutRequested());
+                          context.go(KometRoutes.login);
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Welcome back,',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    user.nama,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  BlocBuilder<KelasBloc, KelasState>(
+                    builder: (context, state) {
+                      String activeClassCount = '0';
+                      String totalAssignments = '0';
+
+                      if (state is KelasLoaded) {
+                        activeClassCount = state.kelasList.length.toString();
+                        int total = 0;
+                        List<String> allAssignmentIds = [];
+                        for (var k in state.kelasList) {
+                          total += k.assignmentIds.length;
+                          allAssignmentIds.addAll(k.assignmentIds);
+                        }
+                        totalAssignments = total.toString();
+
+                        if (allAssignmentIds.isNotEmpty) {
+                          context.read<SubmissionBloc>().add(
+                                GetReviewCountEvent(allAssignmentIds),
+                              );
+                        }
+                      }
+
+                      return IntrinsicHeight(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            _buildSummaryCard(
+                              icon: Icons.class_,
+                              number: activeClassCount == '0'
+                                  ? ''
+                                  : activeClassCount,
+                              label: 'Active Class',
+                              color: const Color(0xFF81B4C6),
+                              verticalMargin: 12.0,
+                            ),
+                            const SizedBox(width: 8),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 12.0,
+                              ),
+                              child: Container(
+                                width: 1,
+                                color: Colors.white.withValues(alpha: 0.9),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            _buildSummaryCard(
+                              icon: Icons.assignment,
+                              number: totalAssignments == '0'
+                                  ? ''
+                                  : totalAssignments,
+                              label: 'Task',
+                              color: const Color(0xFF82903C),
+                              verticalMargin: 0.0,
+                            ),
+                            const SizedBox(width: 8),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 12.0,
+                              ),
+                              child: Container(
+                                width: 1,
+                                color: Colors.white.withValues(alpha: 0.9),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            BlocBuilder<SubmissionBloc, SubmissionState>(
+                              builder: (context, subState) {
+                                String reviewCount = '';
+                                if (subState is SubmissionReviewCountLoaded) {
+                                  reviewCount = subState.count == 0
+                                      ? ''
+                                      : subState.count.toString();
+                                }
+                                return _buildSummaryCard(
+                                  icon: Icons.video_label,
+                                  number: reviewCount,
+                                  label: 'Review',
+                                  color: const Color(0xFF507877),
+                                  verticalMargin: 12.0,
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 32),
+                  Builder(
+                    builder: (blocContext) {
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'My Class',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () {
+                              showDialog(
+                                context: blocContext,
+                                barrierColor:
+                                    Colors.black.withValues(alpha: 0.2),
+                                builder: (context) => CreateKelasDialog(
+                                  onCreated: (nama) {
+                                    blocContext.read<KelasBloc>().add(
+                                          KelasCreateRequested(
+                                            nama: nama,
+                                            guruId: user.id,
+                                          ),
+                                        );
+                                  },
+                                ),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(20),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: const Row(
+                                children: [
+                                  Icon(
+                                    Icons.add,
+                                    size: 16,
+                                    color: Colors.black87,
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Create Class',
+                                    style: TextStyle(
+                                      color: Colors.black87,
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: BlocBuilder<KelasBloc, KelasState>(
+                      builder: (context, state) {
+                        if (state is KelasLoading) {
+                          return const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                            ),
+                          );
+                        } else if (state is KelasLoaded) {
+                          if (state.kelasList.isEmpty) {
+                            return _buildEmptyState();
+                          }
+                          return ListView.builder(
+                            itemCount: state.kelasList.length,
+                            itemBuilder: (context, index) {
+                              final kelas = state.kelasList[index];
+                              return KelasCard(
+                                kelas: kelas,
+                                onTap: () async {
+                                  await context.pushNamed(
+                                    'kelasDetail',
+                                    pathParameters: {'kelasId': kelas.id},
+                                  );
+                                  if (context.mounted) {
+                                    final user = (context.read<AuthBloc>().state
+                                            as AuthAuthenticated)
+                                        .user;
+                                    context.read<KelasBloc>().add(
+                                          KelasFetchGuruRequested(user.id),
+                                        );
+                                  }
+                                },
+                              );
+                            },
+                          );
+                        } else if (state is KelasError) {
+                          return Center(
+                            child: Text(
+                              state.message,
+                              style: const TextStyle(color: Colors.red),
+                            ),
+                          );
+                        }
+                        return const SizedBox();
                       },
                     ),
-                  );
-                },
-              );
-            } else if (state is KelasError) {
-              return Center(child: Text(state.message));
-            }
-            return const SizedBox();
-          },
-        ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () => _showCreateClassDialog(context, user.id),
-          label: const Text('Buat Kelas'),
-          icon: const Icon(Icons.add),
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildEmptyState(BuildContext context) {
+  Widget _buildEmptyState() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.school_outlined, size: 80, color: Colors.grey[400]),
+          Icon(
+            Icons.school_outlined,
+            size: 80,
+            color: Colors.white.withValues(alpha: 0.5),
+          ),
           const SizedBox(height: 16),
-          Text(
+          const Text(
             'Belum ada kelas',
-            style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey[600]),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             'Mulai dengan membuat kelas baru',
-            style: GoogleFonts.inter(color: Colors.grey[500]),
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.7),
+            ),
           ),
         ],
       ),
     );
   }
 
-  void _showCreateClassDialog(BuildContext context, String guruId) {
-    final controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Buat Kelas Baru'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(hintText: 'Nama Kelas (misal: Kelas 5A)'),
+  Widget _buildSummaryCard({
+    required IconData icon,
+    required String number,
+    required String label,
+    required Color color,
+    double verticalMargin = 0.0,
+  }) {
+    return Expanded(
+      child: Container(
+        margin: EdgeInsets.symmetric(vertical: verticalMargin),
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.35),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Batal')),
-          ElevatedButton(
-            onPressed: () {
-              if (controller.text.isNotEmpty) {
-                context.read<KelasBloc>().add(KelasCreateRequested(nama: controller.text, guruId: guruId));
-                Navigator.pop(dialogContext);
-              }
-            },
-            child: const Text('Buat'),
-          ),
-        ],
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: Colors.white,
+              size: 24,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              number,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 28,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

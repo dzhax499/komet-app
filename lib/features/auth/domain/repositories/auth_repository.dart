@@ -14,7 +14,7 @@ abstract class AuthRepository {
     String nama,
     String email,
     String password,
-    String kodeKelas,
+    String? kodeKelas,
   );
   KometResult<void> logout();
   KometResult<UserModel?> getCurrentUser();

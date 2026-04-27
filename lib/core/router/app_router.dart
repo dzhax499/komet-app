@@ -12,14 +12,16 @@ import '../utils/constants.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_siswa_page.dart';
 import '../../features/auth/presentation/pages/register_guru_page.dart';
+import '../../features/auth/presentation/pages/splash_page.dart';
+import '../../features/auth/presentation/pages/get_started_page.dart';
 import '../../features/kelas/presentation/pages/dashboard_guru_page.dart';
 import '../../features/kelas/presentation/pages/dashboard_siswa_page.dart';
 import '../../features/kelas/presentation/pages/kelas_list_page.dart';
+import '../../features/kelas/presentation/pages/kelas_detail_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
-
-// ── Placeholder screens untuk route milik PIC lain ──────────────────────────
-// Akan diganti oleh implementasi real saat ready.
+import '../../features/kelas/presentation/pages/review_submission_page.dart';
+import '../models/submission_model.dart';
 
 class _PlaceholderScreen extends StatelessWidget {
   final String title;
@@ -59,7 +61,12 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: KometRoutes.splash,
       name: 'splash',
-      builder: (context, state) => const _SplashScreen(),
+      builder: (context, state) => const SplashPage(),
+    ),
+    GoRoute(
+      path: KometRoutes.getStarted,
+      name: 'getStarted',
+      builder: (context, state) => const GetStartedPage(),
     ),
 
     // ── Auth (PIC A) ──────────────────────────────────────────────
@@ -79,19 +86,19 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const RegisterGuruPage(),
     ),
 
-    // ── Dashboard (PIC A) ─────────────────────────────────────────
+    // ── Dashboard ─────────────────────────────────────────────────
     GoRoute(
       path: KometRoutes.dashboardGuru,
       name: 'dashboardGuru',
-      builder: (context, state) => const DashboardGuruPage(),
+      builder: (context, state) => const DashboardGuruPage(), // PIC B (Helga)
     ),
     GoRoute(
       path: KometRoutes.dashboardSiswa,
       name: 'dashboardSiswa',
-      builder: (context, state) => const DashboardSiswaPage(),
+      builder: (context, state) => const DashboardSiswaPage(), // PIC C (Nike)
     ),
 
-    // ── Kelas (PIC A) ─────────────────────────────────────────────
+    // ── Kelas (PIC B - Helga) ─────────────────────────────────────
     GoRoute(
       path: KometRoutes.kelasList,
       name: 'kelasList',
@@ -102,13 +109,18 @@ final GoRouter appRouter = GoRouter(
       name: 'kelasDetail',
       builder: (context, state) {
         final kelasId = state.pathParameters['kelasId']!;
-        return _PlaceholderScreen(
-          title: 'Detail Kelas: $kelasId',
-          pic: 'PIC A (Wyandhanu)',
-        );
+        return KelasDetailPage(kelasId: kelasId);
       },
     ),
-
+    // ── Review Submission (PIC B - Helga) ──────────────────────────
+    GoRoute(
+      path: '/review-submission', 
+      name: 'reviewDetail', 
+      builder: (context, state) {
+        final submission = state.extra as SubmissionModel;
+        return ReviewSubmissionPage(submission: submission);
+      },
+    ),
     // ── Assignment (PIC A) ────────────────────────────────────────
     GoRoute(
       path: KometRoutes.assignmentDetail,
@@ -157,15 +169,6 @@ final GoRouter appRouter = GoRouter(
       },
     ),
 
-    // ── Review (PIC A) ────────────────────────────────────────────
-    GoRoute(
-      path: KometRoutes.reviewDetail,
-      name: 'reviewDetail',
-      builder: (context, state) => const _PlaceholderScreen(
-        title: 'Review & Penilaian',
-        pic: 'PIC A (Wyandhanu)',
-      ),
-    ),
 
     // ── Notifikasi (PIC A) ────────────────────────────────────────
     GoRoute(
@@ -198,72 +201,3 @@ final GoRouter appRouter = GoRouter(
   ),
 );
 
-// ── Splash Screen (sementara, milik PIC D) ──────────────────────────────────
-
-class _SplashScreen extends StatefulWidget {
-  const _SplashScreen();
-
-  @override
-  State<_SplashScreen> createState() => _SplashScreenState();
-}
-
-class _SplashScreenState extends State<_SplashScreen> {
-  @override
-  void initState() {
-    super.initState();
-    _navigate();
-  }
-
-  Future<void> _navigate() async {
-    await Future.delayed(const Duration(seconds: 2));
-    if (!mounted) return;
-    
-    final authState = context.read<AuthBloc>().state;
-    if (authState is AuthAuthenticated) {
-      if (authState.user.role == 'guru') {
-        context.go(KometRoutes.dashboardGuru);
-      } else {
-        context.go(KometRoutes.dashboardSiswa);
-      }
-    } else {
-      context.go(KometRoutes.login);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // TODO PIC C: Ganti dengan logo KOMET final
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary,
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: const Icon(Icons.auto_stories, size: 52, color: Colors.white),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'KOMET',
-              style: Theme.of(context).textTheme.displayLarge,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Media Pembelajaran Kreativitas Digital',
-              style: Theme.of(context).textTheme.bodyMedium,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 48),
-            const CircularProgressIndicator(),
-          ],
-        ),
-      ),
-    );
-  }
-}

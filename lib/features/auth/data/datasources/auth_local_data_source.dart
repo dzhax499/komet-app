@@ -5,7 +5,7 @@ import '../../../../core/error/exceptions.dart';
 abstract class AuthLocalDataSource {
   Future<UserModel> login(String email, String password);
   Future<UserModel> registerGuru(UserModel user);
-  Future<UserModel> registerSiswa(UserModel user, String kodeKelas);
+  Future<UserModel> registerSiswa(UserModel user, String? kodeKelas);
   Future<void> logout();
   Future<UserModel?> getCurrentUser();
 }
@@ -43,7 +43,13 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   }
 
   @override
-  Future<UserModel> registerSiswa(UserModel user, String kodeKelas) async {
+  Future<UserModel> registerSiswa(UserModel user, String? kodeKelas) async {
+    // Jika kode kelas kosong, cukup simpan user (register tanpa masuk kelas)
+    if (kodeKelas == null || kodeKelas.isEmpty) {
+      await hiveService.persistUser(user);
+      return user;
+    }
+
     final kelas = hiveService.getKelasByKode(kodeKelas);
     if (kelas == null) {
       throw Exception('Kode kelas tidak ditemukan');

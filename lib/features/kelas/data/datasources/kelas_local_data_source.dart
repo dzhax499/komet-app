@@ -7,6 +7,7 @@ abstract class KelasLocalDataSource {
   Future<List<KelasModel>> getKelasGuru(String guruId);
   Future<List<KelasModel>> getKelasSiswa(String siswaId);
   Future<KelasModel> joinKelas(String kodeKelas, String siswaId);
+  Future<KelasModel> getKelasById(String kelasId);
   Future<void> deleteKelas(String kelasId);
   Future<List<UserModel>> getSiswaInKelas(String kelasId);
 }
@@ -63,11 +64,16 @@ class KelasLocalDataSourceImpl implements KelasLocalDataSource {
   }
 
   @override
+  Future<KelasModel> getKelasById(String kelasId) async {
+    final kelas = hiveService.getKelasById(kelasId);
+    if (kelas == null) throw Exception('Kelas tidak ditemukan di lokal');
+    return kelas;
+  }
+
+  @override
   Future<List<UserModel>> getSiswaInKelas(String kelasId) async {
     final kelas = hiveService.getKelasById(kelasId);
     if (kelas == null) return [];
-    
-    // Ini agak tidak efisien tapi Hive local box biasanya kecil
     return hiveService.getUsersByIds(kelas.siswaIds);
   }
 }
