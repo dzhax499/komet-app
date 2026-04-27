@@ -16,7 +16,6 @@ import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/pages/get_started_page.dart';
 import '../../features/kelas/presentation/pages/dashboard_guru_page.dart';
 import '../../features/kelas/presentation/pages/dashboard_siswa_page.dart';
-import '../../features/kelas/presentation/pages/kelas_list_page.dart';
 import '../../features/kelas/presentation/pages/kelas_detail_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
@@ -99,11 +98,6 @@ final GoRouter appRouter = GoRouter(
     ),
 
     // ── Kelas (PIC B - Helga) ─────────────────────────────────────
-    GoRoute(
-      path: KometRoutes.kelasList,
-      name: 'kelasList',
-      builder: (context, state) => const KelasListPage(),
-    ),
     GoRoute(
       path: KometRoutes.kelasDetail,
       name: 'kelasDetail',
