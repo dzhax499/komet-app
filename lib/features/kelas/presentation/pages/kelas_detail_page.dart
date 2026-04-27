@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../../../core/models/assignment_model.dart';
 import '../../../assignment/presentation/bloc/assignment_bloc.dart';
@@ -10,9 +11,11 @@ import '../bloc/kelas_bloc.dart';
 import '../../../submission/presentation/bloc/submission_bloc.dart';
 import '../../../submission/presentation/bloc/submission_event.dart';
 import '../../../submission/presentation/bloc/submission_state.dart';
+import '../../../../core/models/submission_model.dart';
 import '../widgets/submission_card.dart';
 import '../widgets/assignment_card.dart';
 import '../widgets/create_assignment_dialog.dart';
+import 'submission_canvas_page.dart';
 
 class KelasDetailPage extends StatefulWidget {
   final String kelasId;
@@ -43,6 +46,9 @@ class _KelasDetailPageState extends State<KelasDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final authState = context.read<AuthBloc>().state;
+    final bool isGuru = authState is AuthAuthenticated && authState.user.role == 'guru';
+
     return MultiBlocProvider(
       providers: [
         BlocProvider.value(value: _assignmentBloc),
@@ -64,7 +70,7 @@ class _KelasDetailPageState extends State<KelasDetailPage> {
           ),
           child: Column(
             children: [
-              _buildCustomHeader(context),
+              _buildCustomHeader(context, isGuru),
               Expanded(
                 child: _selectedTabIndex == 0
                     ? BlocListener<AssignmentBloc, AssignmentState>(
@@ -111,6 +117,25 @@ class _KelasDetailPageState extends State<KelasDetailPage> {
                                     deadline: assignment.deadline
                                         .toString()
                                         .split(' ')[0],
+                                    isStudent: !isGuru,
+                                    onTap: !isGuru
+                                        ? () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) =>
+                                                    SubmissionCanvasPage(
+                                                  assignmentId: assignment.id,
+                                                  assignmentTitle:
+                                                      assignment.judul,
+                                                  deadline: assignment.deadline
+                                                      .toString()
+                                                      .split(' ')[0],
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        : null,
                                   );
                                 },
                               );
@@ -163,7 +188,7 @@ class _KelasDetailPageState extends State<KelasDetailPage> {
             ],
           ),
         ),
-        floatingActionButton: _selectedTabIndex == 0
+        floatingActionButton: (_selectedTabIndex == 0 && isGuru)
             ? FloatingActionButton(
                 onPressed: () {
                   final authState = context.read<AuthBloc>().state;
@@ -219,7 +244,7 @@ class _KelasDetailPageState extends State<KelasDetailPage> {
     );
   }
 
-  Widget _buildCustomHeader(BuildContext context) {
+  Widget _buildCustomHeader(BuildContext context, bool isGuru) {
     return BlocBuilder<KelasBloc, KelasState>(
       builder: (context, state) {
         String className = 'Loading...';
@@ -268,17 +293,17 @@ class _KelasDetailPageState extends State<KelasDetailPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Row(
+              Row(
                 children: [
                   Icon(
-                    Icons.school_outlined,
+                    isGuru ? Icons.school_outlined : Icons.auto_stories_outlined,
                     color: Colors.white,
                     size: 20,
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Text(
-                    'Teacher Hub',
-                    style: TextStyle(
+                    isGuru ? 'Teacher Hub' : 'Student Hub',
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16,
                       fontWeight: FontWeight.w400,
@@ -287,35 +312,82 @@ class _KelasDetailPageState extends State<KelasDetailPage> {
                 ],
               ),
               const SizedBox(height: 12),
-              Text(
-                className,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+              if (isGuru) ...[
+                Text(
+                  className,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  const Text(
-                    'Class Code : ',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Text(
+                      'Class Code : ',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  Text(
-                    classCode,
-                    style: const TextStyle(
-                      color: Color(0xFF6CB5B8),
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                    Text(
+                      classCode,
+                      style: const TextStyle(
+                        color: Color(0xFF6CB5B8),
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ] else ...[
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      className.length >= 2
+                          ? className.substring(0, 2).toUpperCase()
+                          : className.toUpperCase(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    BlocBuilder<AssignmentBloc, AssignmentState>(
+                      builder: (context, assignState) {
+                        int tasks = 0;
+                        if (assignState is AssignmentSuccess) {
+                          tasks = assignState.assignments.length;
+                        }
+                        return _buildCompactBadge(Icons.assignment, '$tasks Task');
+                      },
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8),
+                      child: Text('|', style: TextStyle(color: Colors.white54)),
+                    ),
+                    BlocBuilder<SubmissionBloc, SubmissionState>(
+                      builder: (context, subState) {
+                        int completed = 0;
+                        if (subState is SubmissionSuccess) {
+                          final authState = context.read<AuthBloc>().state;
+                          final userId = authState is AuthAuthenticated
+                              ? authState.user.id
+                              : '';
+                          completed = subState.submissions
+                              .where((s) => s.siswaId == userId && s.status != SubmissionStatus.draft)
+                              .length;
+                        }
+                        return _buildCompactBadge(Icons.image_outlined, '$completed Completed');
+                      },
+                    ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -400,6 +472,31 @@ class _KelasDetailPageState extends State<KelasDetailPage> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildCompactBadge(IconData icon, String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFF19350C),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: Colors.white, size: 12),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
