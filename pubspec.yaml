@@ -33,7 +33,18 @@ dependencies:
   # ── Utilities ───────────────────────────────────────────────────
   uuid: ^4.5.1
   google_fonts: ^6.2.1
+  shared_preferences: ^2.3.5
 
+  # ── Cloud Database (PIC B) ──────────────────────────────────────
+  mongo_dart: ^0.10.8
+  flutter_dotenv: ^5.2.1
+  
+  # ── Firebase & Google Auth ──────────────────────────────────────
+  firebase_core: ^3.11.0
+  firebase_auth: ^5.5.0
+  google_sign_in: ^6.2.2
+  crypto: ^3.0.7
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -46,6 +57,9 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  assets:                
+    - .env
 
   # Fonts: dikonfigurasi PIC C setelah UI Design final
   # fonts:

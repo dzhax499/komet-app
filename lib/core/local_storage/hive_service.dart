@@ -6,6 +6,7 @@ import '../models/assignment_model.dart';
 import '../models/submission_model.dart';
 import '../models/notification_model.dart';
 import '../models/sync_queue_item_model.dart';
+import '../models/project_model.dart';
 
 class HiveService {
   static const String userBox = KometBoxNames.users;
@@ -14,7 +15,8 @@ class HiveService {
   static const String submissionBox = KometBoxNames.submissions;
   static const String notificationBox = KometBoxNames.notifications;
   static const String syncQueueBox = KometBoxNames.syncQueue;
-  static const String authBox = KometBoxNames.settings; // Menggunakan box settings untuk auth data
+  static const String projectBox = KometBoxNames.storyProjects;
+  static const String authBox = KometBoxNames.settings; 
 
   Future<void> init() async {
     await Hive.initFlutter();
@@ -30,6 +32,7 @@ class HiveService {
       Hive.openBox<SubmissionModel>(submissionBox),
       Hive.openBox<NotificationModel>(notificationBox),
       Hive.openBox<SyncQueueItemModel>(syncQueueBox),
+      Hive.openBox<ProjectModel>(projectBox), 
       Hive.openBox(authBox),
     ]);
   }
@@ -47,9 +50,10 @@ class HiveService {
     Hive.registerAdapter(SyncDataTypeAdapter()); // id 9
     Hive.registerAdapter(SyncOperationAdapter()); // id 10
     Hive.registerAdapter(SyncQueueItemModelAdapter()); // id 11
+    Hive.registerAdapter(ProjectModelAdapter()); // id 12
   }
 
-  // Helper methods untuk Auth
+  // Helper methods untuk Auth 
   Future<void> persistUser(UserModel user) async {
     final box = Hive.box(authBox);
     await box.put('currentUser', user.id);
@@ -128,5 +132,75 @@ class HiveService {
 
   Future<void> logout() async {
     await Hive.box(authBox).delete('currentUser');
+  }
+
+  // Assignment Methods 
+  Future<void> saveAssignment(AssignmentModel assignment) async {
+    await Hive.box<AssignmentModel>(assignmentBox).put(assignment.id, assignment);
+  }
+
+  List<AssignmentModel> getAssignmentsByKelasId(String kelasId) {
+    return Hive.box<AssignmentModel>(assignmentBox)
+        .values
+        .where((a) => a.kelasId == kelasId)
+        .toList();
+  }
+
+  Future<void> deleteAssignment(String assignmentId) async {
+    await Hive.box<AssignmentModel>(assignmentBox).delete(assignmentId);
+  }
+
+  // Submission Methods 
+  Future<void> saveSubmission(SubmissionModel submission) async {
+    await Hive.box<SubmissionModel>(submissionBox).put(submission.id, submission);
+  }
+
+  List<SubmissionModel> getSubmissionsByAssignmentId(String assignmentId) {
+    return Hive.box<SubmissionModel>(submissionBox)
+        .values
+        .where((s) => s.assignmentId == assignmentId)
+        .toList();
+  }
+
+  SubmissionModel? getSubmissionById(String submissionId) {
+    return Hive.box<SubmissionModel>(submissionBox).get(submissionId);
+  }
+
+  List<SubmissionModel> getSubmissionsByStudentId(String studentId) {
+    return Hive.box<SubmissionModel>(submissionBox)
+        .values
+        .where((s) => s.siswaId == studentId)
+        .toList();
+  }
+
+  List<SubmissionModel> getAllSubmissions() {
+    return Hive.box<SubmissionModel>(submissionBox).values.toList();
+  }
+
+  List<SubmissionModel> getSubmissionsByClassId(String classId) {
+    final kelas = getKelasById(classId);
+    if (kelas == null) return [];
+    
+    final assignmentIds = kelas.assignmentIds;
+    return Hive.box<SubmissionModel>(submissionBox)
+        .values
+        .where((s) => assignmentIds.contains(s.assignmentId))
+        .toList();
+  }
+
+  // Project Methods 
+  Future<void> saveProject(ProjectModel project) async {
+    await Hive.box<ProjectModel>(projectBox).put(project.id, project);
+  }
+
+  ProjectModel? getProjectById(String projectId) {
+    return Hive.box<ProjectModel>(projectBox).get(projectId);
+  }
+
+  List<ProjectModel> getProjectsByOwnerId(String ownerId) {
+    return Hive.box<ProjectModel>(projectBox)
+        .values
+        .where((p) => p.ownerId == ownerId)
+        .toList();
   }
 }

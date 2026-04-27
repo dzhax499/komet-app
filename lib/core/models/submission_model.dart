@@ -73,6 +73,12 @@ class SubmissionModel extends HiveObject {
   @HiveField(12)
   final int revisiCount;
 
+  @HiveField(13)
+  final String? projectId; 
+
+  @HiveField(14)
+  final DateTime? deletedAt; 
+
   SubmissionModel({
     required this.id,
     required this.assignmentId,
@@ -87,6 +93,8 @@ class SubmissionModel extends HiveObject {
     this.komentarUmum,
     required this.komentarHalaman,
     this.revisiCount = 0,
+    this.projectId,
+    this.deletedAt,
   });
 
   SubmissionModel copyWith({
@@ -103,6 +111,8 @@ class SubmissionModel extends HiveObject {
     String? komentarUmum,
     List<PageCommentModel>? komentarHalaman,
     int? revisiCount,
+    String? projectId,
+    DateTime? deletedAt,
   }) {
     return SubmissionModel(
       id: id ?? this.id,
@@ -118,6 +128,70 @@ class SubmissionModel extends HiveObject {
       komentarUmum: komentarUmum ?? this.komentarUmum,
       komentarHalaman: komentarHalaman ?? this.komentarHalaman,
       revisiCount: revisiCount ?? this.revisiCount,
+      projectId: projectId ?? this.projectId,
+      deletedAt: deletedAt ?? this.deletedAt,
+    );
+  }
+
+  // ── Konversi ke MongoDB Map ──────────────────────────────────────────────
+  Map<String, dynamic> toMap() {
+    return {
+      '_id': id,
+      'assignmentId': assignmentId,
+      'studentId': siswaId,
+      'projectId': projectId,
+      'grade': nilai,
+      'teacherComment': komentarUmum,
+      'feedbackHistory': komentarHalaman.map((k) => {
+        'comment': k.komentar,
+        'statusGiven': status.name,
+        'createdAt': k.dibuatPada.toIso8601String(),
+      }).toList(),
+      'status': status.name,
+      'submittedAt': submittedAt?.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+      'deletedAt': deletedAt?.toIso8601String(),
+      // sudahSync & revisiCount → lokal saja
+    };
+  }
+
+  // ── Buat SubmissionModel dari data MongoDB ─────────────────────────────
+  factory SubmissionModel.fromMap(Map<String, dynamic> map) {
+    // Parse feedbackHistory → komentarHalaman
+    final feedbackRaw = map['feedbackHistory'] as List<dynamic>? ?? [];
+    final komentarHalaman = feedbackRaw.map((f) => PageCommentModel(
+      pageId: '',
+      komentar: f['comment']?.toString() ?? '',
+      dibuatPada: f['createdAt'] != null
+          ? DateTime.parse(f['createdAt'].toString())
+          : DateTime.now(),
+    )).toList();
+
+    return SubmissionModel(
+      id: map['_id']?.toString() ?? '',
+      assignmentId: map['assignmentId']?.toString() ?? '',
+      siswaId: map['studentId']?.toString() ?? '',
+      projectId: map['projectId']?.toString(),
+      nilai: map['grade'] as int?,
+      komentarUmum: map['teacherComment'] as String?,
+      komentarHalaman: komentarHalaman,
+      status: SubmissionStatus.values.firstWhere(
+        (s) => s.name == map['status'],
+        orElse: () => SubmissionStatus.submitted,
+      ),
+      submittedAt: map['submittedAt'] != null
+          ? DateTime.parse(map['submittedAt'].toString())
+          : null,
+      updatedAt: map['updatedAt'] != null
+          ? DateTime.parse(map['updatedAt'].toString())
+          : DateTime.now(),
+      deletedAt: map['deletedAt'] != null
+          ? DateTime.parse(map['deletedAt'].toString())
+          : null,
+      // Default nilai lokal
+      storyDataJson: '',
+      sudahSync: true,
+      revisiCount: 0,
     );
   }
 }

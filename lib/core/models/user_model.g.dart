@@ -25,13 +25,14 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
       kelasIds: (fields[5] as List).cast<String>(),
       createdAt: fields[6] as DateTime,
       lastLoginAt: fields[7] as DateTime,
+      deletedAt: fields[8] as DateTime?,
     );
   }
 
   @override
   void write(BinaryWriter writer, UserModel obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -47,7 +48,9 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
       ..writeByte(6)
       ..write(obj.createdAt)
       ..writeByte(7)
-      ..write(obj.lastLoginAt);
+      ..write(obj.lastLoginAt)
+      ..writeByte(8)
+      ..write(obj.deletedAt);
   }
 
   @override

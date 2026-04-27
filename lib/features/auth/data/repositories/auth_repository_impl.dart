@@ -4,12 +4,18 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/models/user_model.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_local_data_source.dart';
+import '../datasources/auth_remote_data_source.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthLocalDataSource localDataSource;
+  final AuthRemoteDataSource remoteDataSource;
   final Uuid uuid;
 
-  AuthRepositoryImpl({required this.localDataSource, required this.uuid});
+  AuthRepositoryImpl({
+    required this.localDataSource,
+    required this.remoteDataSource,
+    required this.uuid,
+  });
 
   @override
   KometResult<UserModel?> getCurrentUser() async {
@@ -28,7 +34,10 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   KometResult<UserModel> login(String email, String password) async {
     try {
-      final user = await localDataSource.login(email, password);
+      // 1. Coba login via server (MongoDB)
+      final user = await remoteDataSource.login(email, password);
+      // 2. Jika sukses, simpan session ke lokal
+      await localDataSource.registerGuru(user); 
       return kometSuccess(user);
     } catch (e) {
       // FIX: AuthFailure parameter positional
@@ -50,11 +59,12 @@ class AuthRepositoryImpl implements AuthRepository {
   KometResult<UserModel> registerGuru(
     String nama,
     String email,
-    String password,
-  ) async {
+    String password, {
+    String? id,
+  }) async {
     try {
       final user = UserModel(
-        id: uuid.v4(),
+        id: id ?? uuid.v4(),
         nama: nama,
         email: email,
         password: password,
@@ -63,7 +73,12 @@ class AuthRepositoryImpl implements AuthRepository {
         createdAt: DateTime.now(),
         lastLoginAt: DateTime.now(),
       );
-      final result = await localDataSource.registerGuru(user);
+      
+      // 1. Register ke server (MongoDB)
+      final remoteUser = await remoteDataSource.registerGuru(user);
+      
+      // 2. Simpan ke lokal
+      final result = await localDataSource.registerGuru(remoteUser);
       return kometSuccess(result);
     } catch (e) {
       return kometFailure(AuthFailure(e.toString()));
@@ -74,12 +89,13 @@ class AuthRepositoryImpl implements AuthRepository {
   KometResult<UserModel> registerSiswa(
     String nama,
     String email,
-    String password,
-    String kodeKelas,
-  ) async {
+    String password, {
+    String? kodeKelas,
+    String? id,
+  }) async {
     try {
       final user = UserModel(
-        id: uuid.v4(),
+        id: id ?? uuid.v4(),
         nama: nama,
         email: email,
         password: password,
@@ -88,8 +104,31 @@ class AuthRepositoryImpl implements AuthRepository {
         createdAt: DateTime.now(),
         lastLoginAt: DateTime.now(),
       );
-      final result = await localDataSource.registerSiswa(user, kodeKelas);
+      
+      // 1. Register ke server (MongoDB)
+      final remoteUser = await remoteDataSource.registerSiswa(user, kodeKelas);
+      
+      // 2. Simpan ke lokal
+      final result = await localDataSource.registerSiswa(remoteUser, kodeKelas);
       return kometSuccess(result);
+    } catch (e) {
+      return kometFailure(AuthFailure(e.toString()));
+    }
+  }
+
+  @override
+  KometResult<UserModel> signInWithGoogle() async {
+    try {
+      final user = await remoteDataSource.signInWithGoogle();
+      // Simpan session ke lokal HANYA jika bukan user baru (yang belum pilih role)
+      if (user.role != 'NEW_USER') {
+        if (user.role == 'guru') {
+          await localDataSource.registerGuru(user);
+        } else {
+          await localDataSource.registerSiswa(user, null);
+        }
+      }
+      return kometSuccess(user);
     } catch (e) {
       return kometFailure(AuthFailure(e.toString()));
     }

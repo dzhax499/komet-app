@@ -8,14 +8,17 @@ abstract class AuthRepository {
   KometResult<UserModel> registerGuru(
     String nama,
     String email,
-    String password,
-  );
+    String password, {
+    String? id,
+  });
   KometResult<UserModel> registerSiswa(
     String nama,
     String email,
-    String password,
-    String kodeKelas,
-  );
+    String password, {
+    String? kodeKelas,
+    String? id,
+  });
   KometResult<void> logout();
   KometResult<UserModel?> getCurrentUser();
+  KometResult<UserModel> signInWithGoogle();
 }

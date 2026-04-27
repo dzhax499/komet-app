@@ -22,7 +22,8 @@ class RegisterGuruParams {
   final String nama;
   final String email;
   final String password;
-  RegisterGuruParams({required this.nama, required this.email, required this.password});
+  final String? id;
+  RegisterGuruParams({required this.nama, required this.email, required this.password, this.id});
 }
 
 class RegisterGuruUseCase implements UseCase<UserModel, RegisterGuruParams> {
@@ -31,7 +32,7 @@ class RegisterGuruUseCase implements UseCase<UserModel, RegisterGuruParams> {
 
   @override
   KometResult<UserModel> call(RegisterGuruParams params) {
-    return repository.registerGuru(params.nama, params.email, params.password);
+    return repository.registerGuru(params.nama, params.email, params.password, id: params.id);
   }
 }
 
@@ -39,12 +40,14 @@ class RegisterSiswaParams {
   final String nama;
   final String email;
   final String password;
-  final String kodeKelas;
+  final String? kodeKelas;
+  final String? id;
   RegisterSiswaParams({
     required this.nama,
     required this.email,
     required this.password,
-    required this.kodeKelas,
+    this.kodeKelas,
+    this.id,
   });
 }
 
@@ -54,7 +57,13 @@ class RegisterSiswaUseCase implements UseCase<UserModel, RegisterSiswaParams> {
 
   @override
   KometResult<UserModel> call(RegisterSiswaParams params) {
-    return repository.registerSiswa(params.nama, params.email, params.password, params.kodeKelas);
+    return repository.registerSiswa(
+      params.nama,
+      params.email,
+      params.password,
+      kodeKelas: params.kodeKelas,
+      id: params.id,
+    );
   }
 }
 
@@ -75,5 +84,15 @@ class GetCurrentUserUseCase implements UseCaseNoParams<UserModel?> {
   @override
   KometResult<UserModel?> call() {
     return repository.getCurrentUser();
+  }
+}
+
+class GoogleLoginUseCase implements UseCaseNoParams<UserModel> {
+  final AuthRepository repository;
+  GoogleLoginUseCase(this.repository);
+
+  @override
+  KometResult<UserModel> call() {
+    return repository.signInWithGoogle();
   }
 }

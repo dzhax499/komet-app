@@ -111,8 +111,9 @@ komet-app/
     data/             — PIC B (Models, Hive service, MongoDB Atlas setup) 
     features/
       auth/           — PIC A (Login, Register Guru/Siswa, Persistence) 
-      kelas/          — PIC A (Manajemen Kelas & Daftar Siswa) 
+      kelas/          — PIC B (Manajemen Kelas & Daftar Siswa) 
       assignment/     — PIC A (Manajemen Tugas & Deadline) 
+      dashboard/      — PIC B (Helga - Guru) & PIC C (Nike - Siswa) 
       editor_engine/  — PIC D (Logic Interpreter: Cara blok diproses jadi cerita) 
       editor_canvas/  — PIC D (UI Foundation: Drag-and-drop & Canvas area) 
       editor_assets/  — PIC C (Manajemen Karakter & Background) 

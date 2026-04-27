@@ -1,5 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import '../../../../core/error/failures.dart';
+import '../../../../core/base/base_use_case.dart';
 import '../../../../core/models/user_model.dart';
 import '../../domain/usecases/auth_usecases.dart';
 
@@ -30,12 +32,12 @@ class AuthRegisterSiswaRequested extends AuthEvent {
   final String nama;
   final String email;
   final String password;
-  final String kodeKelas;
+  final String? kodeKelas;
   AuthRegisterSiswaRequested({
     required this.nama,
     required this.email,
     required this.password,
-    required this.kodeKelas,
+    this.kodeKelas,
   });
   @override
   List<Object?> get props => [nama, email, password, kodeKelas];
@@ -44,6 +46,16 @@ class AuthRegisterSiswaRequested extends AuthEvent {
 class AuthLogoutRequested extends AuthEvent {}
 
 class AuthCheckStatusRequested extends AuthEvent {}
+class AuthGoogleLoginRequested extends AuthEvent {}
+
+class AuthGoogleCompleteRegistrationRequested extends AuthEvent {
+  final UserModel user;
+  final String role;
+  final String? kodeKelas;
+  AuthGoogleCompleteRegistrationRequested({required this.user, required this.role, this.kodeKelas});
+  @override
+  List<Object?> get props => [user, role, kodeKelas];
+}
 
 // ── STATES ──────────────────────────────────────────────────────────────────
 abstract class AuthState extends Equatable {
@@ -67,6 +79,13 @@ class AuthError extends AuthState {
   List<Object?> get props => [message];
 }
 
+class AuthGoogleNeedsRole extends AuthState {
+  final UserModel user;
+  AuthGoogleNeedsRole(this.user);
+  @override
+  List<Object?> get props => [user];
+}
+
 // ── BLOC ────────────────────────────────────────────────────────────────────
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final LoginUseCase loginUseCase;
@@ -74,6 +93,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final RegisterSiswaUseCase registerSiswaUseCase;
   final LogoutUseCase logoutUseCase;
   final GetCurrentUserUseCase getCurrentUserUseCase;
+  final GoogleLoginUseCase googleLoginUseCase;
 
   AuthBloc({
     required this.loginUseCase,
@@ -81,12 +101,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this.registerSiswaUseCase,
     required this.logoutUseCase,
     required this.getCurrentUserUseCase,
+    required this.googleLoginUseCase,
   }) : super(AuthInitial()) {
     on<AuthCheckStatusRequested>(_onCheckStatus);
     on<AuthLoginRequested>(_onLogin);
     on<AuthRegisterGuruRequested>(_onRegisterGuru);
     on<AuthRegisterSiswaRequested>(_onRegisterSiswa);
     on<AuthLogoutRequested>(_onLogout);
+    on<AuthGoogleLoginRequested>(_onGoogleLogin);
+    on<AuthGoogleCompleteRegistrationRequested>(_onGoogleCompleteRegistration);
   }
 
   Future<void> _onCheckStatus(AuthCheckStatusRequested event, Emitter<AuthState> emit) async {
@@ -141,5 +164,47 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     await logoutUseCase();
     emit(AuthUnauthenticated());
+  }
+
+  Future<void> _onGoogleLogin(AuthGoogleLoginRequested event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    final result = await googleLoginUseCase();
+    if (result.data != null) {
+      if (result.data!.role == 'NEW_USER') {
+        emit(AuthGoogleNeedsRole(result.data!));
+      } else {
+        emit(AuthAuthenticated(result.data!));
+      }
+    } else {
+      emit(AuthError(result.failure?.message ?? 'Gagal login dengan Google'));
+    }
+  }
+
+  Future<void> _onGoogleCompleteRegistration(AuthGoogleCompleteRegistrationRequested event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    ({UserModel? data, Failure? failure}) result;
+    
+    if (event.role == 'guru') {
+      result = await registerGuruUseCase(RegisterGuruParams(
+        nama: event.user.nama,
+        email: event.user.email,
+        password: event.user.password,
+        id: event.user.id,
+      ));
+    } else {
+      result = await registerSiswaUseCase(RegisterSiswaParams(
+        nama: event.user.nama,
+        email: event.user.email,
+        password: event.user.password,
+        kodeKelas: event.kodeKelas,
+        id: event.user.id,
+      ));
+    }
+
+    if (result.data != null) {
+      emit(AuthAuthenticated(result.data!));
+    } else {
+      emit(AuthError(result.failure?.message ?? 'Gagal melengkapi pendaftaran'));
+    }
   }
 }
