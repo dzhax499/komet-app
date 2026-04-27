@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'core/di/service_locator.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/kelas/presentation/bloc/kelas_bloc.dart';
@@ -9,6 +11,11 @@ import 'features/kelas/presentation/bloc/kelas_bloc.dart';
 void main() async {
   // WAJIB: harus dipanggil sebelum apapun yang async/plugin
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Inisialisasi Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   // Inisialisasi semua dependency: Hive, GetIt, dll
   await setupServiceLocator();

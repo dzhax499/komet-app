@@ -70,13 +70,15 @@ class SubmissionModelAdapter extends TypeAdapter<SubmissionModel> {
       komentarUmum: fields[10] as String?,
       komentarHalaman: (fields[11] as List).cast<PageCommentModel>(),
       revisiCount: fields[12] as int,
+      projectId: fields[13] as String?,
+      deletedAt: fields[14] as DateTime?,
     );
   }
 
   @override
   void write(BinaryWriter writer, SubmissionModel obj) {
     writer
-      ..writeByte(13)
+      ..writeByte(15)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -102,7 +104,11 @@ class SubmissionModelAdapter extends TypeAdapter<SubmissionModel> {
       ..writeByte(11)
       ..write(obj.komentarHalaman)
       ..writeByte(12)
-      ..write(obj.revisiCount);
+      ..write(obj.revisiCount)
+      ..writeByte(13)
+      ..write(obj.projectId)
+      ..writeByte(14)
+      ..write(obj.deletedAt);
   }
 
   @override

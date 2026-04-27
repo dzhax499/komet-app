@@ -17,8 +17,11 @@ import '../../features/auth/presentation/pages/get_started_page.dart';
 import '../../features/kelas/presentation/pages/dashboard_guru_page.dart';
 import '../../features/kelas/presentation/pages/dashboard_siswa_page.dart';
 import '../../features/kelas/presentation/pages/kelas_list_page.dart';
+import '../../features/kelas/presentation/pages/kelas_detail_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../features/kelas/presentation/pages/review_submission_page.dart';
+import '../models/submission_model.dart';
 
 class _PlaceholderScreen extends StatelessWidget {
   final String title;
@@ -83,19 +86,19 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const RegisterGuruPage(),
     ),
 
-    // ── Dashboard (PIC A) ─────────────────────────────────────────
+    // ── Dashboard ─────────────────────────────────────────────────
     GoRoute(
       path: KometRoutes.dashboardGuru,
       name: 'dashboardGuru',
-      builder: (context, state) => const DashboardGuruPage(),
+      builder: (context, state) => const DashboardGuruPage(), // PIC B (Helga)
     ),
     GoRoute(
       path: KometRoutes.dashboardSiswa,
       name: 'dashboardSiswa',
-      builder: (context, state) => const DashboardSiswaPage(),
+      builder: (context, state) => const DashboardSiswaPage(), // PIC C (Nike)
     ),
 
-    // ── Kelas (PIC A) ─────────────────────────────────────────────
+    // ── Kelas (PIC B - Helga) ─────────────────────────────────────
     GoRoute(
       path: KometRoutes.kelasList,
       name: 'kelasList',
@@ -106,13 +109,18 @@ final GoRouter appRouter = GoRouter(
       name: 'kelasDetail',
       builder: (context, state) {
         final kelasId = state.pathParameters['kelasId']!;
-        return _PlaceholderScreen(
-          title: 'Detail Kelas: $kelasId',
-          pic: 'PIC A (Wyandhanu)',
-        );
+        return KelasDetailPage(kelasId: kelasId);
       },
     ),
-
+    // ── Review Submission (PIC B - Helga) ──────────────────────────
+    GoRoute(
+      path: '/review-submission', 
+      name: 'reviewDetail', 
+      builder: (context, state) {
+        final submission = state.extra as SubmissionModel;
+        return ReviewSubmissionPage(submission: submission);
+      },
+    ),
     // ── Assignment (PIC A) ────────────────────────────────────────
     GoRoute(
       path: KometRoutes.assignmentDetail,
@@ -161,15 +169,6 @@ final GoRouter appRouter = GoRouter(
       },
     ),
 
-    // ── Review (PIC A) ────────────────────────────────────────────
-    GoRoute(
-      path: KometRoutes.reviewDetail,
-      name: 'reviewDetail',
-      builder: (context, state) => const _PlaceholderScreen(
-        title: 'Review & Penilaian',
-        pic: 'PIC A (Wyandhanu)',
-      ),
-    ),
 
     // ── Notifikasi (PIC A) ────────────────────────────────────────
     GoRoute(

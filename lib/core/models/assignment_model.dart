@@ -41,6 +41,9 @@ class AssignmentModel extends HiveObject {
   @HiveField(8)
   final DateTime dibuatPada;
 
+  @HiveField(9)
+  final DateTime? deletedAt;
+
   AssignmentModel({
     required this.id,
     required this.judul,
@@ -51,6 +54,7 @@ class AssignmentModel extends HiveObject {
     required this.nilaiMaksimal,
     required this.status,
     required this.dibuatPada,
+    this.deletedAt,
   });
 
   AssignmentModel copyWith({
@@ -63,6 +67,7 @@ class AssignmentModel extends HiveObject {
     int? nilaiMaksimal,
     AssignmentStatus? status,
     DateTime? dibuatPada,
+    DateTime? deletedAt,
   }) {
     return AssignmentModel(
       id: id ?? this.id,
@@ -74,6 +79,43 @@ class AssignmentModel extends HiveObject {
       nilaiMaksimal: nilaiMaksimal ?? this.nilaiMaksimal,
       status: status ?? this.status,
       dibuatPada: dibuatPada ?? this.dibuatPada,
+      deletedAt: deletedAt ?? this.deletedAt,
+    );
+  }
+
+  // Konversi ke MongoDB Map 
+  Map<String, dynamic> toMap() {
+    return {
+      '_id': id,
+      'classId': kelasId,
+      'title': judul,
+      'description': deskripsi,
+      'deadline': deadline.toIso8601String(),
+      'createdAt': dibuatPada.toIso8601String(),
+      'deletedAt': deletedAt?.toIso8601String(),
+    };
+  }
+
+  // Buat AssignmentModel dari data MongoDB
+  factory AssignmentModel.fromMap(Map<String, dynamic> map) {
+    return AssignmentModel(
+      id: map['_id']?.toString() ?? '',
+      kelasId: map['classId']?.toString() ?? '',
+      judul: map['title'] ?? '',
+      deskripsi: map['description'] ?? '',
+      deadline: map['deadline'] != null
+          ? DateTime.parse(map['deadline'].toString())
+          : DateTime.now(),
+      dibuatPada: map['createdAt'] != null
+          ? DateTime.parse(map['createdAt'].toString())
+          : DateTime.now(),
+      deletedAt: map['deletedAt'] != null
+          ? DateTime.parse(map['deletedAt'].toString())
+          : null,
+      // Nilai default untuk field lokal
+      guruId: '',
+      nilaiMaksimal: 100,
+      status: AssignmentStatus.aktif,
     );
   }
 }

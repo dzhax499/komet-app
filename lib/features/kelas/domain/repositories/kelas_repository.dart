@@ -4,9 +4,16 @@ import '../../../../core/models/user_model.dart';
 
 abstract class KelasRepository {
   KometResult<KelasModel> createKelas(String nama, String guruId);
+
   KometResult<List<KelasModel>> getKelasGuru(String guruId);
+
   KometResult<List<KelasModel>> getKelasSiswa(String siswaId);
+
   KometResult<KelasModel> joinKelas(String kodeKelas, String siswaId);
+
+  KometResult<KelasModel> getKelasById(String kelasId);
+
   KometResult<void> deleteKelas(String kelasId);
+  
   KometResult<List<UserModel>> getSiswaInKelas(String kelasId);
 }
