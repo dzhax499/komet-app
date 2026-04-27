@@ -345,11 +345,20 @@ class _LoginPageState extends State<LoginPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'who are you?',
+                'siapa diri kamu?',
                 style: GoogleFonts.outfit(
                   fontSize: 24,
                   fontWeight: FontWeight.w400,
                   color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Silakan pilih peran Anda untuk melanjutkan pendaftaran.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.dmSans(
+                  fontSize: 14,
+                  color: AppColors.textSecondary,
                 ),
               ),
               const SizedBox(height: 24),
@@ -369,7 +378,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   child: Text(
-                    'Teacher',
+                    'Saya seorang Guru',
                     style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w500),
                   ),
                 ),
@@ -391,7 +400,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   child: Text(
-                    'Student',
+                    'Saya seorang Siswa',
                     style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w500),
                   ),
                 ),
@@ -435,10 +444,19 @@ class _LoginPageState extends State<LoginPage> {
             color: AppColors.secondary,
             borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
           ),
-          padding: const EdgeInsets.all(32),
+          padding: const EdgeInsets.fromLTRB(32, 16, 32, 56),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: AppColors.textDisabled.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
               Text(
                 'Selamat Datang!',
                 style: GoogleFonts.outfit(
