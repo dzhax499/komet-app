@@ -57,28 +57,45 @@ class GetStartedPage extends StatelessWidget {
             children: [
               const Spacer(flex: 3),
               
-              // Logo
-              Image.asset(
-                'assets/images/logo.png',
-                width: 84,
-                height: 84,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) => const Icon(
-                  Icons.auto_stories,
-                  size: 84,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 18),
-              
-              // Title
-              Text(
-                'KOMET',
-                style: GoogleFonts.permanentMarker(
-                  fontSize: 44,
-                  color: Colors.white,
-                  letterSpacing: 2,
-                ),
+              // Logo & Title Stack (Overlapping for manual adjustment)
+              Stack(
+                alignment: Alignment.center,
+                clipBehavior: Clip.none,
+                children: [
+                  // Logo
+                  Image.asset(
+                    'assets/images/logo.png',
+                    width: 280,
+                    height: 280,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => const Icon(
+                      Icons.auto_stories,
+                      size: 280,
+                      color: Colors.white,
+                    ),
+                  ),
+                  
+                  // Title (Positioned to overlap logo)
+                  Positioned(
+                    bottom: 10, // User can adjust this value to control overlap
+                    child: Text(
+                      'KOMET',
+                      style: GoogleFonts.permanentMarker(
+                        fontSize: 44,
+                        color: Colors.white,
+                        letterSpacing: 2,
+                        // Added subtle shadow for better legibility when overlapping
+                        shadows: [
+                          Shadow(
+                            color: Colors.black.withOpacity(0.25),
+                            offset: const Offset(0, 4),
+                            blurRadius: 8,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
               
               const Spacer(flex: 2),

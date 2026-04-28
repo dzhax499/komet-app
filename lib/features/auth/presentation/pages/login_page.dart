@@ -46,236 +46,244 @@ class _LoginPageState extends State<LoginPage> {
             _showGoogleRoleSelection(context, state.user);
           }
         },
-        child: Column(
+        child: Stack(
           children: [
-            // ── TOP PANEL (Green Gradient) ───────────────────────────────────
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(28, 64, 28, 40),
-              decoration: const BoxDecoration(
-                color: AppColors.primaryDark,
-              ),
+            // ── BACKGROUND & MODAL ──
+            Column(
+              children: [
+                // Top section background (Fixed height area)
+                Container(
+                  width: double.infinity,
+                  height: 220, // Adjust this to change where the login modal starts
+                  color: AppColors.primaryDark,
+                ),
+                
+                // Bottom Modal Card
+                Expanded(
+                  child: Container(
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          AppColors.secondary,
+                          AppColors.secondaryLight,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                    ),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            'hello!',
+                            style: GoogleFonts.nunito(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w400,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+    
+                          // Email Field
+                          _buildField(
+                            controller: _emailController,
+                            hint: 'Email',
+                            icon: Icons.email_outlined,
+                          ),
+                          const SizedBox(height: 10),
+    
+                          // Password Field
+                          _buildField(
+                            controller: _passwordController,
+                            hint: 'Password',
+                            icon: Icons.lock_outline,
+                            isPassword: true,
+                            obscureText: _obscurePassword,
+                            onTogglePassword: () => setState(() => _obscurePassword = !_obscurePassword),
+                          ),
+                          const SizedBox(height: 24),
+    
+                          // Login Button
+                          BlocBuilder<AuthBloc, AuthState>(
+                            builder: (context, state) {
+                              return SizedBox(
+                                width: double.infinity,
+                                height: 54,
+                                child: ElevatedButton(
+                                  onPressed: state is AuthLoading
+                                      ? null
+                                      : () {
+                                          context.read<AuthBloc>().add(AuthLoginRequested(
+                                                email: _emailController.text,
+                                                password: _passwordController.text,
+                                              ));
+                                        },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primaryDark,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(50),
+                                    ),
+                                    elevation: 0,
+                                  ),
+                                  child: state is AuthLoading
+                                      ? const CircularProgressIndicator(color: Colors.white)
+                                      : Text(
+                                          'Login',
+                                          style: GoogleFonts.nunito(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 20),
+    
+                          // Social Login
+                          Text(
+                            '— OR —',
+                            style: GoogleFonts.nunito(
+                              fontSize: 12,
+                              color: AppColors.textPrimary,
+                              letterSpacing: 1.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+    
+                          // Google Login
+                          SizedBox(
+                            width: double.infinity,
+                            height: 54,
+                            child: OutlinedButton(
+                              onPressed: () {
+                                context.read<AuthBloc>().add(AuthGoogleLoginRequested());
+                              },
+                              style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primaryDark,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(50),
+                                    ),
+                                    elevation: 0,
+                                  ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    width: 24,
+                                    height: 24,
+                                    decoration: const BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    padding: const EdgeInsets.all(4),
+                                    child: Image.asset(
+                                      'assets/images/google_logo.png',
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        // Text-based fallback to avoid CORS/Network errors on Web
+                                        return const Center(
+                                          child: Text(
+                                            'G',
+                                            style: TextStyle(
+                                              color: Color(0xFF4285F4),
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    'Continue with Google',
+                                    style: GoogleFonts.nunito(
+                                      fontSize: 15,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+    
+                          // Register Button
+                          SizedBox(
+                            width: double.infinity,
+                            height: 54,
+                            child: OutlinedButton(
+                              onPressed: () => _showRegisterOption(context),
+                              style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primaryDark,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(50),
+                                    ),
+                                    elevation: 0,
+                                  ),
+                              child: Text(
+                                'Register',
+                                style: GoogleFonts.nunito(
+                                  fontSize: 15,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+    
+                          // Guest Option
+                          Text(
+                            'Lanjut tanpa akun?',
+                            style: GoogleFonts.nunito(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () => context.go(KometRoutes.getStarted),
+                            child: Text(
+                              'Masuk sebagai Guest →',
+                              style: GoogleFonts.nunito(
+                                fontSize: 12,
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.bold,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            
+            // ── FLOATING LOGO ──
+            Positioned(
+              top: -10, // Adjust this to move logo freely
+              left: 0,
+              right: 0,
               child: Center(
-                child: Container(
-                  width: 68,
-                  height: 68,
                 child: Image.asset(
                   'assets/images/logo.png',
-                  width: 52,
-                  height: 52,
+                  width: 280,
+                  height: 280,
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) => const Icon(
                     Icons.auto_stories,
-                    size: 52,
+                    size: 280,
                     color: Colors.white,
-                  ),
-                ),
-                ),
-              ),
-            ),
-
-            // ── BOTTOM CARD (Mint Gradient) ──────────────────────────────────
-            Expanded(
-              child: Container(
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      AppColors.secondary,
-                      AppColors.secondaryLight,
-                    ],
-                  ),
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-                ),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        'hello!',
-                        style: GoogleFonts.nunito(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w400,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Email Field
-                      _buildField(
-                        controller: _emailController,
-                        hint: 'Email',
-                        icon: Icons.email_outlined,
-                      ),
-                      const SizedBox(height: 10),
-
-                      // Password Field
-                      _buildField(
-                        controller: _passwordController,
-                        hint: 'Password',
-                        icon: Icons.lock_outline,
-                        isPassword: true,
-                        obscureText: _obscurePassword,
-                        onTogglePassword: () => setState(() => _obscurePassword = !_obscurePassword),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Login Button
-                      BlocBuilder<AuthBloc, AuthState>(
-                        builder: (context, state) {
-                          return SizedBox(
-                            width: double.infinity,
-                            height: 54,
-                            child: ElevatedButton(
-                              onPressed: state is AuthLoading
-                                  ? null
-                                  : () {
-                                      context.read<AuthBloc>().add(AuthLoginRequested(
-                                            email: _emailController.text,
-                                            password: _passwordController.text,
-                                          ));
-                                    },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primaryDark,
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(50),
-                                ),
-                                elevation: 0,
-                              ),
-                              child: state is AuthLoading
-                                  ? const CircularProgressIndicator(color: Colors.white)
-                                  : Text(
-                                      'Login',
-                                      style: GoogleFonts.nunito(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Divider
-                      Row(
-                        children: [
-                          Expanded(child: Divider(color: Colors.black.withValues(alpha: 0.1))),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            child: Text(
-                              'or',
-                              style: GoogleFonts.nunito(
-                                fontSize: 11,
-                                color: AppColors.textSecondary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          Expanded(child: Divider(color: Colors.black.withValues(alpha: 0.1))),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Google Login Stub
-                      SizedBox(
-                        width: double.infinity,
-                        height: 54,
-                        child: OutlinedButton(
-                          onPressed: () {
-                            context.read<AuthBloc>().add(AuthGoogleLoginRequested());
-                          },
-                          style: OutlinedButton.styleFrom(
-                            backgroundColor: Colors.white.withValues(alpha: 0.76),
-                            side: BorderSide(color: Colors.white.withValues(alpha: 0.88), width: 1.5),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(50),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(
-                                width: 18,
-                                height: 18,
-                                decoration: const BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Center(
-                                  child: Text(
-                                    'G',
-                                    style: TextStyle(
-                                      color: Color(0xFF4285F4),
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Text(
-                                'Continue with Google',
-                                style: GoogleFonts.nunito(
-                                  fontSize: 15,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-
-                      // Register Button
-                      SizedBox(
-                        width: double.infinity,
-                        height: 54,
-                        child: OutlinedButton(
-                          onPressed: () => _showRegisterOption(context),
-                          style: OutlinedButton.styleFrom(
-                            backgroundColor: Colors.transparent,
-                            side: BorderSide(color: Colors.black.withValues(alpha: 0.11), width: 1.5),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(50),
-                            ),
-                          ),
-                          child: Text(
-                            'Register',
-                            style: GoogleFonts.nunito(
-                              fontSize: 15,
-                              color: const Color(0xFF2A4A2E),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Guest Option
-                      Text(
-                        'Lanjut tanpa akun?',
-                        style: GoogleFonts.nunito(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () => context.go(KometRoutes.getStarted), // Assuming getStarted is the guest entry or similar
-                        child: Text(
-                          'Masuk sebagai Guest →',
-                          style: GoogleFonts.nunito(
-                            fontSize: 12,
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.bold,
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                      ),
-                    ],
                   ),
                 ),
               ),
@@ -349,7 +357,7 @@ class _LoginPageState extends State<LoginPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'siapa diri kamu?',
+                'Siapa diri kamu?',
                 style: GoogleFonts.nunito(
                   fontSize: 24,
                   fontWeight: FontWeight.w400,

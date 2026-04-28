@@ -99,15 +99,15 @@ class _SplashPageState extends State<SplashPage> {
                 children: [
                   // Logo (SVG representation in Icon)
                   Container(
-                    width: 96,
-                    height: 96,
+                    width: 180,
+                    height: 180,
                     margin: const EdgeInsets.only(bottom: 18),
                     child: Image.asset(
                       'assets/images/logo.png',
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) => const Icon(
                         Icons.auto_stories,
-                        size: 72,
+                        size: 180,
                         color: Colors.white,
                       ),
                     ),
