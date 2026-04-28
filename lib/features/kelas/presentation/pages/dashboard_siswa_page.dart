@@ -19,7 +19,7 @@ class DashboardSiswaPage extends StatelessWidget {
       create: (context) => sl<KelasBloc>()..add(KelasFetchSiswaRequested(user.id)),
       child: Scaffold(
         appBar: AppBar(
-          title: Text('KOMET Siswa', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+          title: Text('KOMET Siswa', style: GoogleFonts.nunito(fontWeight: FontWeight.bold)),
           actions: [
             IconButton(
               icon: const Icon(Icons.logout),
@@ -49,7 +49,7 @@ class DashboardSiswaPage extends StatelessWidget {
                     child: ListTile(
                       contentPadding: const EdgeInsets.all(16),
                       leading: const CircleAvatar(child: Icon(Icons.class_)),
-                      title: Text(kelas.nama, style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold)),
+                      title: Text(kelas.nama, style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.bold)),
                       subtitle: const Text('Ketuk untuk melihat tugas'),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () {
@@ -85,7 +85,7 @@ class DashboardSiswaPage extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             'Belum ada kelas',
-            style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey[600]),
+            style: GoogleFonts.nunito(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey[600]),
           ),
           const SizedBox(height: 8),
           Text(

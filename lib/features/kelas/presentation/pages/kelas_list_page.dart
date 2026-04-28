@@ -94,7 +94,7 @@ class _KelasListPageState extends State<KelasListPage> {
         icon: Icon(user.role == 'guru' ? Icons.add : Icons.group_add, color: Colors.white),
         label: Text(
           user.role == 'guru' ? 'Buat Kelas' : 'Gabung Kelas',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: Colors.white),
+          style: GoogleFonts.nunito(fontWeight: FontWeight.bold, color: Colors.white),
         ),
       ),
     );
@@ -111,7 +111,7 @@ class _KelasListPageState extends State<KelasListPage> {
         titlePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         title: Text(
           'Daftar Kelas',
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.nunito(
             fontWeight: FontWeight.bold,
             color: Colors.black87,
             fontSize: 20,
@@ -172,7 +172,7 @@ class _KelasListPageState extends State<KelasListPage> {
                     children: [
                       Text(
                         kelas.nama,
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.nunito(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: Colors.black87,
@@ -224,7 +224,7 @@ class _KelasListPageState extends State<KelasListPage> {
           const SizedBox(height: 24),
           Text(
             'Belum ada kelas',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.nunito(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: Colors.black87,

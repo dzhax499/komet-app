@@ -82,14 +82,12 @@ class _SplashPageState extends State<SplashPage> {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
             colors: [
-              AppColors.primaryDark,
-              AppColors.primary,
-              AppColors.primaryLight,
+              Color(0xFF1A3C0A),
+              Color(0xFF758837),
             ],
-            stops: [0.0, 0.55, 1.0],
           ),
         ),
         child: Stack(
@@ -104,25 +102,28 @@ class _SplashPageState extends State<SplashPage> {
                     width: 96,
                     height: 96,
                     margin: const EdgeInsets.only(bottom: 18),
-                    child: const Icon(
-                      Icons.auto_stories,
-                      size: 72,
-                      color: Colors.white,
+                    child: Image.asset(
+                      'assets/images/logo.png',
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) => const Icon(
+                        Icons.auto_stories,
+                        size: 72,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                   Text(
                     'KOMET',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.permanentMarker(
                       fontSize: 40,
-                      fontWeight: FontWeight.bold,
                       color: Colors.white,
-                      letterSpacing: 7,
+                      letterSpacing: 2,
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     'SPACE EXPLORATION & INNOVATION',
-                    style: GoogleFonts.dmSans(
+                    style: GoogleFonts.nunito(
                       fontSize: 10,
                       color: Colors.white.withValues(alpha: 0.45),
                       letterSpacing: 2.5,
@@ -158,7 +159,7 @@ class _SplashPageState extends State<SplashPage> {
                   const SizedBox(height: 8),
                   Text(
                     'loading...',
-                    style: GoogleFonts.dmSans(
+                    style: GoogleFonts.nunito(
                       fontSize: 10,
                       color: Colors.white.withValues(alpha: 0.3),
                       letterSpacing: 1,

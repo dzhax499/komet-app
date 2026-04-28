@@ -50,16 +50,7 @@ class _RegisterSiswaPageState extends State<RegisterSiswaPage> {
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(16, 44, 16, 26),
               decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColors.primaryDark,
-                    AppColors.primary,
-                    AppColors.primaryLight,
-                  ],
-                  stops: [0.0, 0.55, 1.0],
-                ),
+                color: Color(0xFF1A3C0A),
               ),
               child: Column(
                 children: [
@@ -97,8 +88,8 @@ class _RegisterSiswaPageState extends State<RegisterSiswaPage> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      AppColors.secondary,
-                      AppColors.secondaryLight,
+                      Color(0xFF7AB3C4),
+                      Color(0xFFDCD9D4),
                     ],
                   ),
                   borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
@@ -110,7 +101,7 @@ class _RegisterSiswaPageState extends State<RegisterSiswaPage> {
                     children: [
                       Text(
                         'almost done!',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.nunito(
                           fontSize: 24,
                           fontWeight: FontWeight.w400,
                           color: AppColors.textPrimary,
@@ -183,7 +174,7 @@ class _RegisterSiswaPageState extends State<RegisterSiswaPage> {
                                   ? const CircularProgressIndicator(color: Colors.white)
                                   : Text(
                                       'Register',
-                                      style: GoogleFonts.outfit(
+                                      style: GoogleFonts.nunito(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w500,
                                       ),
@@ -202,7 +193,7 @@ class _RegisterSiswaPageState extends State<RegisterSiswaPage> {
                             padding: const EdgeInsets.symmetric(horizontal: 10),
                             child: Text(
                               'or',
-                              style: GoogleFonts.dmSans(
+                              style: GoogleFonts.nunito(
                                 fontSize: 11,
                                 color: AppColors.textSecondary,
                                 fontWeight: FontWeight.w600,
@@ -251,7 +242,7 @@ class _RegisterSiswaPageState extends State<RegisterSiswaPage> {
                               const SizedBox(width: 10),
                               Text(
                                 'Continue with Google',
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.nunito(
                                   fontSize: 15,
                                   color: AppColors.textPrimary,
                                 ),
@@ -293,7 +284,7 @@ class _RegisterSiswaPageState extends State<RegisterSiswaPage> {
         maxLength: maxLength,
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: GoogleFonts.dmSans(color: AppColors.textDisabled, fontSize: 14),
+          hintStyle: GoogleFonts.nunito(color: AppColors.textDisabled, fontSize: 14),
           prefixIcon: Icon(icon, color: AppColors.textSecondary, size: 20),
           suffixIcon: isPassword
               ? IconButton(
@@ -310,7 +301,7 @@ class _RegisterSiswaPageState extends State<RegisterSiswaPage> {
           focusedBorder: InputBorder.none,
           counterText: '',
         ),
-        style: GoogleFonts.dmSans(fontSize: 14, color: AppColors.textPrimary),
+        style: GoogleFonts.nunito(fontSize: 14, color: AppColors.textPrimary),
       ),
     );
   }

@@ -59,8 +59,9 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-  assets:                
+  assets:
     - .env
+    - assets/images/
 
   # Fonts: dikonfigurasi PIC C setelah UI Design final
   # fonts:

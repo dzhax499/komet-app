@@ -56,7 +56,7 @@ class _JoinKelasDialogState extends State<JoinKelasDialog> {
               const SizedBox(height: 20),
               Text(
                 'Gabung ke Kelas',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.nunito(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
@@ -77,7 +77,7 @@ class _JoinKelasDialogState extends State<JoinKelasDialog> {
                 autofocus: true,
                 textAlign: TextAlign.center,
                 maxLength: 6,
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.nunito(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 8,
@@ -85,7 +85,7 @@ class _JoinKelasDialogState extends State<JoinKelasDialog> {
                 decoration: InputDecoration(
                   counterText: "",
                   hintText: 'ABC123',
-                  hintStyle: GoogleFonts.outfit(
+                  hintStyle: GoogleFonts.nunito(
                     color: Colors.grey[300],
                     letterSpacing: 8,
                   ),

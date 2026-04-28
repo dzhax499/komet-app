@@ -44,65 +44,55 @@ class GetStartedPage extends StatelessWidget {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
             colors: [
-              AppColors.primaryDark,
-              AppColors.primary,
-              AppColors.primaryLight,
+              Color(0xFF1A3C0A),
+              Color(0xFF758837),
             ],
-            stops: [0.0, 0.55, 1.0],
           ),
         ),
         child: SafeArea(
           child: Column(
             children: [
-              const Spacer(),
+              const Spacer(flex: 3),
               
               // Logo
-              const Icon(
-                Icons.auto_stories,
-                size: 84,
-                color: Colors.white,
+              Image.asset(
+                'assets/images/logo.png',
+                width: 84,
+                height: 84,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => const Icon(
+                  Icons.auto_stories,
+                  size: 84,
+                  color: Colors.white,
+                ),
               ),
               const SizedBox(height: 18),
               
               // Title
               Text(
                 'KOMET',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.permanentMarker(
                   fontSize: 44,
-                  fontWeight: FontWeight.bold,
                   color: Colors.white,
-                  letterSpacing: 8,
-                ),
-              ),
-              const SizedBox(height: 6),
-              
-              // Subtitle
-              Text(
-                'SPACE EXPLORATION & INNOVATION',
-                style: GoogleFonts.dmSans(
-                  fontSize: 10,
-                  color: Colors.white.withValues(alpha: 0.45),
-                  letterSpacing: 2.5,
-                  fontWeight: FontWeight.w500,
+                  letterSpacing: 2,
                 ),
               ),
               
-              const SizedBox(height: 64),
+              const Spacer(flex: 2),
               
               // Button
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32),
+              Center(
                 child: SizedBox(
-                  width: double.infinity,
+                  width: 220,
                   height: 56,
                   child: ElevatedButton(
                     onPressed: () => _markAsSeenAndNavigate(context),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: AppColors.primaryDark,
+                      backgroundColor: AppColors.primaryDark,
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(50),
                       ),
@@ -110,7 +100,7 @@ class GetStartedPage extends StatelessWidget {
                     ),
                     child: Text(
                       'Get Started',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.nunito(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 0.5,
@@ -122,21 +112,22 @@ class GetStartedPage extends StatelessWidget {
               
               const SizedBox(height: 18),
               
-              // Small text
+              // Subtitle (Moved below button)
               Text(
-                'Start your learning journey today',
-                style: GoogleFonts.dmSans(
-                  fontSize: 11,
-                  color: Colors.white.withValues(alpha: 0.35),
-                  letterSpacing: 0.5,
+                'SPACE EXPLORATION & INNOVATION',
+                style: GoogleFonts.nunito(
+                  fontSize: 10,
+                  color: Colors.white.withValues(alpha: 0.45),
+                  letterSpacing: 2.5,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
               
-              const Spacer(),
+              const SizedBox(height: 48),
             ],
           ),
         ),
       ),
     );
   }
-}
+}

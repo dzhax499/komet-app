@@ -53,26 +53,23 @@ class _LoginPageState extends State<LoginPage> {
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(28, 64, 28, 40),
               decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColors.primaryDark,
-                    AppColors.primary,
-                    AppColors.primaryLight,
-                  ],
-                  stops: [0.0, 0.55, 1.0],
-                ),
+                color: AppColors.primaryDark,
               ),
               child: Center(
                 child: Container(
                   width: 68,
                   height: 68,
-                  child: const Icon(
+                child: Image.asset(
+                  'assets/images/logo.png',
+                  width: 52,
+                  height: 52,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => const Icon(
                     Icons.auto_stories,
                     size: 52,
                     color: Colors.white,
                   ),
+                ),
                 ),
               ),
             ),
@@ -99,10 +96,10 @@ class _LoginPageState extends State<LoginPage> {
                     children: [
                       Text(
                         'hello!',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.nunito(
                           fontSize: 24,
                           fontWeight: FontWeight.w400,
-                          color: AppColors.textPrimary,
+                          color: Colors.white,
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -153,7 +150,7 @@ class _LoginPageState extends State<LoginPage> {
                                   ? const CircularProgressIndicator(color: Colors.white)
                                   : Text(
                                       'Login',
-                                      style: GoogleFonts.outfit(
+                                      style: GoogleFonts.nunito(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w500,
                                       ),
@@ -172,7 +169,7 @@ class _LoginPageState extends State<LoginPage> {
                             padding: const EdgeInsets.symmetric(horizontal: 10),
                             child: Text(
                               'or',
-                              style: GoogleFonts.dmSans(
+                              style: GoogleFonts.nunito(
                                 fontSize: 11,
                                 color: AppColors.textSecondary,
                                 fontWeight: FontWeight.w600,
@@ -223,7 +220,7 @@ class _LoginPageState extends State<LoginPage> {
                               const SizedBox(width: 10),
                               Text(
                                 'Continue with Google',
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.nunito(
                                   fontSize: 15,
                                   color: AppColors.textPrimary,
                                 ),
@@ -249,7 +246,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           child: Text(
                             'Register',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.nunito(
                               fontSize: 15,
                               color: const Color(0xFF2A4A2E),
                             ),
@@ -261,7 +258,7 @@ class _LoginPageState extends State<LoginPage> {
                       // Guest Option
                       Text(
                         'Lanjut tanpa akun?',
-                        style: GoogleFonts.dmSans(
+                        style: GoogleFonts.nunito(
                           fontSize: 12,
                           color: AppColors.textSecondary,
                         ),
@@ -270,7 +267,7 @@ class _LoginPageState extends State<LoginPage> {
                         onPressed: () => context.go(KometRoutes.getStarted), // Assuming getStarted is the guest entry or similar
                         child: Text(
                           'Masuk sebagai Guest →',
-                          style: GoogleFonts.dmSans(
+                          style: GoogleFonts.nunito(
                             fontSize: 12,
                             color: AppColors.primary,
                             fontWeight: FontWeight.bold,
@@ -309,7 +306,7 @@ class _LoginPageState extends State<LoginPage> {
         obscureText: isPassword ? obscureText : false,
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: GoogleFonts.dmSans(color: AppColors.textDisabled, fontSize: 14),
+          hintStyle: GoogleFonts.nunito(color: AppColors.textDisabled, fontSize: 14),
           prefixIcon: Icon(icon, color: AppColors.textSecondary, size: 20),
           suffixIcon: isPassword
               ? IconButton(
@@ -325,7 +322,7 @@ class _LoginPageState extends State<LoginPage> {
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,
         ),
-        style: GoogleFonts.dmSans(fontSize: 14, color: AppColors.textPrimary),
+        style: GoogleFonts.nunito(fontSize: 14, color: AppColors.textPrimary),
       ),
     );
   }
@@ -337,7 +334,14 @@ class _LoginPageState extends State<LoginPage> {
       builder: (context) {
         return Container(
           decoration: const BoxDecoration(
-            color: AppColors.secondary,
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AppColors.secondary,
+                AppColors.secondaryLight,
+              ],
+            ),
             borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
           ),
           padding: const EdgeInsets.all(32),
@@ -346,17 +350,17 @@ class _LoginPageState extends State<LoginPage> {
             children: [
               Text(
                 'siapa diri kamu?',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.nunito(
                   fontSize: 24,
                   fontWeight: FontWeight.w400,
-                  color: AppColors.textPrimary,
+                  color: Colors.white,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 'Silakan pilih peran Anda untuk melanjutkan pendaftaran.',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.dmSans(
+                style: GoogleFonts.nunito(
                   fontSize: 14,
                   color: AppColors.textSecondary,
                 ),
@@ -379,7 +383,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   child: Text(
                     'Saya seorang Guru',
-                    style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w500),
+                    style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w500),
                   ),
                 ),
               ),
@@ -401,14 +405,14 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   child: Text(
                     'Saya seorang Siswa',
-                    style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w500),
+                    style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w500),
                   ),
                 ),
               ),
               const SizedBox(height: 24),
               Text(
                 'Lanjut tanpa akun?',
-                style: GoogleFonts.dmSans(fontSize: 12, color: AppColors.textSecondary),
+                style: GoogleFonts.nunito(fontSize: 12, color: AppColors.textSecondary),
               ),
               TextButton(
                 onPressed: () {
@@ -417,7 +421,7 @@ class _LoginPageState extends State<LoginPage> {
                 },
                 child: Text(
                   'Masuk sebagai Guest →',
-                  style: GoogleFonts.dmSans(
+                  style: GoogleFonts.nunito(
                     fontSize: 12,
                     color: AppColors.primary,
                     fontWeight: FontWeight.bold,
@@ -441,7 +445,14 @@ class _LoginPageState extends State<LoginPage> {
       builder: (context) {
         return Container(
           decoration: const BoxDecoration(
-            color: AppColors.secondary,
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AppColors.secondary,
+                AppColors.secondaryLight,
+              ],
+            ),
             borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
           ),
           padding: const EdgeInsets.fromLTRB(32, 16, 32, 56),
@@ -459,17 +470,17 @@ class _LoginPageState extends State<LoginPage> {
               ),
               Text(
                 'Selamat Datang!',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.nunito(
                   fontSize: 24,
                   fontWeight: FontWeight.w400,
-                  color: AppColors.textPrimary,
+                  color: Colors.white,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 'Silakan pilih peran Anda untuk melanjutkan pendaftaran.',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.dmSans(
+                style: GoogleFonts.nunito(
                   fontSize: 14,
                   color: AppColors.textSecondary,
                 ),
@@ -495,7 +506,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   child: Text(
                     'Saya seorang Guru',
-                    style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w500),
+                    style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w500),
                   ),
                 ),
               ),
@@ -517,7 +528,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   child: Text(
                     'Saya seorang Siswa',
-                    style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w500),
+                    style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w500),
                   ),
                 ),
               ),
