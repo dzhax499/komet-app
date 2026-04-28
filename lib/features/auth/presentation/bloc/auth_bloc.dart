@@ -57,6 +57,14 @@ class AuthGoogleCompleteRegistrationRequested extends AuthEvent {
   List<Object?> get props => [user, role, kodeKelas];
 }
 
+class AuthUpdateProfileRequested extends AuthEvent {
+  final String? nama;
+  final String? photoUrl;
+  AuthUpdateProfileRequested({this.nama, this.photoUrl});
+  @override
+  List<Object?> get props => [nama, photoUrl];
+}
+
 // ── STATES ──────────────────────────────────────────────────────────────────
 abstract class AuthState extends Equatable {
   @override
@@ -94,6 +102,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final LogoutUseCase logoutUseCase;
   final GetCurrentUserUseCase getCurrentUserUseCase;
   final GoogleLoginUseCase googleLoginUseCase;
+  final UpdateProfileUseCase updateProfileUseCase;
 
   AuthBloc({
     required this.loginUseCase,
@@ -102,6 +111,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this.logoutUseCase,
     required this.getCurrentUserUseCase,
     required this.googleLoginUseCase,
+    required this.updateProfileUseCase,
   }) : super(AuthInitial()) {
     on<AuthCheckStatusRequested>(_onCheckStatus);
     on<AuthLoginRequested>(_onLogin);
@@ -110,6 +120,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthLogoutRequested>(_onLogout);
     on<AuthGoogleLoginRequested>(_onGoogleLogin);
     on<AuthGoogleCompleteRegistrationRequested>(_onGoogleCompleteRegistration);
+    on<AuthUpdateProfileRequested>(_onUpdateProfile);
   }
 
   Future<void> _onCheckStatus(AuthCheckStatusRequested event, Emitter<AuthState> emit) async {
@@ -205,6 +216,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthAuthenticated(result.data!));
     } else {
       emit(AuthError(result.failure?.message ?? 'Gagal melengkapi pendaftaran'));
+    }
+  }
+
+  Future<void> _onUpdateProfile(AuthUpdateProfileRequested event, Emitter<AuthState> emit) async {
+    if (state is AuthAuthenticated) {
+      final currentUser = (state as AuthAuthenticated).user;
+      emit(AuthLoading());
+      final result = await updateProfileUseCase(UpdateProfileParams(
+        userId: currentUser.id,
+        nama: event.nama,
+        photoUrl: event.photoUrl,
+      ));
+      if (result.data != null) {
+        emit(AuthAuthenticated(result.data!));
+      } else {
+        emit(AuthError(result.failure?.message ?? 'Gagal update profile'));
+        emit(AuthAuthenticated(currentUser)); // Revert back to previous user
+      }
     }
   }
 }

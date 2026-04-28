@@ -96,3 +96,20 @@ class GoogleLoginUseCase implements UseCaseNoParams<UserModel> {
     return repository.signInWithGoogle();
   }
 }
+
+class UpdateProfileParams {
+  final String userId;
+  final String? nama;
+  final String? photoUrl;
+  UpdateProfileParams({required this.userId, this.nama, this.photoUrl});
+}
+
+class UpdateProfileUseCase implements UseCase<UserModel, UpdateProfileParams> {
+  final AuthRepository repository;
+  UpdateProfileUseCase(this.repository);
+
+  @override
+  KometResult<UserModel> call(UpdateProfileParams params) {
+    return repository.updateProfile(params.userId, nama: params.nama, photoUrl: params.photoUrl);
+  }
+}

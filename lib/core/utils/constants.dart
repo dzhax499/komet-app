@@ -28,6 +28,7 @@ class KometRoutes {
   static const String login = '/login';
   static const String registerSiswa = '/register/siswa';
   static const String registerGuru = '/register/guru';
+  static const String profileGuru = '/profile/guru';
 
   // Dashboard — PIC A
   static const String dashboardGuru = '/dashboard/guru';

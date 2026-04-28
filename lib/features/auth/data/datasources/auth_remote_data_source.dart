@@ -14,6 +14,7 @@ abstract class AuthRemoteDataSource {
   Future<UserModel> registerSiswa(UserModel user, String? kodeKelas);
   Future<UserModel> login(String email, String password);
   Future<UserModel> signInWithGoogle();
+  Future<void> updateProfile(UserModel user);
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -114,6 +115,19 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       }
     } catch (e) {
       throw Exception("Gagal Login Google: ${e.toString()}");
+    }
+  }
+
+  @override
+  Future<void> updateProfile(UserModel user) async {
+    try {
+      final collection = await mongoService.userCollection;
+      await collection.update(
+        where.eq('_id', user.id),
+        modify.set('name', user.nama).set('photoUrl', user.photoUrl),
+      );
+    } catch (e) {
+      throw Exception("Gagal update profile di server: ${e.toString()}");
     }
   }
 

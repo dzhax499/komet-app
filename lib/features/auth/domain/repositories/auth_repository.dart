@@ -21,4 +21,5 @@ abstract class AuthRepository {
   KometResult<void> logout();
   KometResult<UserModel?> getCurrentUser();
   KometResult<UserModel> signInWithGoogle();
+  KometResult<UserModel> updateProfile(String userId, {String? nama, String? photoUrl});
 }
