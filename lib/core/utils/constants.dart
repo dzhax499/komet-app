@@ -35,7 +35,6 @@ class KometRoutes {
   static const String dashboardSiswa = '/dashboard/siswa';
 
   // Kelas — PIC A
-  static const String kelasList = '/kelas';
   static const String kelasDetail = '/kelas/:kelasId';
   static const String kelasSiswa = '/kelas/:kelasId/siswa';
 
