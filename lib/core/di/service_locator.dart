@@ -10,6 +10,7 @@ import '../../features/submission/domain/usecases/get_submissions_by_class_use_c
 import '../../features/submission/domain/usecases/get_review_count_use_case.dart';
 import '../../features/submission/domain/usecases/grade_submission_use_case.dart';
 import '../../features/submission/domain/usecases/get_submissions_by_student_use_case.dart';
+import '../../features/submission/domain/usecases/submit_task_use_case.dart';
 import '../../features/submission/presentation/bloc/submission_bloc.dart';
 import '../../features/auth/data/datasources/auth_local_data_source.dart';
 import '../../features/auth/data/datasources/auth_remote_data_source.dart';
@@ -219,6 +220,7 @@ Future<void> setupServiceLocator() async {
   sl.registerLazySingleton(() => GetReviewCountUseCase(sl()));
   sl.registerLazySingleton(() => GradeSubmissionUseCase(sl()));
   sl.registerLazySingleton(() => GetSubmissionsByStudentUseCase(sl()));
+  sl.registerLazySingleton(() => SubmitTaskUseCase(sl()));
 
   sl.registerFactory(
     () => SubmissionBloc(
@@ -227,6 +229,7 @@ Future<void> setupServiceLocator() async {
       getReviewCountUseCase: sl(),
       gradeSubmissionUseCase: sl(),
       getSubmissionsByStudentUseCase: sl(),
+      submitTaskUseCase: sl(),
     ),
   );
 

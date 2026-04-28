@@ -37,3 +37,17 @@ class SubmissionReviewCountLoaded extends SubmissionState {
   @override
   List<Object?> get props => [count];
 }
+
+class SubmissionSaved extends SubmissionState {
+  final SubmissionModel submission;
+  SubmissionSaved(this.submission);
+  @override
+  List<Object?> get props => [submission];
+}
+
+class ExistingSubmissionLoaded extends SubmissionState {
+  final SubmissionModel submission;
+  ExistingSubmissionLoaded(this.submission);
+  @override
+  List<Object?> get props => [submission];
+}

@@ -9,7 +9,7 @@ abstract class SubmissionRepository {
 
   KometResult<List<SubmissionModel>> getSubmissionsByStudent(String studentId);
 
-  KometResult<SubmissionModel> gradeSubmission(String submissionId, int grade, String teacherComment);
+  KometResult<SubmissionModel> gradeSubmission(String submissionId, int grade, String teacherComment, SubmissionStatus status);
 
   KometResult<SubmissionModel> addFeedback(String submissionId, PageCommentModel feedback, SubmissionStatus newStatus);
 

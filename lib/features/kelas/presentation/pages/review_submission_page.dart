@@ -5,10 +5,12 @@ import '../../../../core/models/submission_model.dart';
 import '../../../submission/presentation/bloc/submission_bloc.dart';
 import '../../../submission/presentation/bloc/submission_event.dart';
 import '../../../submission/presentation/bloc/submission_state.dart';
+import 'submission_canvas_page.dart';
 
 class ReviewSubmissionPage extends StatefulWidget {
   final SubmissionModel submission;
-  const ReviewSubmissionPage({super.key, required this.submission});
+  final String assignmentTitle;
+  const ReviewSubmissionPage({super.key, required this.submission, required this.assignmentTitle});
 
   @override
   State<ReviewSubmissionPage> createState() => _ReviewSubmissionPageState();
@@ -282,17 +284,18 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
               },
               children: [
                 _buildTableRow(
-                  'Assignment',
-                  widget.submission.assignmentId.substring(0, 8),
+                  'Task',
+                  widget.assignmentTitle,
                 ),
                 _buildTableRow(
                   'Blok',
-                  'Check Logic',
+                  '${(widget.submission.storyDataJson?.split('<block')?.length ?? 1) - 1}',
                 ),
                 _buildTableRow(
                   'Submit',
-                  widget.submission.submittedAt?.toString().split('.')[0] ??
-                      '-',
+                  widget.submission.submittedAt != null
+                      ? '${widget.submission.submittedAt!.day.toString().padLeft(2, '0')}/${widget.submission.submittedAt!.month.toString().padLeft(2, '0')}/${widget.submission.submittedAt!.year} ${widget.submission.submittedAt!.hour.toString().padLeft(2, '0')}:${widget.submission.submittedAt!.minute.toString().padLeft(2, '0')}'
+                      : '-',
                 ),
               ],
             ),
@@ -334,38 +337,55 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
   }
 
   Widget _buildAudioPlayerCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => BlocProvider.value(
+              value: _submissionBloc,
+              child: SubmissionCanvasPage(
+                assignmentId: widget.submission.assignmentId,
+                assignmentTitle: widget.assignmentTitle,
+                deadline: '',
+                studentId: widget.submission.siswaId,
+                isReviewMode: true,
+                initialSubmission: widget.submission,
+              ),
+            ),
           ),
-        ],
-      ),
-      child: Center(
-        child: SizedBox(
-          height: 36,
-          width: 36,
-          child: Stack(
+        );
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: const Center(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
+              Icon(
                 Icons.play_arrow,
                 color: Color(0xFF4C661D),
                 size: 36,
               ),
-              Positioned(
-                left: 7,
-                top: 8,
-                child: Container(
-                  width: 3,
-                  height: 20,
-                  color: const Color(0xFF4C661D),
+              SizedBox(width: 8),
+              Text(
+                "Preview Scene",
+                style: TextStyle(
+                  color: Color(0xFF4C661D),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ],
@@ -473,22 +493,32 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
           Padding(
             padding: const EdgeInsets.all(16),
             child: Container(
-              height: 100,
+              height: 80,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              child: TextField(
-                controller: _feedbackController,
-                maxLines: null,
-                expands: true,
-                textAlignVertical: TextAlignVertical.top,
-                style: const TextStyle(color: Colors.black87),
-                decoration: InputDecoration(
-                  hintText: 'Feedback...',
-                  hintStyle: TextStyle(color: Colors.grey[400]),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.all(16),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: TextField(
+                  controller: _feedbackController,
+                  maxLines: null,
+                  expands: true,
+                  textAlignVertical: TextAlignVertical.top,
+                  style: const TextStyle(color: Colors.black87),
+                  decoration: InputDecoration(
+                    hintText: 'Feedback...',
+                    hintStyle: TextStyle(color: Colors.grey[400]),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.all(16),
+                  ),
                 ),
               ),
             ),
@@ -521,6 +551,7 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
                 submissionId: widget.submission.id,
                 grade: _assessmentValue.toInt(),
                 teacherComment: _feedbackController.text,
+                status: SubmissionStatus.reviewed,
               ),
             );
           },
@@ -570,6 +601,7 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
                 submissionId: widget.submission.id,
                 grade: _assessmentValue.toInt(),
                 teacherComment: _feedbackController.text,
+                status: SubmissionStatus.needsRevision,
               ),
             );
           },

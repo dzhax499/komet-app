@@ -104,19 +104,22 @@ class DashboardSiswaPage extends StatelessWidget {
                           builder: (context, submissionState) {
                             int activeClass = 0;
                             int totalAssignments = 0;
+                            int completedTasks = 0;
+
+                            if (submissionState is SubmissionSuccess) {
+                              completedTasks = submissionState.submissions
+                                  .where((s) => s.status == SubmissionStatus.submitted || s.status == SubmissionStatus.reviewed || s.status == SubmissionStatus.needsRevision)
+                                  .length;
+                            }
                             
                             if (kelasState is KelasLoaded) {
                               activeClass = kelasState.kelasList.length;
                               for (var k in kelasState.kelasList) {
                                 totalAssignments += k.assignmentIds.length;
                               }
-                            }
-
-                            int completedTasks = 0;
-                            if (submissionState is SubmissionSuccess) {
-                              completedTasks = submissionState.submissions
-                                  .where((s) => s.status != SubmissionStatus.draft)
-                                  .length;
+                              // Subtract completed to get 'Remaining Tasks'
+                              totalAssignments -= completedTasks;
+                              if (totalAssignments < 0) totalAssignments = 0;
                             }
 
                             return IntrinsicHeight(
@@ -233,16 +236,20 @@ class DashboardSiswaPage extends StatelessWidget {
 
                                     if (submissionState is SubmissionSuccess) {
                                       classCompleted = submissionState.submissions
-                                          .where((s) => s.status != SubmissionStatus.draft && kelas.assignmentIds.contains(s.assignmentId))
+                                          .where((s) => (s.status == SubmissionStatus.submitted || s.status == SubmissionStatus.reviewed || s.status == SubmissionStatus.needsRevision) && kelas.assignmentIds.contains(s.assignmentId))
                                           .length;
                                     }
+                                    classTasks -= classCompleted;
+                                    if (classTasks < 0) classTasks = 0;
 
                                     return GestureDetector(
                                       onTap: () {
                                         context.pushNamed('kelasDetail',
                                             pathParameters: {
                                               'kelasId': kelas.id
-                                            });
+                                            }).then((_) {
+                                          context.read<SubmissionBloc>().add(GetSubmissionsByStudentEvent(user.id));
+                                        });
                                       },
                                       child: _buildUltraSlimClassCard(
                                         _phthaloGreen,

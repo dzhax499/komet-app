@@ -111,8 +111,10 @@ final GoRouter appRouter = GoRouter(
       path: '/review-submission', 
       name: 'reviewDetail', 
       builder: (context, state) {
-        final submission = state.extra as SubmissionModel;
-        return ReviewSubmissionPage(submission: submission);
+        final extra = state.extra as Map;
+        final submission = extra['submission'] as SubmissionModel;
+        final title = extra['assignmentTitle'] as String;
+        return ReviewSubmissionPage(submission: submission, assignmentTitle: title);
       },
     ),
     // ── Assignment (PIC A) ────────────────────────────────────────

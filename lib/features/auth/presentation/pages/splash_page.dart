@@ -99,25 +99,9 @@ class _SplashPageState extends State<SplashPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Logo (SVG representation in Icon)
-                  Container(
-                    width: 96,
-                    height: 96,
-                    margin: const EdgeInsets.only(bottom: 18),
-                    child: const Icon(
-                      Icons.auto_stories,
-                      size: 72,
-                      color: Colors.white,
-                    ),
-                  ),
-                  Text(
-                    'KOMET',
-                    style: GoogleFonts.outfit(
-                      fontSize: 40,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      letterSpacing: 7,
-                    ),
+                  Image.asset(
+                    'assets/images/logo.png',
+                    width: 150,
                   ),
                   const SizedBox(height: 6),
                   Text(

@@ -140,6 +140,7 @@ class SubmissionModel extends HiveObject {
       'assignmentId': assignmentId,
       'studentId': siswaId,
       'projectId': projectId,
+      'storyDataJson': storyDataJson,
       'grade': nilai,
       'teacherComment': komentarUmum,
       'feedbackHistory': komentarHalaman.map((k) => {
@@ -189,7 +190,7 @@ class SubmissionModel extends HiveObject {
           ? DateTime.parse(map['deletedAt'].toString())
           : null,
       // Default nilai lokal
-      storyDataJson: '',
+      storyDataJson: map['storyDataJson']?.toString() ?? '',
       sudahSync: true,
       revisiCount: 0,
     );

@@ -285,12 +285,19 @@ class DashboardGuruPage extends StatelessWidget {
                                     pathParameters: {'kelasId': kelas.id},
                                   );
                                   if (context.mounted) {
-                                    final user = (context.read<AuthBloc>().state
-                                            as AuthAuthenticated)
-                                        .user;
-                                    context.read<KelasBloc>().add(
-                                          KelasFetchGuruRequested(user.id),
-                                        );
+                                    final user = (context.read<AuthBloc>().state as AuthAuthenticated).user;
+                                    context.read<KelasBloc>().add(KelasFetchGuruRequested(user.id));
+                                    
+                                    final currentState = context.read<KelasBloc>().state;
+                                    if (currentState is KelasLoaded) {
+                                      List<String> allAssignmentIds = [];
+                                      for (var k in currentState.kelasList) {
+                                        allAssignmentIds.addAll(k.assignmentIds);
+                                      }
+                                      if (allAssignmentIds.isNotEmpty) {
+                                        context.read<SubmissionBloc>().add(GetReviewCountEvent(allAssignmentIds));
+                                      }
+                                    }
                                   }
                                 },
                               );

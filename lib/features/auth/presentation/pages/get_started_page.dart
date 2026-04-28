@@ -60,22 +60,9 @@ class GetStartedPage extends StatelessWidget {
               const Spacer(),
               
               // Logo
-              const Icon(
-                Icons.auto_stories,
-                size: 84,
-                color: Colors.white,
-              ),
-              const SizedBox(height: 18),
-              
-              // Title
-              Text(
-                'KOMET',
-                style: GoogleFonts.outfit(
-                  fontSize: 44,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  letterSpacing: 8,
-                ),
+              Image.asset(
+                'assets/images/logo.png',
+                width: 150,
               ),
               const SizedBox(height: 6),
               

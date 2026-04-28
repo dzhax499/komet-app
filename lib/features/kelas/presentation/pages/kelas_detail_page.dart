@@ -48,6 +48,7 @@ class _KelasDetailPageState extends State<KelasDetailPage> {
   Widget build(BuildContext context) {
     final authState = context.read<AuthBloc>().state;
     final bool isGuru = authState is AuthAuthenticated && authState.user.role == 'guru';
+    final String userId = authState is AuthAuthenticated ? authState.user.id : '';
 
     return MultiBlocProvider(
       providers: [
@@ -72,7 +73,24 @@ class _KelasDetailPageState extends State<KelasDetailPage> {
             children: [
               _buildCustomHeader(context, isGuru),
               Expanded(
-                child: _selectedTabIndex == 0
+                child: BlocListener<SubmissionBloc, SubmissionState>(
+                  listener: (context, state) {
+                    if (state is SubmissionSaved) {
+                      _submissionBloc.add(GetSubmissionsByClassEvent(widget.kelasId));
+                    }
+                  },
+                  child: BlocBuilder<SubmissionBloc, SubmissionState>(
+                    builder: (context, submissionState) {
+                      var submittedAssignmentIds = <String>{};
+                      if (submissionState is SubmissionSuccess) {
+                        final userSubmissions = submissionState.submissions.where((s) => s.siswaId == userId);
+                        submittedAssignmentIds = userSubmissions
+                            .where((s) => s.status == SubmissionStatus.submitted || s.status == SubmissionStatus.reviewed || s.status == SubmissionStatus.needsRevision)
+                            .map((s) => s.assignmentId)
+                            .toSet();
+                      }
+
+                      return _selectedTabIndex == 0
                     ? BlocListener<AssignmentBloc, AssignmentState>(
                         listener: (context, state) {
                           if (state is AssignmentCreatedSuccess) {
@@ -99,7 +117,11 @@ class _KelasDetailPageState extends State<KelasDetailPage> {
                                 child: CircularProgressIndicator(),
                               );
                             } else if (state is AssignmentSuccess) {
-                              if (state.assignments.isEmpty) {
+                              final List<AssignmentModel> displayAssignments = isGuru 
+                                  ? state.assignments 
+                                  : state.assignments.where((a) => !submittedAssignmentIds.contains(a.id)).toList();
+
+                              if (displayAssignments.isEmpty) {
                                 return const Center(
                                   child: Text("Belum ada task di kelas ini."),
                                 );
@@ -109,9 +131,9 @@ class _KelasDetailPageState extends State<KelasDetailPage> {
                                   top: 20,
                                   bottom: 100,
                                 ),
-                                itemCount: state.assignments.length,
+                                itemCount: displayAssignments.length,
                                 itemBuilder: (context, index) {
-                                  final assignment = state.assignments[index];
+                                  final assignment = displayAssignments[index];
                                   return AssignmentCard(
                                     title: assignment.judul,
                                     deadline: assignment.deadline
@@ -120,20 +142,28 @@ class _KelasDetailPageState extends State<KelasDetailPage> {
                                     isStudent: !isGuru,
                                     onTap: !isGuru
                                         ? () {
+                                            final authState = context.read<AuthBloc>().state;
+                                            final studentId = authState is AuthAuthenticated ? authState.user.id : '';
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(
                                                 builder: (_) =>
-                                                    SubmissionCanvasPage(
-                                                  assignmentId: assignment.id,
-                                                  assignmentTitle:
-                                                      assignment.judul,
-                                                  deadline: assignment.deadline
-                                                      .toString()
-                                                      .split(' ')[0],
-                                                ),
+                                                    BlocProvider.value(
+                                                      value: _submissionBloc,
+                                                      child: SubmissionCanvasPage(
+                                                        assignmentId: assignment.id,
+                                                        assignmentTitle:
+                                                            assignment.judul,
+                                                        deadline: assignment.deadline
+                                                            .toString()
+                                                            .split(' ')[0],
+                                                        studentId: studentId,
+                                                      ),
+                                                    ),
                                               ),
-                                            );
+                                            ).then((_) {
+                                                _submissionBloc.add(GetSubmissionsByClassEvent(widget.kelasId));
+                                              });
                                           }
                                         : null,
                                   );
@@ -148,14 +178,18 @@ class _KelasDetailPageState extends State<KelasDetailPage> {
                           },
                         ),
                       )
-                    : BlocBuilder<SubmissionBloc, SubmissionState>(
-                        builder: (context, subState) {
-                          if (subState is SubmissionLoading) {
+                    : Builder(
+                        builder: (context) {
+                          if (submissionState is SubmissionLoading) {
                             return const Center(
                               child: CircularProgressIndicator(),
                             );
-                          } else if (subState is SubmissionSuccess) {
-                            if (subState.submissions.isEmpty) {
+                          } else if (submissionState is SubmissionSuccess) {
+                            final List<SubmissionModel> displaySubmissions = isGuru
+                                ? submissionState.submissions.where((s) => s.status != SubmissionStatus.draft).toList()
+                                : submissionState.submissions.where((s) => s.siswaId == (context.read<AuthBloc>().state as AuthAuthenticated).user.id && (s.status == SubmissionStatus.submitted || s.status == SubmissionStatus.reviewed || s.status == SubmissionStatus.needsRevision)).toList();
+
+                            if (displaySubmissions.isEmpty) {
                               return const Center(
                                 child: Text("Belum ada pengumpulan tugas."),
                               );
@@ -165,27 +199,72 @@ class _KelasDetailPageState extends State<KelasDetailPage> {
                                 top: 20,
                                 bottom: 100,
                               ),
-                              itemCount: subState.submissions.length,
+                              itemCount: displaySubmissions.length,
                               itemBuilder: (context, index) {
-                                final sub = subState.submissions[index];
+                                final sub = displaySubmissions[index];
+                                final assignmentState = context.read<AssignmentBloc>().state;
+                                String taskTitle = "Unknown Task";
+                                if (assignmentState is AssignmentSuccess) {
+                                  try {
+                                    taskTitle = assignmentState.assignments.firstWhere((a) => a.id == sub.assignmentId).judul;
+                                  } catch (_) {}
+                                }
+
                                 return SubmissionCard(
                                   submission: sub,
                                   studentName:
                                       "Student ${sub.siswaId.substring(0, 4)}",
-                                  assignmentTitle: "Checking task...",
+                                  assignmentTitle: taskTitle,
+                                  onTap: () {
+                                    if (!isGuru) {
+                                      final authState = context.read<AuthBloc>().state;
+                                      final studentId = authState is AuthAuthenticated ? authState.user.id : '';
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => BlocProvider.value(
+                                            value: _submissionBloc,
+                                            child: SubmissionCanvasPage(
+                                              assignmentId: sub.assignmentId,
+                                              assignmentTitle: taskTitle,
+                                              deadline: "",
+                                              studentId: studentId,
+                                              isReviewMode: sub.status == SubmissionStatus.reviewed,
+                                            ),
+                                          ),
+                                        ),
+                                      ).then((_) {
+                                        _submissionBloc.add(GetSubmissionsByClassEvent(widget.kelasId));
+                                      });
+                                    } else {
+                                      context.pushNamed('reviewDetail', extra: {
+                                        'submission': sub,
+                                        'assignmentTitle': taskTitle,
+                                      }).then((_) {
+                                        _submissionBloc.add(GetSubmissionsByClassEvent(widget.kelasId));
+                                      });
+                                    }
+                                  },
+                                  onCancel: (!isGuru && sub.status == SubmissionStatus.submitted) ? () {
+                                    final cancelledSub = sub.copyWith(status: SubmissionStatus.draft);
+                                    context.read<SubmissionBloc>().add(SubmitTaskEvent(cancelledSub));
+                                  } : null,
                                 );
                               },
                             );
-                          } else if (subState is SubmissionFailure) {
+                          } else if (submissionState is SubmissionFailure) {
                             return Center(
-                              child: Text("Error: ${subState.message}"),
+                              child: Text("Error: ${submissionState.message}"),
                             );
                           }
                           return const SizedBox.shrink();
                         },
-                      ),
+                      );
+                  },
+                ),
               ),
-            ],
+            ),
+          ],
           ),
         ),
         floatingActionButton: (_selectedTabIndex == 0 && isGuru)
@@ -357,32 +436,37 @@ class _KelasDetailPageState extends State<KelasDetailPage> {
                       ),
                     ),
                     const SizedBox(width: 16),
-                    BlocBuilder<AssignmentBloc, AssignmentState>(
-                      builder: (context, assignState) {
-                        int tasks = 0;
-                        if (assignState is AssignmentSuccess) {
-                          tasks = assignState.assignments.length;
-                        }
-                        return _buildCompactBadge(Icons.assignment, '$tasks Task');
-                      },
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 8),
-                      child: Text('|', style: TextStyle(color: Colors.white54)),
-                    ),
                     BlocBuilder<SubmissionBloc, SubmissionState>(
                       builder: (context, subState) {
+                        final authState = context.read<AuthBloc>().state;
+                        final userId = authState is AuthAuthenticated ? authState.user.id : '';
                         int completed = 0;
+                        Set<String> submittedIds = {};
+                        
                         if (subState is SubmissionSuccess) {
-                          final authState = context.read<AuthBloc>().state;
-                          final userId = authState is AuthAuthenticated
-                              ? authState.user.id
-                              : '';
-                          completed = subState.submissions
-                              .where((s) => s.siswaId == userId && s.status != SubmissionStatus.draft)
-                              .length;
+                          final userSubmissions = subState.submissions.where((s) => s.siswaId == userId);
+                          completed = userSubmissions.where((s) => s.status == SubmissionStatus.submitted || s.status == SubmissionStatus.reviewed || s.status == SubmissionStatus.needsRevision).length;
+                          submittedIds = userSubmissions.where((s) => s.status == SubmissionStatus.submitted || s.status == SubmissionStatus.reviewed || s.status == SubmissionStatus.needsRevision).map((s) => s.assignmentId).toSet();
                         }
-                        return _buildCompactBadge(Icons.image_outlined, '$completed Completed');
+
+                        return Row(
+                          children: [
+                            BlocBuilder<AssignmentBloc, AssignmentState>(
+                              builder: (context, assignState) {
+                                int tasks = 0;
+                                if (assignState is AssignmentSuccess) {
+                                  tasks = assignState.assignments.where((a) => !submittedIds.contains(a.id)).length;
+                                }
+                                return _buildCompactBadge(Icons.assignment, '$tasks Task');
+                              },
+                            ),
+                            const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 8),
+                              child: Text('|', style: TextStyle(color: Colors.white54)),
+                            ),
+                            _buildCompactBadge(Icons.image_outlined, '$completed Completed'),
+                          ],
+                        );
                       },
                     ),
                   ],
