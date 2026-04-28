@@ -304,23 +304,24 @@ class _LoginPageState extends State<LoginPage> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.72),
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(50),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.85), width: 1.5),
+        border: Border.all(color: AppColors.primaryDark, width: 1.5),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
       child: TextField(
         controller: controller,
         obscureText: isPassword ? obscureText : false,
         decoration: InputDecoration(
+          filled: false,
           hintText: hint,
-          hintStyle: GoogleFonts.nunito(color: AppColors.textDisabled, fontSize: 14),
-          prefixIcon: Icon(icon, color: AppColors.textSecondary, size: 20),
+          hintStyle: GoogleFonts.nunito(color: AppColors.primaryDark.withValues(alpha: 0.4), fontSize: 14),
+          prefixIcon: Icon(icon, color: AppColors.primaryDark, size: 20),
           suffixIcon: isPassword
               ? IconButton(
                   icon: Icon(
                     obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                    color: AppColors.textSecondary,
+                    color: AppColors.primaryDark,
                     size: 20,
                   ),
                   onPressed: onTogglePassword,
@@ -330,7 +331,7 @@ class _LoginPageState extends State<LoginPage> {
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,
         ),
-        style: GoogleFonts.nunito(fontSize: 14, color: AppColors.textPrimary),
+        style: GoogleFonts.nunito(fontSize: 14, color: AppColors.primaryDark),
       ),
     );
   }
