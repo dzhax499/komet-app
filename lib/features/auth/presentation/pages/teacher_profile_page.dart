@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/models/user_model.dart';
 import '../bloc/auth_bloc.dart';
 import '../../../kelas/presentation/bloc/kelas_bloc.dart';
 import '../../../submission/presentation/bloc/submission_bloc.dart';
@@ -119,7 +118,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
     );
   }
 
-  Widget _buildContent(user) {
+  Widget _buildContent(UserModel user) {
     switch (_viewState) {
       case ProfileViewState.view:
         return _buildProfileView(user);
@@ -130,7 +129,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
     }
   }
 
-  Widget _buildProfileView(user) {
+  Widget _buildProfileView(UserModel user) {
     return Column(
       children: [
         _buildAvatar(user, size: 140),
@@ -164,7 +163,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
     );
   }
 
-  Widget _buildEditNameView(user) {
+  Widget _buildEditNameView(UserModel user) {
     return Column(
       children: [
         _buildAvatar(user, size: 140, showEditIcon: true, onEdit: () {
@@ -178,7 +177,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
             hintText: 'Input Name ...',
             hintStyle: const TextStyle(color: Colors.white70),
             filled: true,
-            fillColor: Colors.white.withOpacity(0.2),
+            fillColor: Colors.white.withValues(alpha: 0.2),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(15),
               borderSide: BorderSide.none,
@@ -205,7 +204,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
     );
   }
 
-  Widget _buildEditPhotoView(user) {
+  Widget _buildEditPhotoView(UserModel user) {
     return Column(
       children: [
         _buildAvatar(user, size: 140),
@@ -268,7 +267,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
     );
   }
 
-  Widget _buildAvatar(user, {required double size, bool showEditIcon = false, VoidCallback? onEdit}) {
+  Widget _buildAvatar(UserModel user, {required double size, bool showEditIcon = false, VoidCallback? onEdit}) {
     ImageProvider? imageProvider;
     if (user.photoUrl != null) {
       if (user.photoUrl!.startsWith('http')) {
@@ -286,7 +285,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(color: Colors.white, width: 2),
-            color: Colors.white.withOpacity(0.2),
+            color: Colors.white.withValues(alpha: 0.2),
             image: imageProvider != null
                 ? DecorationImage(image: imageProvider, fit: BoxFit.cover)
                 : null,

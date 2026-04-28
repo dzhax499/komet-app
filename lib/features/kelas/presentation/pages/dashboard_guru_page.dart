@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../../../core/utils/constants.dart';
+import '../../../../core/models/user_model.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../submission/presentation/bloc/submission_bloc.dart';
 import '../../../submission/presentation/bloc/submission_event.dart';
@@ -477,7 +478,7 @@ class _DashboardGuruPageState extends State<DashboardGuruPage> {
     );
   }
 
-  Widget _buildProfileAvatar(user, {required double size}) {
+  Widget _buildProfileAvatar(UserModel user, {required double size}) {
     ImageProvider? imageProvider;
     if (user.photoUrl != null) {
       if (user.photoUrl!.startsWith('http')) {

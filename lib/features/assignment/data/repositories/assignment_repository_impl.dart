@@ -38,7 +38,7 @@ class AssignmentRepositoryImpl implements AssignmentRepository {
         final updatedAssignments = List<String>.from(currentKelas.assignmentIds)..add(remoteAssignment.id);
         await kelasLocalDataSource.createKelas(currentKelas.copyWith(assignmentIds: updatedAssignments));
       } catch (e) {
-
+        // Silently fail if local kelas update fails as assignment is already created
       }
       
       return kometSuccess(result);
