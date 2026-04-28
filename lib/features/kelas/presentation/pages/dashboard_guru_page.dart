@@ -111,7 +111,7 @@ class _DashboardGuruPageState extends State<DashboardGuruPage> {
                                       const SizedBox(height: 4),
                                       _buildPillButton(
                                         label: 'Logout',
-                                        color: const Color(0xFFB4C690),
+                                        color: const Color(0xFF650002),
                                         onTap: () {
                                           context.read<AuthBloc>().add(AuthLogoutRequested());
                                           context.go(KometRoutes.login);
