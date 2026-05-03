@@ -36,6 +36,7 @@ class KometRoutes {
 
   // Kelas — PIC A
   static const String kelasDetail = '/kelas/:kelasId';
+  static const String manageKelas = '/kelas/:kelasId/manage';
   static const String kelasSiswa = '/kelas/:kelasId/siswa';
 
   // Assignment — PIC A

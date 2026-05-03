@@ -9,6 +9,8 @@ import '../../../submission/presentation/bloc/submission_state.dart';
 
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:ming_cute_icons/ming_cute_icons.dart';
+import 'package:material_symbols_icons/material_symbols_icons.dart';
 
 enum ProfileViewState { view, editName, editPhoto }
 
@@ -284,7 +286,6 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
           height: size,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 2),
             color: Colors.white.withValues(alpha: 0.2),
             image: imageProvider != null
                 ? DecorationImage(image: imageProvider, fit: BoxFit.cover)
@@ -334,10 +335,11 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
 
         return IntrinsicHeight(
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _buildSummaryCard(icon: Icons.class_, number: activeClassCount, label: 'Active Class', color: const Color(0xFF81B4C6)),
               _buildDivider(),
-              _buildSummaryCard(icon: Icons.assignment, number: totalAssignments, label: 'Task', color: const Color(0xFF82903C)),
+              _buildSummaryCard(icon: MingCuteIcons.mgc_task_2_fill, number: totalAssignments, label: 'Task', color: const Color(0xFF82903C)),
               _buildDivider(),
               BlocBuilder<SubmissionBloc, SubmissionState>(
                 builder: (context, subState) {
@@ -345,7 +347,13 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                   if (subState is SubmissionReviewCountLoaded) {
                     reviewCount = subState.count.toString();
                   }
-                  return _buildSummaryCard(icon: Icons.video_label, number: reviewCount, label: 'Review', color: const Color(0xFF507877));
+                  return _buildSummaryCard(
+                    icon: Symbols.inbox,
+                    number: reviewCount,
+                    label: 'Review',
+                    color: const Color(0xFF507877),
+                    fill: 1.0,
+                  );
                 },
               ),
             ],
@@ -357,12 +365,18 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
 
   Widget _buildDivider() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-      child: Container(width: 1, color: Colors.white),
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Container(width: 1, color: Colors.white.withValues(alpha: 0.5)),
     );
   }
 
-  Widget _buildSummaryCard({required IconData icon, required String number, required String label, required Color color}) {
+  Widget _buildSummaryCard({
+    required IconData icon,
+    required String number,
+    required String label,
+    required Color color,
+    double fill = 0.0,
+  }) {
     return Expanded(
       child: Container(
         margin: const EdgeInsets.all(4),
@@ -373,7 +387,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
         ),
         child: Column(
           children: [
-            Icon(icon, color: Colors.white, size: 20),
+            Icon(icon, color: Colors.white, size: 20, fill: fill),
             Text(number, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
             Text(label, style: const TextStyle(color: Colors.white, fontSize: 10)),
           ],
