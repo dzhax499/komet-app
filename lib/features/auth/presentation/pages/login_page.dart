@@ -105,6 +105,26 @@ class _LoginPageState extends State<LoginPage> {
                             obscureText: _obscurePassword,
                             onTogglePassword: () => setState(() => _obscurePassword = !_obscurePassword),
                           ),
+                          const SizedBox(height: 12),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: () => context.push(KometRoutes.forgotPassword),
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.zero,
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: Text(
+                                'Lupa Password?',
+                                style: GoogleFonts.nunito(
+                                  fontSize: 14,
+                                  color: AppColors.primaryDark,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
                           const SizedBox(height: 24),
     
                           // Login Button

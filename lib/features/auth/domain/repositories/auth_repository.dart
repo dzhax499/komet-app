@@ -22,4 +22,7 @@ abstract class AuthRepository {
   KometResult<UserModel?> getCurrentUser();
   KometResult<UserModel> signInWithGoogle();
   KometResult<UserModel> updateProfile(String userId, {String? nama, String? photoUrl});
+  KometResult<void> sendPasswordResetOtp(String email);
+  KometResult<void> verifyResetOtp(String email, String otp);
+  KometResult<void> resetPassword(String email, String newPassword);
 }

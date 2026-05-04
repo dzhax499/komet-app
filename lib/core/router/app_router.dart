@@ -15,6 +15,9 @@ import '../../features/auth/presentation/pages/register_guru_page.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/pages/get_started_page.dart';
 import '../../features/auth/presentation/pages/teacher_profile_page.dart';
+import '../../features/auth/presentation/pages/forgot_password_page.dart';
+import '../../features/auth/presentation/pages/forgot_password_otp_page.dart';
+import '../../features/auth/presentation/pages/forgot_password_reset_page.dart';
 import '../../features/kelas/presentation/pages/dashboard_guru_page.dart';
 import '../../features/kelas/presentation/pages/dashboard_siswa_page.dart';
 import '../../features/kelas/presentation/pages/kelas_list_page.dart';
@@ -88,6 +91,27 @@ final GoRouter appRouter = GoRouter(
       path: KometRoutes.registerGuru,
       name: 'registerGuru',
       builder: (context, state) => const RegisterGuruPage(),
+    ),
+    GoRoute(
+      path: KometRoutes.forgotPassword,
+      name: 'forgotPassword',
+      builder: (context, state) => const ForgotPasswordPage(),
+    ),
+    GoRoute(
+      path: KometRoutes.forgotPasswordOtp,
+      name: 'forgotPasswordOtp',
+      builder: (context, state) {
+        final email = state.extra as String;
+        return ForgotPasswordOtpPage(email: email);
+      },
+    ),
+    GoRoute(
+      path: KometRoutes.forgotPasswordReset,
+      name: 'forgotPasswordReset',
+      builder: (context, state) {
+        final email = state.extra as String;
+        return ForgotPasswordResetPage(email: email);
+      },
     ),
 
     GoRoute(
