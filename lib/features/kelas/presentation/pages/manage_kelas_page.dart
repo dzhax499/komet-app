@@ -535,7 +535,7 @@ class _ManageKelasPageState extends State<ManageKelasPage> {
       builder: (ctx) => KometActionDialog(
         title: 'Remove Class',
         content:
-            'Apakah Anda yakin ingin menghapus kelas ini? Tindakan ini tidak dapat dibatalkan.',
+            'Apakah Anda yakin ingin menghapus kelas ini? Semua data terkait kelas akan dihapus dan tidak dapat dikembalikan.',
         confirmLabel: 'Remove',
         isDestructive: true,
         onConfirm: () {
