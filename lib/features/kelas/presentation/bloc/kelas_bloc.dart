@@ -1,8 +1,12 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../../../core/models/kelas_model.dart';
+import '../../../../core/models/user_model.dart';
 import '../../domain/usecases/kelas_usecases.dart';
 import '../../domain/usecases/get_kelas_by_id_use_case.dart';
+import '../../domain/usecases/update_kelas_use_case.dart';
+import '../../domain/usecases/remove_student_use_case.dart';
+import '../../../../core/di/service_locator.dart';
 
 // EVENTS
 abstract class KelasEvent extends Equatable {
@@ -48,19 +52,39 @@ class KelasDeleteRequested extends KelasEvent {
   List<Object?> get props => [kelasId, guruId];
 }
 
-class KelasLeaveRequested extends KelasEvent {
-  final String kelasId;
-  final String siswaId;
-  KelasLeaveRequested({required this.kelasId, required this.siswaId});
-  @override
-  List<Object?> get props => [kelasId, siswaId];
-}
-
 class KelasFetchDetailRequested extends KelasEvent {
   final String kelasId;
   KelasFetchDetailRequested(this.kelasId);
   @override
   List<Object?> get props => [kelasId];
+}
+
+class KelasUpdateRequested extends KelasEvent {
+  final String kelasId;
+  final String newNama;
+  final String guruId;
+  KelasUpdateRequested({
+    required this.kelasId,
+    required this.newNama,
+    required this.guruId,
+  });
+  @override
+  List<Object?> get props => [kelasId, newNama, guruId];
+}
+
+class KelasFetchStudentsRequested extends KelasEvent {
+  final String kelasId;
+  KelasFetchStudentsRequested(this.kelasId);
+  @override
+  List<Object?> get props => [kelasId];
+}
+
+class KelasRemoveStudentRequested extends KelasEvent {
+  final String kelasId;
+  final String siswaId;
+  KelasRemoveStudentRequested({required this.kelasId, required this.siswaId});
+  @override
+  List<Object?> get props => [kelasId, siswaId];
 }
 
 // STATES 
@@ -97,6 +121,13 @@ class KelasDetailLoaded extends KelasState {
   List<Object?> get props => [kelas];
 }
 
+class KelasStudentsLoaded extends KelasState {
+  final List<UserModel> students;
+  KelasStudentsLoaded(this.students);
+  @override
+  List<Object?> get props => [students];
+}
+
 // BLOC
 class KelasBloc extends Bloc<KelasEvent, KelasState> {
   final CreateKelasUseCase createKelasUseCase;
@@ -104,8 +135,6 @@ class KelasBloc extends Bloc<KelasEvent, KelasState> {
   final GetKelasSiswaUseCase getKelasSiswaUseCase;
   final JoinKelasUseCase joinKelasUseCase;
   final DeleteKelasUseCase deleteKelasUseCase;
-  final LeaveKelasUseCase leaveKelasUseCase;
-  final GetKelasByIdUseCase getKelasByIdUseCase;
 
   KelasBloc({
     required this.createKelasUseCase,
@@ -114,17 +143,21 @@ class KelasBloc extends Bloc<KelasEvent, KelasState> {
     required this.joinKelasUseCase,
     required this.deleteKelasUseCase,
     required this.getKelasByIdUseCase,
-    required this.leaveKelasUseCase,
+    required this.getSiswaInKelasUseCase,
   }) : super(KelasInitial()) {
     on<KelasFetchGuruRequested>(_onFetchGuru);
     on<KelasFetchSiswaRequested>(_onFetchSiswa);
     on<KelasCreateRequested>(_onCreate);
     on<KelasJoinRequested>(_onJoin);
     on<KelasDeleteRequested>(_onDelete);
-    on<KelasLeaveRequested>(_onLeave);
     on<KelasFetchDetailRequested>(_onFetchDetail);
+    on<KelasUpdateRequested>(_onUpdate);
+    on<KelasFetchStudentsRequested>(_onFetchStudents);
+    on<KelasRemoveStudentRequested>(_onRemoveStudent);
   }
 
+  final GetKelasByIdUseCase getKelasByIdUseCase;
+  final GetSiswaInKelasUseCase getSiswaInKelasUseCase;
 
   Future<void> _onFetchGuru(KelasFetchGuruRequested event, Emitter<KelasState> emit) async {
     emit(KelasLoading());
@@ -173,18 +206,6 @@ class KelasBloc extends Bloc<KelasEvent, KelasState> {
     final result = await deleteKelasUseCase(event.kelasId);
     if (result.failure == null) {
       emit(KelasActionSuccess('Kelas berhasil dihapus'));
-      add(KelasFetchGuruRequested(event.guruId));
-    } else {
-      emit(KelasError(result.failure!.message));
-    }
-  }
-
-  Future<void> _onLeave(KelasLeaveRequested event, Emitter<KelasState> emit) async {
-    emit(KelasLoading());
-    final result = await leaveKelasUseCase(LeaveKelasParams(kelasId: event.kelasId, siswaId: event.siswaId));
-    if (result.failure == null) {
-      emit(KelasActionSuccess('Berhasil keluar dari kelas'));
-      add(KelasFetchSiswaRequested(event.siswaId));
     } else {
       emit(KelasError(result.failure!.message));
     }
@@ -197,6 +218,44 @@ class KelasBloc extends Bloc<KelasEvent, KelasState> {
       emit(KelasDetailLoaded(result.data!));
     } else {
       emit(KelasError(result.failure?.message ?? 'Gagal memuat detail kelas'));
+    }
+  }
+
+  Future<void> _onUpdate(KelasUpdateRequested event, Emitter<KelasState> emit) async {
+    emit(KelasLoading());
+    final result = await sl<UpdateKelasUseCase>()(UpdateKelasParams(
+      kelasId: event.kelasId,
+      newNama: event.newNama,
+    ));
+    if (result.data != null) {
+      emit(KelasActionSuccess('Nama kelas berhasil diperbarui'));
+      add(KelasFetchGuruRequested(event.guruId));
+    } else {
+      emit(KelasError(result.failure?.message ?? 'Gagal memperbarui nama kelas'));
+    }
+  }
+
+  Future<void> _onFetchStudents(KelasFetchStudentsRequested event, Emitter<KelasState> emit) async {
+    emit(KelasLoading());
+    final result = await getSiswaInKelasUseCase(event.kelasId);
+    if (result.data != null) {
+      emit(KelasStudentsLoaded(result.data!));
+    } else {
+      emit(KelasError(result.failure?.message ?? 'Gagal memuat daftar siswa'));
+    }
+  }
+
+  Future<void> _onRemoveStudent(KelasRemoveStudentRequested event, Emitter<KelasState> emit) async {
+    emit(KelasLoading());
+    final result = await sl<RemoveStudentUseCase>()(RemoveStudentParams(
+      kelasId: event.kelasId,
+      siswaId: event.siswaId,
+    ));
+    if (result.failure == null) {
+      emit(KelasActionSuccess('Siswa berhasil dihapus dari kelas'));
+      add(KelasFetchStudentsRequested(event.kelasId));
+    } else {
+      emit(KelasError(result.failure?.message ?? 'Gagal menghapus siswa'));
     }
   }
 }

@@ -73,7 +73,7 @@ class _RegisterGuruPageState extends State<RegisterGuruPage> {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  Container(
+                  SizedBox(
                     width: 68,
                     height: 68,
                     child: const Icon(

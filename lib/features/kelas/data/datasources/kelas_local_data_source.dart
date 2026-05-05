@@ -8,7 +8,9 @@ abstract class KelasLocalDataSource {
   Future<List<KelasModel>> getKelasSiswa(String siswaId);
   Future<KelasModel> joinKelas(String kodeKelas, String siswaId);
   Future<KelasModel> getKelasById(String kelasId);
+  Future<KelasModel> updateKelas(KelasModel kelas);
   Future<void> deleteKelas(String kelasId);
+  Future<void> removeStudent(String kelasId, String siswaId);
   Future<List<UserModel>> getSiswaInKelas(String kelasId);
 }
 
@@ -59,6 +61,12 @@ class KelasLocalDataSourceImpl implements KelasLocalDataSource {
   }
 
   @override
+  Future<KelasModel> updateKelas(KelasModel kelas) async {
+    await hiveService.saveKelas(kelas);
+    return kelas;
+  }
+
+  @override
   Future<void> deleteKelas(String kelasId) async {
     await hiveService.deleteKelas(kelasId);
   }
@@ -68,6 +76,15 @@ class KelasLocalDataSourceImpl implements KelasLocalDataSource {
     final kelas = hiveService.getKelasById(kelasId);
     if (kelas == null) throw Exception('Kelas tidak ditemukan di lokal');
     return kelas;
+  }
+
+  @override
+  Future<void> removeStudent(String kelasId, String siswaId) async {
+    final kelas = hiveService.getKelasById(kelasId);
+    if (kelas != null) {
+      final updatedSiswaIds = List<String>.from(kelas.siswaIds)..remove(siswaId);
+      await hiveService.saveKelas(kelas.copyWith(siswaIds: updatedSiswaIds));
+    }
   }
 
   @override

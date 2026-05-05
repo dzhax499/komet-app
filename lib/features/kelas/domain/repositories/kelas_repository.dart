@@ -13,7 +13,11 @@ abstract class KelasRepository {
 
   KometResult<KelasModel> getKelasById(String kelasId);
 
+  KometResult<KelasModel> updateKelas(String kelasId, String newNama);
+  
   KometResult<void> deleteKelas(String kelasId);
+  
+  KometResult<void> removeStudent(String kelasId, String siswaId);
   
   KometResult<List<UserModel>> getSiswaInKelas(String kelasId);
 

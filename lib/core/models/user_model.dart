@@ -31,6 +31,9 @@ class UserModel extends HiveObject {
   @HiveField(8)
   final DateTime? deletedAt; // ➕ Soft delete
 
+  @HiveField(9)
+  final String? photoUrl;
+
   UserModel({
     required this.id,
     required this.nama,
@@ -41,6 +44,7 @@ class UserModel extends HiveObject {
     required this.createdAt,
     required this.lastLoginAt,
     this.deletedAt,
+    this.photoUrl,
   });
 
   UserModel copyWith({
@@ -53,6 +57,7 @@ class UserModel extends HiveObject {
     DateTime? createdAt,
     DateTime? lastLoginAt,
     DateTime? deletedAt,
+    String? photoUrl,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -64,6 +69,7 @@ class UserModel extends HiveObject {
       createdAt: createdAt ?? this.createdAt,
       lastLoginAt: lastLoginAt ?? this.lastLoginAt,
       deletedAt: deletedAt ?? this.deletedAt,
+      photoUrl: photoUrl ?? this.photoUrl,
     );
   }
 
@@ -77,6 +83,7 @@ class UserModel extends HiveObject {
       'role': role,
       'createdAt': createdAt.toIso8601String(),
       'deletedAt': deletedAt?.toIso8601String(),
+      'photoUrl': photoUrl,
     };
   }
 
@@ -96,6 +103,7 @@ class UserModel extends HiveObject {
       deletedAt: map['deletedAt'] != null
           ? DateTime.parse(map['deletedAt'].toString())
           : null,
+      photoUrl: map['photoUrl'],
     );
   }
 }

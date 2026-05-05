@@ -40,7 +40,7 @@ class AuthRepositoryImpl implements AuthRepository {
       await localDataSource.registerGuru(user); 
       return kometSuccess(user);
     } catch (e) {
-      // FIX: AuthFailure parameter positional
+
       return kometFailure(AuthFailure(e.toString()));
     }
   }
@@ -59,11 +59,12 @@ class AuthRepositoryImpl implements AuthRepository {
   KometResult<UserModel> registerGuru(
     String nama,
     String email,
-    String password,
-  ) async {
+    String password, {
+    String? id,
+  }) async {
     try {
       final user = UserModel(
-        id: uuid.v4(),
+        id: id ?? uuid.v4(),
         nama: nama,
         email: email,
         password: password,
@@ -88,12 +89,13 @@ class AuthRepositoryImpl implements AuthRepository {
   KometResult<UserModel> registerSiswa(
     String nama,
     String email,
-    String password,
+    String password, {
     String? kodeKelas,
-  ) async {
+    String? id,
+  }) async {
     try {
       final user = UserModel(
-        id: uuid.v4(),
+        id: id ?? uuid.v4(),
         nama: nama,
         email: email,
         password: password,
@@ -109,6 +111,51 @@ class AuthRepositoryImpl implements AuthRepository {
       // 2. Simpan ke lokal
       final result = await localDataSource.registerSiswa(remoteUser, kodeKelas);
       return kometSuccess(result);
+    } catch (e) {
+      return kometFailure(AuthFailure(e.toString()));
+    }
+  }
+
+  @override
+  KometResult<UserModel> signInWithGoogle() async {
+    try {
+      final user = await remoteDataSource.signInWithGoogle();
+      // Simpan session ke lokal HANYA jika bukan user baru (yang belum pilih role)
+      if (user.role != 'NEW_USER') {
+        if (user.role == 'guru') {
+          await localDataSource.registerGuru(user);
+        } else {
+          await localDataSource.registerSiswa(user, null);
+        }
+      }
+      return kometSuccess(user);
+    } catch (e) {
+      return kometFailure(AuthFailure(e.toString()));
+    }
+  }
+
+  @override
+  KometResult<UserModel> updateProfile(String userId, {String? nama, String? photoUrl}) async {
+    try {
+      final currentUser = await localDataSource.getCurrentUser();
+      if (currentUser == null) throw Exception("User not found");
+
+      final updatedUser = currentUser.copyWith(
+        nama: nama,
+        photoUrl: photoUrl,
+      );
+
+      // 1. Update remote (MongoDB)
+      await remoteDataSource.updateProfile(updatedUser);
+
+      // 2. Update local (Hive)
+      if (updatedUser.role == 'guru') {
+        await localDataSource.registerGuru(updatedUser);
+      } else {
+        await localDataSource.registerSiswa(updatedUser, null);
+      }
+
+      return kometSuccess(updatedUser);
     } catch (e) {
       return kometFailure(AuthFailure(e.toString()));
     }

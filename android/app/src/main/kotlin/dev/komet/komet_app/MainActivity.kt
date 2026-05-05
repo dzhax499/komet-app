@@ -1,4 +1,4 @@
-package dev.komet.komet_app
+package com.dnhsquad.komet
 
 import io.flutter.embedding.android.FlutterActivity
 

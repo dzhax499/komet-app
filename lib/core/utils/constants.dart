@@ -28,14 +28,15 @@ class KometRoutes {
   static const String login = '/login';
   static const String registerSiswa = '/register/siswa';
   static const String registerGuru = '/register/guru';
+  static const String profileGuru = '/profile/guru';
 
   // Dashboard — PIC A
   static const String dashboardGuru = '/dashboard/guru';
   static const String dashboardSiswa = '/dashboard/siswa';
 
   // Kelas — PIC A
-  static const String kelasList = '/kelas';
   static const String kelasDetail = '/kelas/:kelasId';
+  static const String manageKelas = '/kelas/:kelasId/manage';
   static const String kelasSiswa = '/kelas/:kelasId/siswa';
 
   // Assignment — PIC A
