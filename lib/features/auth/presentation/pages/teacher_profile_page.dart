@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/models/user_model.dart';
 import '../bloc/auth_bloc.dart';
 import '../../../kelas/presentation/bloc/kelas_bloc.dart';
 import '../../../submission/presentation/bloc/submission_bloc.dart';
@@ -10,6 +9,8 @@ import '../../../submission/presentation/bloc/submission_state.dart';
 
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:ming_cute_icons/ming_cute_icons.dart';
+import 'package:material_symbols_icons/material_symbols_icons.dart';
 
 enum ProfileViewState { view, editName, editPhoto }
 
@@ -119,7 +120,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
     );
   }
 
-  Widget _buildContent(user) {
+  Widget _buildContent(UserModel user) {
     switch (_viewState) {
       case ProfileViewState.view:
         return _buildProfileView(user);
@@ -130,7 +131,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
     }
   }
 
-  Widget _buildProfileView(user) {
+  Widget _buildProfileView(UserModel user) {
     return Column(
       children: [
         _buildAvatar(user, size: 140),
@@ -164,7 +165,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
     );
   }
 
-  Widget _buildEditNameView(user) {
+  Widget _buildEditNameView(UserModel user) {
     return Column(
       children: [
         _buildAvatar(user, size: 140, showEditIcon: true, onEdit: () {
@@ -178,7 +179,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
             hintText: 'Input Name ...',
             hintStyle: const TextStyle(color: Colors.white70),
             filled: true,
-            fillColor: Colors.white.withOpacity(0.2),
+            fillColor: Colors.white.withValues(alpha: 0.2),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(15),
               borderSide: BorderSide.none,
@@ -205,7 +206,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
     );
   }
 
-  Widget _buildEditPhotoView(user) {
+  Widget _buildEditPhotoView(UserModel user) {
     return Column(
       children: [
         _buildAvatar(user, size: 140),
@@ -268,7 +269,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
     );
   }
 
-  Widget _buildAvatar(user, {required double size, bool showEditIcon = false, VoidCallback? onEdit}) {
+  Widget _buildAvatar(UserModel user, {required double size, bool showEditIcon = false, VoidCallback? onEdit}) {
     ImageProvider? imageProvider;
     if (user.photoUrl != null) {
       if (user.photoUrl!.startsWith('http')) {
@@ -285,8 +286,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
           height: size,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 2),
-            color: Colors.white.withOpacity(0.2),
+            color: Colors.white.withValues(alpha: 0.2),
             image: imageProvider != null
                 ? DecorationImage(image: imageProvider, fit: BoxFit.cover)
                 : null,
@@ -335,10 +335,11 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
 
         return IntrinsicHeight(
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _buildSummaryCard(icon: Icons.class_, number: activeClassCount, label: 'Active Class', color: const Color(0xFF81B4C6)),
               _buildDivider(),
-              _buildSummaryCard(icon: Icons.assignment, number: totalAssignments, label: 'Task', color: const Color(0xFF82903C)),
+              _buildSummaryCard(icon: MingCuteIcons.mgc_task_2_fill, number: totalAssignments, label: 'Task', color: const Color(0xFF82903C)),
               _buildDivider(),
               BlocBuilder<SubmissionBloc, SubmissionState>(
                 builder: (context, subState) {
@@ -346,7 +347,13 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                   if (subState is SubmissionReviewCountLoaded) {
                     reviewCount = subState.count.toString();
                   }
-                  return _buildSummaryCard(icon: Icons.video_label, number: reviewCount, label: 'Review', color: const Color(0xFF507877));
+                  return _buildSummaryCard(
+                    icon: Symbols.inbox,
+                    number: reviewCount,
+                    label: 'Review',
+                    color: const Color(0xFF507877),
+                    fill: 1.0,
+                  );
                 },
               ),
             ],
@@ -358,12 +365,18 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
 
   Widget _buildDivider() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-      child: Container(width: 1, color: Colors.white),
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Container(width: 1, color: Colors.white.withValues(alpha: 0.5)),
     );
   }
 
-  Widget _buildSummaryCard({required IconData icon, required String number, required String label, required Color color}) {
+  Widget _buildSummaryCard({
+    required IconData icon,
+    required String number,
+    required String label,
+    required Color color,
+    double fill = 0.0,
+  }) {
     return Expanded(
       child: Container(
         margin: const EdgeInsets.all(4),
@@ -374,7 +387,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
         ),
         child: Column(
           children: [
-            Icon(icon, color: Colors.white, size: 20),
+            Icon(icon, color: Colors.white, size: 20, fill: fill),
             Text(number, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
             Text(label, style: const TextStyle(color: Colors.white, fontSize: 10)),
           ],

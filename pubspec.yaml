@@ -45,7 +45,10 @@ dependencies:
   google_sign_in: ^6.2.2
   crypto: ^3.0.7
   image_picker: ^1.2.1
-  mailer: ^7.1.0
+  flutter_slidable: ^4.0.3
+  material_symbols_icons: ^4.2759.0
+  boxicons: ^2.1.3
+  ming_cute_icons: ^0.0.7
   
 dev_dependencies:
   flutter_test:
@@ -60,9 +63,8 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-  assets:
+  assets:                
     - .env
-    - assets/images/
 
   # Fonts: dikonfigurasi PIC C setelah UI Design final
   # fonts:

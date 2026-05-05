@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../../../core/utils/constants.dart';
+import '../../../../core/models/user_model.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../submission/presentation/bloc/submission_bloc.dart';
 import '../../../submission/presentation/bloc/submission_event.dart';
@@ -11,6 +12,8 @@ import '../../../submission/presentation/bloc/submission_state.dart';
 import '../bloc/kelas_bloc.dart';
 import '../widgets/create_kelas_dialog.dart';
 import '../widgets/kelas_card.dart';
+import 'package:material_symbols_icons/material_symbols_icons.dart';
+import 'package:ming_cute_icons/ming_cute_icons.dart';
 
 class DashboardGuruPage extends StatefulWidget {
   const DashboardGuruPage({super.key});
@@ -24,6 +27,9 @@ class _DashboardGuruPageState extends State<DashboardGuruPage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.sizeOf(context);
+    final isSmallScreen = screenSize.width < 360;
+
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
         if (state is! AuthAuthenticated) {
@@ -36,363 +42,373 @@ class _DashboardGuruPageState extends State<DashboardGuruPage> {
         return MultiBlocProvider(
           providers: [
             BlocProvider<KelasBloc>(
-              create: (context) => sl<KelasBloc>()
-                ..add(
-                  KelasFetchGuruRequested(user.id),
-                ),
+              create: (context) =>
+                  sl<KelasBloc>()..add(KelasFetchGuruRequested(user.id)),
             ),
             BlocProvider<SubmissionBloc>(
               create: (context) => sl<SubmissionBloc>(),
             ),
           ],
-          child: GestureDetector(
-            onTap: () {
-              if (_isProfileMenuOpen) {
-                setState(() => _isProfileMenuOpen = false);
-              }
-            },
-            child: Scaffold(
-              body: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Color(0xFF86B3C0),
-                      Color(0xFFE3E2E0),
-                    ],
-                    stops: [0.0, 1.0],
-                  ),
-                ),
-                child: SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24.0,
-                      vertical: 20.0,
+          child: Builder(
+            builder: (innerContext) {
+              return GestureDetector(
+                onTap: () {
+                  if (_isProfileMenuOpen) {
+                    setState(() => _isProfileMenuOpen = false);
+                  }
+                },
+                child: Scaffold(
+                  body: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Color(0xFF86B3C0), Color(0xFFE3E2E0)],
+                        stops: [0.0, 1.0],
+                      ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: SafeArea(
+                      child: RefreshIndicator(
+                        onRefresh: () async {
+                          innerContext.read<KelasBloc>().add(
+                            KelasFetchGuruRequested(user.id),
+                          );
+                        },
+                        child: ListView(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isSmallScreen ? 16.0 : 24.0,
+                            vertical: 20.0,
+                          ),
+                          physics: const AlwaysScrollableScrollPhysics(
+                            parent: BouncingScrollPhysics(),
+                          ),
                           children: [
-                            const Row(
-                              children: [
-                                Icon(
-                                  Icons.school_outlined,
-                                  color: Colors.white,
-                                  size: 28,
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Teacher Hub',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                ),
-                              ],
+                            _buildHeader(innerContext, user, isSmallScreen),
+                            const SizedBox(height: 24),
+                            Text(
+                              'Welcome back,',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: isSmallScreen ? 18 : 20,
+                                fontWeight: FontWeight.w400,
+                              ),
                             ),
-                            
-                            // Profile Avatar and Menu (Image 1)
-                            Row(
-                              children: [
-                                if (_isProfileMenuOpen)
-                                  Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      _buildPillButton(
-                                        label: 'Profile',
-                                        color: const Color(0xFF82903C),
-                                        onTap: () => context.pushNamed('profileGuru'),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      _buildPillButton(
-                                        label: 'Logout',
-                                        color: const Color(0xFFB4C690),
-                                        onTap: () {
-                                          context.read<AuthBloc>().add(AuthLogoutRequested());
-                                          context.go(KometRoutes.login);
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                const SizedBox(width: 12),
-                                GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      _isProfileMenuOpen = !_isProfileMenuOpen;
-                                    });
-                                  },
-                                  child: _buildProfileAvatar(user, size: 52),
-                                ),
-                              ],
+                            const SizedBox(height: 4),
+                            Text(
+                              user.nama,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: isSmallScreen ? 22 : 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            _buildSummarySection(isSmallScreen),
+                            const SizedBox(height: 32),
+                            _buildKelasSection(
+                              innerContext,
+                              user,
+                              isSmallScreen,
                             ),
                           ],
                         ),
-                        const SizedBox(height: 24),
-                        const Text(
-                          'Welcome back,',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          user.nama,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        BlocBuilder<KelasBloc, KelasState>(
-                          builder: (context, state) {
-                            String activeClassCount = '0';
-                            String totalAssignments = '0';
-
-                            if (state is KelasLoaded) {
-                              activeClassCount = state.kelasList.length.toString();
-                              int total = 0;
-                              List<String> allAssignmentIds = [];
-                              for (var k in state.kelasList) {
-                                total += k.assignmentIds.length;
-                                allAssignmentIds.addAll(k.assignmentIds);
-                              }
-                              totalAssignments = total.toString();
-
-                              if (allAssignmentIds.isNotEmpty) {
-                                context.read<SubmissionBloc>().add(
-                                      GetReviewCountEvent(allAssignmentIds),
-                                    );
-                              }
-                            }
-
-                            return IntrinsicHeight(
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  _buildSummaryCard(
-                                    icon: Icons.class_,
-                                    number: activeClassCount == '0'
-                                        ? ''
-                                        : activeClassCount,
-                                    label: 'Active Class',
-                                    color: const Color(0xFF81B4C6),
-                                    verticalMargin: 12.0,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 12.0,
-                                    ),
-                                    child: Container(
-                                      width: 1,
-                                      color: Colors.white.withValues(alpha: 0.9),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  _buildSummaryCard(
-                                    icon: Icons.assignment,
-                                    number: totalAssignments == '0'
-                                        ? ''
-                                        : totalAssignments,
-                                    label: 'Task',
-                                    color: const Color(0xFF82903C),
-                                    verticalMargin: 0.0,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 12.0,
-                                    ),
-                                    child: Container(
-                                      width: 1,
-                                      color: Colors.white.withValues(alpha: 0.9),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  _buildSummaryCard(
-                                    icon: Icons.video_label,
-                                    number: reviewCount(context),
-                                    label: 'Review',
-                                    color: const Color(0xFF507877),
-                                    verticalMargin: 12.0,
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 32),
-                        Builder(
-                          builder: (blocContext) {
-                            return Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text(
-                                  'My Class',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                ),
-                                InkWell(
-                                  onTap: () {
-                                    showDialog(
-                                      context: blocContext,
-                                      barrierColor:
-                                          Colors.black.withValues(alpha: 0.2),
-                                      builder: (context) => CreateKelasDialog(
-                                        onCreated: (nama) {
-                                          blocContext.read<KelasBloc>().add(
-                                                KelasCreateRequested(
-                                                  nama: nama,
-                                                  guruId: user.id,
-                                                ),
-                                              );
-                                        },
-                                      ),
-                                    );
-                                  },
-                                  borderRadius: BorderRadius.circular(20),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 8,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: const Row(
-                                      children: [
-                                        Icon(
-                                          Icons.add,
-                                          size: 16,
-                                          color: Colors.black87,
-                                        ),
-                                        SizedBox(width: 4),
-                                        Text(
-                                          'Create Class',
-                                          style: TextStyle(
-                                            color: Colors.black87,
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        Expanded(
-                          child: BlocBuilder<KelasBloc, KelasState>(
-                            builder: (context, state) {
-                              if (state is KelasLoading) {
-                                return const Center(
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                  ),
-                                );
-                              } else if (state is KelasLoaded) {
-                                if (state.kelasList.isEmpty) {
-                                  return _buildEmptyState();
-                                }
-                                return ListView.builder(
-                                  itemCount: state.kelasList.length,
-                                  itemBuilder: (context, index) {
-                                    final kelas = state.kelasList[index];
-                                    return KelasCard(
-                                      kelas: kelas,
-                                      onTap: () async {
-                                        await context.pushNamed(
-                                          'kelasDetail',
-                                          pathParameters: {'kelasId': kelas.id},
-                                        );
-                                        if (context.mounted) {
-                                          final user = (context.read<AuthBloc>().state
-                                                  as AuthAuthenticated)
-                                              .user;
-                                          context.read<KelasBloc>().add(
-                                                KelasFetchGuruRequested(user.id),
-                                              );
-                                        }
-                                      },
-                                    );
-                                  },
-                                );
-                              } else if (state is KelasError) {
-                                return Center(
-                                  child: Text(
-                                    state.message,
-                                    style: const TextStyle(color: Colors.red),
-                                  ),
-                                );
-                              }
-                              return const SizedBox();
-                            },
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
         );
       },
     );
   }
 
-  String reviewCount(BuildContext context) {
-    final subState = context.watch<SubmissionBloc>().state;
-    if (subState is SubmissionReviewCountLoaded) {
-      return subState.count == 0 ? '' : subState.count.toString();
-    }
-    return '';
+  Widget _buildHeader(BuildContext context, UserModel user, bool isSmall) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            Icon(
+              Icons.school_outlined,
+              color: Colors.white,
+              size: isSmall ? 24 : 28,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Teacher Hub',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: isSmall ? 18 : 22,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
+        Row(
+          children: [
+            if (_isProfileMenuOpen)
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  _buildPillButton(
+                    label: 'Profile',
+                    color: const Color(0xFF82903C),
+                    onTap: () => context.pushNamed('profileGuru'),
+                  ),
+                  const SizedBox(height: 4),
+                  _buildPillButton(
+                    label: 'Logout',
+                    color: const Color(0xFF650002),
+                    onTap: () {
+                      context.read<AuthBloc>().add(AuthLogoutRequested());
+                      context.go(KometRoutes.login);
+                    },
+                  ),
+                ],
+              ),
+            const SizedBox(width: 12),
+            GestureDetector(
+              onTap: () =>
+                  setState(() => _isProfileMenuOpen = !_isProfileMenuOpen),
+              child: _buildProfileAvatar(user, size: isSmall ? 48 : 52),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.school_outlined,
-            size: 80,
-            color: Colors.white.withValues(alpha: 0.5),
+  Widget _buildSummarySection(bool isSmall) {
+    return BlocBuilder<KelasBloc, KelasState>(
+      buildWhen: (previous, current) =>
+          current is KelasLoading ||
+          current is KelasLoaded ||
+          current is KelasError,
+      builder: (context, state) {
+        String activeClassCount = '0';
+        String totalAssignments = '0';
+
+        if (state is KelasLoaded) {
+          activeClassCount = state.kelasList.length.toString();
+          int total = 0;
+          List<String> allAssignmentIds = [];
+          for (var k in state.kelasList) {
+            total += k.assignmentIds.length;
+            allAssignmentIds.addAll(k.assignmentIds);
+          }
+          totalAssignments = total.toString();
+          if (allAssignmentIds.isNotEmpty) {
+            context.read<SubmissionBloc>().add(
+              GetReviewCountEvent(allAssignmentIds),
+            );
+          }
+        }
+
+        return IntrinsicHeight(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: _buildSummaryCard(
+                  icon: Icons.class_,
+                  number: activeClassCount,
+                  label: 'Active Class',
+                  color: const Color(0xFF81B4C6),
+                  isSmall: isSmall,
+                ),
+              ),
+              const SizedBox(width: 8),
+              VerticalDivider(
+                color: Colors.white.withValues(alpha: 0.9),
+                thickness: 1,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildSummaryCard(
+                  icon: MingCuteIcons.mgc_task_2_fill,
+                  number: totalAssignments,
+                  label: 'Task',
+                  color: const Color(0xFF84953D),
+                  isSmall: isSmall,
+                ),
+              ),
+              const SizedBox(width: 8),
+              VerticalDivider(
+                color: Colors.white.withValues(alpha: 0.9),
+                thickness: 1,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: BlocBuilder<SubmissionBloc, SubmissionState>(
+                  builder: (context, subState) {
+                    String reviewCount = '0';
+                    if (subState is SubmissionReviewCountLoaded) {
+                      reviewCount = subState.count.toString();
+                    }
+                    return _buildSummaryCard(
+                      icon: Symbols.inbox,
+                      number: reviewCount,
+                      label: 'Review',
+                      color: const Color(0xFF4C7573),
+                      isSmall: isSmall,
+                      fill: 1.0,
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          const Text(
-            'Belum ada kelas',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+        );
+      },
+    );
+  }
+
+  Widget _buildKelasSection(
+    BuildContext context,
+    UserModel user,
+    bool isSmall,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'My Class',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: isSmall ? 20 : 24,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Mulai dengan membuat kelas baru',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.7),
+            GestureDetector(
+              onTap: () {
+                showDialog(
+                  context: context,
+                  barrierColor: Colors.black.withValues(alpha: 0.2),
+                  builder: (dialogContext) => CreateKelasDialog(
+                    onCreated: (nama) {
+                      context.read<KelasBloc>().add(
+                        KelasCreateRequested(nama: nama, guruId: user.id),
+                      );
+                    },
+                  ),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  '+ Create Class',
+                  style: TextStyle(
+                    color: Colors.black87,
+                    fontSize: isSmall ? 12 : 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
             ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        BlocListener<KelasBloc, KelasState>(
+          listener: (context, state) {
+            if (state is KelasActionSuccess) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            } else if (state is KelasError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          },
+          child: BlocBuilder<KelasBloc, KelasState>(
+            buildWhen: (previous, current) =>
+                current is KelasLoading ||
+                current is KelasLoaded ||
+                current is KelasError,
+            builder: (context, state) {
+              if (state is KelasLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (state is KelasLoaded) {
+                if (state.kelasList.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      "You don't have any class yet",
+                      style: TextStyle(color: Colors.white70, fontSize: 16),
+                    ),
+                  );
+                }
+                return Column(
+                  children: state.kelasList
+                      .map(
+                        (kelas) => KelasCard(
+                          kelas: kelas,
+                          onTap: () {
+                            context.pushNamed(
+                              'kelasDetail',
+                              pathParameters: {'kelasId': kelas.id},
+                            );
+                          },
+                          onEdit: () async {
+                            final result = await context.pushNamed(
+                              'manageKelas',
+                              pathParameters: {'kelasId': kelas.id},
+                            );
+                            if (result == true) {
+                              if (context.mounted) {
+                                context.read<KelasBloc>().add(
+                                  KelasFetchGuruRequested(user.id),
+                                );
+                              }
+                            }
+                          },
+                        ),
+                      )
+                      .toList(),
+                );
+              }
+
+              if (state is KelasError) {
+                return Center(
+                  child: Text(
+                    state.message,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            },
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -401,85 +417,45 @@ class _DashboardGuruPageState extends State<DashboardGuruPage> {
     required String number,
     required String label,
     required Color color,
-    double verticalMargin = 0.0,
+    required bool isSmall,
+    double fill = 0.0,
   }) {
-    return Expanded(
-      child: Container(
-        margin: EdgeInsets.symmetric(vertical: verticalMargin),
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.35),
-              blurRadius: 16,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: Colors.white, size: isSmall ? 20 : 24, fill: fill),
+          const SizedBox(height: 8),
+          Text(
+            number,
+            style: TextStyle(
               color: Colors.white,
-              size: 24,
+              fontSize: isSmall ? 24 : 28,
+              fontWeight: FontWeight.bold,
             ),
-            const SizedBox(height: 8),
-            Text(
-              number,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPillButton({
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white, width: 1.5),
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
           ),
-        ),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: isSmall ? 10 : 12,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildProfileAvatar(user, {required double size}) {
+  Widget _buildProfileAvatar(UserModel user, {required double size}) {
     ImageProvider? imageProvider;
-    if (user.photoUrl != null) {
+    if (user.photoUrl != null && user.photoUrl!.isNotEmpty) {
       if (user.photoUrl!.startsWith('http')) {
         imageProvider = NetworkImage(user.photoUrl!);
       } else {
@@ -492,21 +468,38 @@ class _DashboardGuruPageState extends State<DashboardGuruPage> {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 2),
         image: imageProvider != null
-            ? DecorationImage(
-                image: imageProvider,
-                fit: BoxFit.cover,
-              )
+            ? DecorationImage(image: imageProvider, fit: BoxFit.cover)
             : null,
       ),
       child: imageProvider == null
-          ? const Icon(
-              Icons.person,
-              color: Colors.white,
-              size: 28,
-            )
+          ? Icon(Icons.person, color: Colors.white, size: size * 0.5)
           : null,
+    );
+  }
+
+  Widget _buildPillButton({
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
     );
   }
 }
