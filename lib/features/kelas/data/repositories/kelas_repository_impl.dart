@@ -59,10 +59,32 @@ class KelasRepositoryImpl implements KelasRepository {
   }
 
   @override
+  KometResult<KelasModel> updateKelas(String kelasId, String newNama) async {
+    try {
+      final updatedKelas = await remoteDataSource.updateKelas(kelasId, newNama);
+      await localDataSource.updateKelas(updatedKelas);
+      return kometSuccess(updatedKelas);
+    } catch (e) {
+      return kometFailure(LocalStorageFailure(e.toString()));
+    }
+  }
+
+  @override
   KometResult<void> deleteKelas(String kelasId) async {
     try {
       await remoteDataSource.deleteKelas(kelasId);
       await localDataSource.deleteKelas(kelasId);
+      return kometSuccess(null);
+    } catch (e) {
+      return kometFailure(LocalStorageFailure(e.toString()));
+    }
+  }
+
+  @override
+  KometResult<void> removeStudent(String kelasId, String siswaId) async {
+    try {
+      await remoteDataSource.removeStudent(kelasId, siswaId);
+      await localDataSource.removeStudent(kelasId, siswaId);
       return kometSuccess(null);
     } catch (e) {
       return kometFailure(LocalStorageFailure(e.toString()));

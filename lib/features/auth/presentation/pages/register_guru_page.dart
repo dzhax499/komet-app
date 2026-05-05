@@ -62,6 +62,7 @@ class _RegisterGuruPageState extends State<RegisterGuruPage> {
                       ),
                     ),
                   ),
+
                 ),
                 
                 // Fixed height for the logo space (matching login page)
