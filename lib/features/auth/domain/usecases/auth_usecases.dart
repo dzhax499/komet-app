@@ -96,3 +96,62 @@ class GoogleLoginUseCase implements UseCaseNoParams<UserModel> {
     return repository.signInWithGoogle();
   }
 }
+
+class UpdateProfileParams {
+  final String userId;
+  final String? nama;
+  final String? photoUrl;
+  UpdateProfileParams({required this.userId, this.nama, this.photoUrl});
+}
+
+class UpdateProfileUseCase implements UseCase<UserModel, UpdateProfileParams> {
+  final AuthRepository repository;
+  UpdateProfileUseCase(this.repository);
+
+  @override
+  KometResult<UserModel> call(UpdateProfileParams params) {
+    return repository.updateProfile(params.userId, nama: params.nama, photoUrl: params.photoUrl);
+  }
+}
+
+class SendPasswordResetOtpUseCase implements UseCase<void, String> {
+  final AuthRepository repository;
+  SendPasswordResetOtpUseCase(this.repository);
+
+  @override
+  KometResult<void> call(String email) {
+    return repository.sendPasswordResetOtp(email);
+  }
+}
+
+class VerifyOtpParams {
+  final String email;
+  final String otp;
+  VerifyOtpParams({required this.email, required this.otp});
+}
+
+class VerifyResetOtpUseCase implements UseCase<void, VerifyOtpParams> {
+  final AuthRepository repository;
+  VerifyResetOtpUseCase(this.repository);
+
+  @override
+  KometResult<void> call(VerifyOtpParams params) {
+    return repository.verifyResetOtp(params.email, params.otp);
+  }
+}
+
+class ResetPasswordParams {
+  final String email;
+  final String newPassword;
+  ResetPasswordParams({required this.email, required this.newPassword});
+}
+
+class ResetPasswordUseCase implements UseCase<void, ResetPasswordParams> {
+  final AuthRepository repository;
+  ResetPasswordUseCase(this.repository);
+
+  @override
+  KometResult<void> call(ResetPasswordParams params) {
+    return repository.resetPassword(params.email, params.newPassword);
+  }
+}

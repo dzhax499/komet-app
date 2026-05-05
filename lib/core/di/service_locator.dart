@@ -120,6 +120,10 @@ Future<void> setupServiceLocator() async {
   sl.registerLazySingleton(() => LogoutUseCase(sl()));
   sl.registerLazySingleton(() => GetCurrentUserUseCase(sl()));
   sl.registerLazySingleton(() => GoogleLoginUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateProfileUseCase(sl()));
+  sl.registerLazySingleton(() => SendPasswordResetOtpUseCase(sl()));
+  sl.registerLazySingleton(() => VerifyResetOtpUseCase(sl()));
+  sl.registerLazySingleton(() => ResetPasswordUseCase(sl()));
 
   sl.registerFactory(
     () => AuthBloc(
@@ -129,6 +133,10 @@ Future<void> setupServiceLocator() async {
       logoutUseCase: sl(),
       getCurrentUserUseCase: sl(),
       googleLoginUseCase: sl(),
+      updateProfileUseCase: sl(),
+      sendPasswordResetOtpUseCase: sl(),
+      verifyResetOtpUseCase: sl(),
+      resetPasswordUseCase: sl(),
     ),
   );
 

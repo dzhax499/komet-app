@@ -57,6 +57,37 @@ class AuthGoogleCompleteRegistrationRequested extends AuthEvent {
   List<Object?> get props => [user, role, kodeKelas];
 }
 
+class AuthUpdateProfileRequested extends AuthEvent {
+  final String? nama;
+  final String? photoUrl;
+  AuthUpdateProfileRequested({this.nama, this.photoUrl});
+  @override
+  List<Object?> get props => [nama, photoUrl];
+}
+
+class AuthForgotPasswordRequested extends AuthEvent {
+  final String email;
+  AuthForgotPasswordRequested({required this.email});
+  @override
+  List<Object?> get props => [email];
+}
+
+class AuthVerifyOtpRequested extends AuthEvent {
+  final String email;
+  final String otp;
+  AuthVerifyOtpRequested({required this.email, required this.otp});
+  @override
+  List<Object?> get props => [email, otp];
+}
+
+class AuthResetPasswordRequested extends AuthEvent {
+  final String email;
+  final String newPassword;
+  AuthResetPasswordRequested({required this.email, required this.newPassword});
+  @override
+  List<Object?> get props => [email, newPassword];
+}
+
 // ── STATES ──────────────────────────────────────────────────────────────────
 abstract class AuthState extends Equatable {
   @override
@@ -86,6 +117,10 @@ class AuthGoogleNeedsRole extends AuthState {
   List<Object?> get props => [user];
 }
 
+class AuthOtpSent extends AuthState {}
+class AuthOtpVerified extends AuthState {}
+class AuthPasswordResetSuccess extends AuthState {}
+
 // ── BLOC ────────────────────────────────────────────────────────────────────
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final LoginUseCase loginUseCase;
@@ -94,6 +129,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final LogoutUseCase logoutUseCase;
   final GetCurrentUserUseCase getCurrentUserUseCase;
   final GoogleLoginUseCase googleLoginUseCase;
+  final UpdateProfileUseCase updateProfileUseCase;
+  final SendPasswordResetOtpUseCase sendPasswordResetOtpUseCase;
+  final VerifyResetOtpUseCase verifyResetOtpUseCase;
+  final ResetPasswordUseCase resetPasswordUseCase;
 
   AuthBloc({
     required this.loginUseCase,
@@ -102,6 +141,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this.logoutUseCase,
     required this.getCurrentUserUseCase,
     required this.googleLoginUseCase,
+    required this.updateProfileUseCase,
+    required this.sendPasswordResetOtpUseCase,
+    required this.verifyResetOtpUseCase,
+    required this.resetPasswordUseCase,
   }) : super(AuthInitial()) {
     on<AuthCheckStatusRequested>(_onCheckStatus);
     on<AuthLoginRequested>(_onLogin);
@@ -110,6 +153,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthLogoutRequested>(_onLogout);
     on<AuthGoogleLoginRequested>(_onGoogleLogin);
     on<AuthGoogleCompleteRegistrationRequested>(_onGoogleCompleteRegistration);
+    on<AuthUpdateProfileRequested>(_onUpdateProfile);
+    on<AuthForgotPasswordRequested>(_onForgotPassword);
+    on<AuthVerifyOtpRequested>(_onVerifyOtp);
+    on<AuthResetPasswordRequested>(_onResetPassword);
   }
 
   Future<void> _onCheckStatus(AuthCheckStatusRequested event, Emitter<AuthState> emit) async {
@@ -205,6 +252,54 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthAuthenticated(result.data!));
     } else {
       emit(AuthError(result.failure?.message ?? 'Gagal melengkapi pendaftaran'));
+    }
+  }
+
+  Future<void> _onUpdateProfile(AuthUpdateProfileRequested event, Emitter<AuthState> emit) async {
+    if (state is AuthAuthenticated) {
+      final currentUser = (state as AuthAuthenticated).user;
+      emit(AuthLoading());
+      final result = await updateProfileUseCase(UpdateProfileParams(
+        userId: currentUser.id,
+        nama: event.nama,
+        photoUrl: event.photoUrl,
+      ));
+      if (result.data != null) {
+        emit(AuthAuthenticated(result.data!));
+      } else {
+        emit(AuthError(result.failure?.message ?? 'Gagal update profile'));
+        emit(AuthAuthenticated(currentUser)); // Revert back to previous user
+      }
+    }
+  }
+
+  Future<void> _onForgotPassword(AuthForgotPasswordRequested event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    final result = await sendPasswordResetOtpUseCase(event.email);
+    if (result.failure == null) {
+      emit(AuthOtpSent());
+    } else {
+      emit(AuthError(result.failure?.message ?? 'Gagal mengirim OTP'));
+    }
+  }
+
+  Future<void> _onVerifyOtp(AuthVerifyOtpRequested event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    final result = await verifyResetOtpUseCase(VerifyOtpParams(email: event.email, otp: event.otp));
+    if (result.failure == null) {
+      emit(AuthOtpVerified());
+    } else {
+      emit(AuthError(result.failure?.message ?? 'OTP salah atau kadaluarsa'));
+    }
+  }
+
+  Future<void> _onResetPassword(AuthResetPasswordRequested event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    final result = await resetPasswordUseCase(ResetPasswordParams(email: event.email, newPassword: event.newPassword));
+    if (result.failure == null) {
+      emit(AuthPasswordResetSuccess());
+    } else {
+      emit(AuthError(result.failure?.message ?? 'Gagal mereset password'));
     }
   }
 }

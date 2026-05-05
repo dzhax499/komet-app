@@ -40,7 +40,7 @@ class AuthRepositoryImpl implements AuthRepository {
       await localDataSource.registerGuru(user); 
       return kometSuccess(user);
     } catch (e) {
-      // FIX: AuthFailure parameter positional
+
       return kometFailure(AuthFailure(e.toString()));
     }
   }
@@ -128,6 +128,63 @@ class AuthRepositoryImpl implements AuthRepository {
         }
       }
       return kometSuccess(user);
+    } catch (e) {
+      return kometFailure(AuthFailure(e.toString()));
+    }
+  }
+
+  @override
+  KometResult<UserModel> updateProfile(String userId, {String? nama, String? photoUrl}) async {
+    try {
+      final currentUser = await localDataSource.getCurrentUser();
+      if (currentUser == null) throw Exception("User not found");
+
+      final updatedUser = currentUser.copyWith(
+        nama: nama,
+        photoUrl: photoUrl,
+      );
+
+      // 1. Update remote (MongoDB)
+      await remoteDataSource.updateProfile(updatedUser);
+
+      // 2. Update local (Hive)
+      if (updatedUser.role == 'guru') {
+        await localDataSource.registerGuru(updatedUser);
+      } else {
+        await localDataSource.registerSiswa(updatedUser, null);
+      }
+
+      return kometSuccess(updatedUser);
+    } catch (e) {
+      return kometFailure(AuthFailure(e.toString()));
+    }
+  }
+
+  @override
+  KometResult<void> sendPasswordResetOtp(String email) async {
+    try {
+      await remoteDataSource.sendPasswordResetOtp(email);
+      return kometSuccess(null);
+    } catch (e) {
+      return kometFailure(AuthFailure(e.toString()));
+    }
+  }
+
+  @override
+  KometResult<void> verifyResetOtp(String email, String otp) async {
+    try {
+      await remoteDataSource.verifyResetOtp(email, otp);
+      return kometSuccess(null);
+    } catch (e) {
+      return kometFailure(AuthFailure(e.toString()));
+    }
+  }
+
+  @override
+  KometResult<void> resetPassword(String email, String newPassword) async {
+    try {
+      await remoteDataSource.resetPassword(email, newPassword);
+      return kometSuccess(null);
     } catch (e) {
       return kometFailure(AuthFailure(e.toString()));
     }

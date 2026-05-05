@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "514431532526-7t14r0ejhqi4mb7ailvlv7valnsdlrql.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.dnhsquad.komet",
+            "certificate_hash": "adc7470c867b1fffde3ca0789626818d5cacf156"
+          }
+        },
+        {
           "client_id": "514431532526-7tunelqplf2mjf126dvsj646g9c42nj4.apps.googleusercontent.com",
           "client_type": 3
         }

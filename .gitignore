@@ -38,6 +38,10 @@ migrate_working_dir/
 **/android/app/debug
 **/android/app/profile
 **/android/app/release
+**/android/**/build/
+**/android/**/run/
+**/android/**/output/
+**/android/**/gradle/
 
 # iOS related
 **/ios/Flutter/Generated.xcconfig
