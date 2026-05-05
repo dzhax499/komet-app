@@ -227,12 +227,9 @@ class _DashboardGuruPageState extends State<DashboardGuruPage> {
                                   ),
                                 ],
                               ),
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
+                            );
+                          },
+                        ),
                   const SizedBox(height: 16),
                   Builder(
                     builder: (blocContext) {
