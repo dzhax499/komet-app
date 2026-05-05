@@ -132,6 +132,9 @@ Future<void> setupServiceLocator() async {
   sl.registerLazySingleton(() => GetCurrentUserUseCase(sl()));
   sl.registerLazySingleton(() => GoogleLoginUseCase(sl()));
   sl.registerLazySingleton(() => UpdateProfileUseCase(sl()));
+  sl.registerLazySingleton(() => SendPasswordResetOtpUseCase(sl()));
+  sl.registerLazySingleton(() => VerifyResetOtpUseCase(sl()));
+  sl.registerLazySingleton(() => ResetPasswordUseCase(sl()));
 
   sl.registerFactory(
     () => AuthBloc(
@@ -142,6 +145,9 @@ Future<void> setupServiceLocator() async {
       getCurrentUserUseCase: sl(),
       googleLoginUseCase: sl(),
       updateProfileUseCase: sl(),
+      sendPasswordResetOtpUseCase: sl(),
+      verifyResetOtpUseCase: sl(),
+      resetPasswordUseCase: sl(),
     ),
   );
 
@@ -236,7 +242,6 @@ Future<void> setupServiceLocator() async {
   sl.registerLazySingleton(() => GetSubmissionsByStudentUseCase(sl()));
   sl.registerLazySingleton(() => SubmitTaskUseCase(sl()));
   
-
   sl.registerFactory(
     () => SubmissionBloc(
       getSubmissionsByStudentUseCase: sl(),
@@ -244,6 +249,7 @@ Future<void> setupServiceLocator() async {
       getSubmissionsByClassUseCase: sl(),
       getReviewCountUseCase: sl(),
       gradeSubmissionUseCase: sl(),
+      submitTaskUseCase: sl(),
     ),
   );
   

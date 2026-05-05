@@ -11,17 +11,24 @@ class AppColors {
 
   // ── Brand Colors (Green Palette) ──────────────────────────────────────────
   /// Hijau Gelap — Primary Dark
-  static const Color primaryDark = Color(0xFF1A3D1F);
+  static const Color primaryDark = Color(0xFF1A3C0A);
 
   /// Hijau Medium — Primary
-  static const Color primary = Color(0xFF2D5A34);
+  static const Color primary = Color(0xFF758837);
 
   /// Hijau Terang — Primary Light
-  static const Color primaryLight = Color(0xFF3D7A45);
+  static const Color primaryLight = Color(0xFF4A7473);
 
   /// Mint Green — Secondary / Card Background
-  static const Color secondary = Color(0xFFCCE4DE);
-  static const Color secondaryLight = Color(0xFFD4E8E0);
+  static const Color secondary = Color(0xFF7AB3C4);
+  static const Color secondaryLight = Color(0xFFDCD9D4);
+
+  // ── New Brand Palette ─────────────────────────────────────────────────────
+  static const Color kometDarkGreen = Color(0xFF1A3C0A);
+  static const Color kometOlive = Color(0xFF758837);
+  static const Color kometWhite = Color(0xFFDCD9D4);
+  static const Color kometTeal = Color(0xFF4A7473);
+  static const Color kometBlue = Color(0xFF7AB3C4);
 
   // ── Surface / Background ──────────────────────────────────────────────────
   /// Background utama aplikasi (Light Greenish Gray)
