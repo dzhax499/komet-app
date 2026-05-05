@@ -91,6 +91,7 @@ class SubmissionRepositoryImpl implements SubmissionRepository {
     String submissionId,
     int grade,
     String teacherComment,
+    SubmissionStatus status,
   ) async {
     try {
       final localSub = await localDataSource.getSubmissionById(submissionId);
@@ -101,7 +102,7 @@ class SubmissionRepositoryImpl implements SubmissionRepository {
       final updatedSub = localSub.copyWith(
         nilai: grade,
         komentarUmum: teacherComment,
-        status: SubmissionStatus.reviewed,
+        status: status,
         updatedAt: DateTime.now(),
       );
 

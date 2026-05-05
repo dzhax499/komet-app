@@ -42,13 +42,34 @@ migrate_working_dir/
 # iOS related
 **/ios/Flutter/Generated.xcconfig
 **/ios/Flutter/flutter_export_environment.sh
+**/ios/Flutter/ephemeral/
+
+# Gradle
+.gradle/
+**/.gradle/
 
 # Windows related
 **/windows/flutter/ephemeral/
 **/windows/flutter/generated_config.cmake
+**/windows/flutter/generated_plugins.cmake
+**/windows/flutter/generated_plugin_registrant.*
 
 # Linux related
 **/linux/flutter/ephemeral/
+**/linux/flutter/generated_plugins.cmake
+**/linux/flutter/generated_plugin_registrant.*
+
+# macOS related
+**/macos/flutter/ephemeral/
+**/macos/Flutter/GeneratedPluginRegistrant.*
+
+# Web related
+**/web/flutter_bootstrap.js
+**/web/flutter_service_worker.js
+
+# Generated plugin files (general)
+**/GeneratedPluginRegistrant.*
+**/generated_plugin_registrant.*
 
 # macOS related
 **/macos/flutter/ephemeral/
