@@ -42,22 +42,22 @@ class KelasLocalDataSourceImpl implements KelasLocalDataSource {
       throw Exception('Kode kelas tidak ditemukan');
     }
 
-    if (kelas.siswaIds.contains(siswaId)) {
-      return kelas;
+    if (!kelas.siswaIds.contains(siswaId)) {
+      final updatedSiswaIds = List<String>.from(kelas.siswaIds)..add(siswaId);
+      final updatedKelas = kelas.copyWith(siswaIds: updatedSiswaIds);
+      await hiveService.saveKelas(updatedKelas);
     }
 
-    final updatedSiswaIds = List<String>.from(kelas.siswaIds)..add(siswaId);
-    final updatedKelas = kelas.copyWith(siswaIds: updatedSiswaIds);
-    await hiveService.saveKelas(updatedKelas);
-
-    // Update user juga
+    // Update user juga (selalu cek agar lokal sinkron)
     final user = hiveService.getCurrentUser();
     if (user != null && user.id == siswaId) {
-      final updatedKelasIds = List<String>.from(user.kelasIds)..add(kelas.id);
-      await hiveService.saveUser(user.copyWith(kelasIds: updatedKelasIds));
+      if (!user.kelasIds.contains(kelas.id)) {
+        final updatedKelasIds = List<String>.from(user.kelasIds)..add(kelas.id);
+        await hiveService.saveUser(user.copyWith(kelasIds: updatedKelasIds));
+      }
     }
 
-    return updatedKelas;
+    return hiveService.getKelasById(kelas.id) ?? kelas;
   }
 
   @override

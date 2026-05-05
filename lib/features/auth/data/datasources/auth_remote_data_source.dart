@@ -36,8 +36,30 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<UserModel> registerSiswa(UserModel user, String? kodeKelas) async {
-
-    return _registerUser(user);
+    final registeredUser = await _registerUser(user);
+    
+    if (kodeKelas != null && kodeKelas.isNotEmpty) {
+      try {
+        final classCollection = await mongoService.classCollection;
+        final classMap = await classCollection.findOne(
+          where.eq('classCode', kodeKelas).eq('deletedAt', null)
+        );
+        
+        if (classMap != null) {
+          await classCollection.updateOne(
+            where.eq('classCode', kodeKelas),
+            modify.addToSet('students', registeredUser.id)
+          );
+          // Return user with updated kelasIds if needed, 
+          // although typically the repository will handle fetching the latest state.
+          return registeredUser.copyWith(kelasIds: [classMap['_id'].toString()]);
+        }
+      } catch (e) {
+        print("DEBUG: Gagal join kelas otomatis saat register: $e");
+      }
+    }
+    
+    return registeredUser;
   }
 
   Future<UserModel> _registerUser(UserModel user) async {

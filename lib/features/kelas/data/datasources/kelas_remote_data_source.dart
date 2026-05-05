@@ -66,6 +66,8 @@ class KelasRemoteDataSourceImpl implements KelasRemoteDataSource {
 
   @override
   Future<List<KelasModel>> getKelasSiswa(String siswaId) async {
+    if (siswaId.isEmpty) return [];
+
     final collection = await mongoService.classCollection;
     final assignmentCol = await mongoService.assignmentCollection;
 

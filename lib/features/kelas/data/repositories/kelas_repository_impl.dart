@@ -148,10 +148,16 @@ class KelasRepositoryImpl implements KelasRepository {
   @override
   KometResult<KelasModel> joinKelas(String kodeKelas, String siswaId) async {
     try {
-      // Update di MongoDB
+      // 1. Update di MongoDB
       final remoteKelas = await remoteDataSource.joinKelas(kodeKelas, siswaId);
-      // Cache ke lokal
+      
+      // 2. Simpan/Update ke lokal Hive
+      // Kita panggil createKelas (yang sebenarnya save/overwrite) untuk memastikan data terbaru ada di lokal
+      await localDataSource.createKelas(remoteKelas);
+      
+      // 3. Jalankan logic join lokal (seperti update user.kelasIds)
       await localDataSource.joinKelas(kodeKelas, siswaId);
+      
       return kometSuccess(remoteKelas);
     } catch (e) {
       return kometFailure(LocalStorageFailure(e.toString()));
