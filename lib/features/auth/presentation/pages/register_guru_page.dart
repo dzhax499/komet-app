@@ -59,7 +59,8 @@ class _RegisterGuruPageState extends State<RegisterGuruPage> {
                         backgroundColor: Colors.white.withValues(alpha: 0.14),
                         shape: const CircleBorder(),
                       ),
-                    ),
+                  ),
+                ),
                 ),
                 
                 // Fixed height for the logo space (matching login page)
