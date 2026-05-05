@@ -69,9 +69,13 @@ class KelasRemoteDataSourceImpl implements KelasRemoteDataSource {
     final collection = await mongoService.classCollection;
     final assignmentCol = await mongoService.assignmentCollection;
 
-    // Mencari siswaId di dalam array students
+    // Mencari kelas di mana siswaId ada di dalam array students
+    // Gunakan raw query untuk memastikan array membership check benar
     final result = await collection.find(
-      where.eq('students', siswaId).eq('deletedAt', null)
+      where.raw({
+        'students': siswaId,
+        'deletedAt': null,
+      })
     ).toList();
 
     List<KelasModel> kelasList = [];

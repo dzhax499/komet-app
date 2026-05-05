@@ -1,8 +1,10 @@
+import 'dart:io' as dart_io;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/service_locator.dart';
+import '../../../../core/models/user_model.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../bloc/kelas_bloc.dart';
 import '../widgets/join_kelas_dialog.dart';
@@ -11,8 +13,17 @@ import '../../../submission/presentation/bloc/submission_event.dart';
 import '../../../submission/presentation/bloc/submission_state.dart';
 import '../../../../core/models/submission_model.dart';
 
-class DashboardSiswaPage extends StatelessWidget {
+class DashboardSiswaPage extends StatefulWidget {
   const DashboardSiswaPage({super.key});
+
+  @override
+  State<DashboardSiswaPage> createState() => _DashboardSiswaPageState();
+}
+
+class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
+  bool _isProfileMenuOpen = false;
+  late KelasBloc _kelasBloc;
+  late SubmissionBloc _submissionBloc;
 
   // Palet warna sesuai tema KOMET
   static const Color _moonstoneBlue = Color(0xFF6FA9BB);
@@ -22,19 +33,33 @@ class DashboardSiswaPage extends StatelessWidget {
   static const Color _phthaloGreen = Color(0xFF19350C);
 
   @override
+  void initState() {
+    super.initState();
+    final authState = context.read<AuthBloc>().state;
+    if (authState is AuthAuthenticated) {
+      _kelasBloc = sl<KelasBloc>()..add(KelasFetchSiswaRequested(authState.user.id));
+      _submissionBloc = sl<SubmissionBloc>()..add(GetSubmissionsByStudentEvent(authState.user.id));
+    } else {
+      _kelasBloc = sl<KelasBloc>();
+      _submissionBloc = sl<SubmissionBloc>();
+    }
+  }
+
+  @override
+  void dispose() {
+    _kelasBloc.close();
+    _submissionBloc.close();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final user = (context.read<AuthBloc>().state as AuthAuthenticated).user;
 
     return MultiBlocProvider(
       providers: [
-        BlocProvider<KelasBloc>(
-          create: (context) =>
-              sl<KelasBloc>()..add(KelasFetchSiswaRequested(user.id)),
-        ),
-        BlocProvider<SubmissionBloc>(
-          create: (context) =>
-              sl<SubmissionBloc>()..add(GetSubmissionsByStudentEvent(user.id)),
-        ),
+        BlocProvider<KelasBloc>.value(value: _kelasBloc),
+        BlocProvider<SubmissionBloc>.value(value: _submissionBloc),
       ],
       child: Scaffold(
         body: Stack(
@@ -58,29 +83,52 @@ class DashboardSiswaPage extends StatelessWidget {
                     const SizedBox(height: 12),
                     // Header
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Icon(Icons.auto_stories_outlined,
-                            color: Colors.white, size: 18),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Student Hub',
-                          style: GoogleFonts.outfit(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w400,
-                            color: Colors.white,
-                          ),
+                        Row(
+                          children: [
+                            const Icon(Icons.auto_stories_outlined,
+                                color: Colors.white, size: 18),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Student Hub',
+                              style: GoogleFonts.outfit(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
                         ),
-                        const Spacer(),
-                        // Tombol Logout
-                        IconButton(
-                          icon: const Icon(Icons.logout,
-                              color: Colors.white, size: 20),
-                          onPressed: () {
-                            context
-                                .read<AuthBloc>()
-                                .add(AuthLogoutRequested());
-                            context.go('/login');
-                          },
+                        Row(
+                          children: [
+                            if (_isProfileMenuOpen)
+                              Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  _buildPillButton(
+                                    label: 'Profile',
+                                    color: const Color(0xFF82903C),
+                                    onTap: () => context.pushNamed('profileSiswa'),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  _buildPillButton(
+                                    label: 'Logout',
+                                    color: const Color(0xFF650002),
+                                    onTap: () {
+                                      context.read<AuthBloc>().add(AuthLogoutRequested());
+                                      context.go('/login');
+                                    },
+                                  ),
+                                ],
+                              ),
+                            const SizedBox(width: 12),
+                            GestureDetector(
+                              onTap: () => setState(() => _isProfileMenuOpen = !_isProfileMenuOpen),
+                              child: _buildProfileAvatar(user, size: 48),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -447,6 +495,57 @@ class DashboardSiswaPage extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPillButton({
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileAvatar(UserModel user, {required double size}) {
+    ImageProvider? imageProvider;
+    if (user.photoUrl != null) {
+      if (user.photoUrl!.startsWith('http')) {
+        imageProvider = NetworkImage(user.photoUrl!);
+      } else {
+        imageProvider = FileImage(dart_io.File(user.photoUrl!));
+      }
+    }
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.black87,
+        image: imageProvider != null
+            ? DecorationImage(image: imageProvider, fit: BoxFit.cover)
+            : null,
+      ),
+      child: imageProvider == null
+          ? Icon(Icons.person, color: Colors.white, size: size * 0.5)
+          : null,
     );
   }
 }
