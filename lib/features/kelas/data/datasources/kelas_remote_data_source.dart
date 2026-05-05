@@ -152,8 +152,16 @@ class KelasRemoteDataSourceImpl implements KelasRemoteDataSource {
     // 3. Hapus semua tugas (assignments) di kelas ini
     await assignmentCol.deleteMany(where.eq('classId', kelasId));
 
-    // 4. Hapus data kelas itu sendiri
+    // 4. Hapus data kelas itu sendiri (Hard Delete)
+    // Coba hapus dengan ID String (default Komet)
     await classCol.deleteOne(where.eq('_id', kelasId));
+    
+    // Fallback: Jika ID di MongoDB ternyata tersimpan sebagai ObjectId
+    if (kelasId.length == 24) {
+      try {
+        await classCol.deleteOne(where.id(ObjectId.fromHexString(kelasId)));
+      } catch (_) {}
+    }
   }
 
   @override

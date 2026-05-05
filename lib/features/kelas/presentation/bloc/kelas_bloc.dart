@@ -217,6 +217,8 @@ class KelasBloc extends Bloc<KelasEvent, KelasState> {
     final result = await deleteKelasUseCase(event.kelasId);
     if (result.failure == null) {
       emit(KelasActionSuccess('Kelas berhasil dihapus'));
+      // Refresh daftar kelas guru agar UI langsung update
+      add(KelasFetchGuruRequested(event.guruId));
     } else {
       emit(KelasError(result.failure!.message));
     }

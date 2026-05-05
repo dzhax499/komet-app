@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -62,7 +61,7 @@ class _RegisterGuruPageState extends State<RegisterGuruPage> {
                       ),
                     ),
                   ),
-
+                ),
                 
                 // Fixed height for the logo space (matching login page)
                 const SizedBox(height: 160),

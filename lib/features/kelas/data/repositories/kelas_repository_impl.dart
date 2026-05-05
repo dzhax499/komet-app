@@ -95,6 +95,21 @@ class KelasRepositoryImpl implements KelasRepository {
   KometResult<List<KelasModel>> getKelasGuru(String guruId) async {
     try {
       final remoteData = await remoteDataSource.getKelasGuru(guruId);
+      
+      // 1. Dapatkan daftar ID dari remote
+      final remoteIds = remoteData.map((k) => k.id).toSet();
+      
+      // 2. Dapatkan daftar ID dari lokal untuk guru ini
+      final localClasses = await localDataSource.getKelasGuru(guruId);
+      
+      // 3. Hapus kelas di lokal yang sudah tidak ada di remote
+      for (final localKelas in localClasses) {
+        if (!remoteIds.contains(localKelas.id)) {
+          await localDataSource.deleteKelas(localKelas.id);
+        }
+      }
+
+      // 4. Update/Create sisanya dari remote
       for (final kelas in remoteData) {
         await localDataSource.createKelas(kelas); 
       }
@@ -114,6 +129,21 @@ class KelasRepositoryImpl implements KelasRepository {
   KometResult<List<KelasModel>> getKelasSiswa(String siswaId) async {
     try {
       final remoteData = await remoteDataSource.getKelasSiswa(siswaId);
+      
+      // 1. Dapatkan daftar ID dari remote
+      final remoteIds = remoteData.map((k) => k.id).toSet();
+      
+      // 2. Dapatkan daftar ID dari lokal untuk siswa ini
+      final localClasses = await localDataSource.getKelasSiswa(siswaId);
+      
+      // 3. Hapus kelas di lokal yang sudah tidak ada di remote
+      for (final localKelas in localClasses) {
+        if (!remoteIds.contains(localKelas.id)) {
+          await localDataSource.deleteKelas(localKelas.id);
+        }
+      }
+
+      // 4. Update/Create sisanya dari remote
       for (final kelas in remoteData) {
         await localDataSource.createKelas(kelas);
       }

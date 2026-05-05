@@ -281,7 +281,7 @@ class _SceneBg {
 class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> {
   late final blockly.BlocklyOptions workspaceConfiguration;
   late final blockly.BlocklyEditor _editor;
-  int _blockCount = 0;
+  final int _blockCount = 0;
   
   // Multi-object scene system
   List<SceneObject> _objects = [];
@@ -564,7 +564,7 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> {
       'objects': _objects.map((o) => {
         'name': o.name,
         'icon': o.icon.codePoint, // save codepoint
-        'baseColor': o.baseColor.value,
+        'baseColor': o.baseColor.toARGB32(),
         'spawnX': o.spawnX,
         'spawnY': o.spawnY,
         'workspaceXml': o.workspaceXml,
@@ -642,6 +642,7 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> {
       komentarHalaman: [],
     );
 
+    if (!mounted) return;
     context.read<SubmissionBloc>().add(SubmitTaskEvent(submission));
   }
 
@@ -1072,7 +1073,7 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> {
                       if (mounted) _showToast("${c['name']} added", Icons.person_add_alt_1_rounded, clr);
                     },
                     child: Container(
-                      decoration: BoxDecoration(color: clr.withOpacity(0.08), borderRadius: BorderRadius.circular(16), border: Border.all(color: clr.withOpacity(0.15))),
+                      decoration: BoxDecoration(color: clr.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(16), border: Border.all(color: clr.withValues(alpha: 0.15))),
                       child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                         Container(width: 42, height: 42, decoration: BoxDecoration(shape: BoxShape.circle, color: clr), child: Icon(c['icon'] as IconData, color: Colors.white, size: 22)),
                         const SizedBox(height: 8),
@@ -1102,7 +1103,7 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> {
           Expanded(child: Text(widget.assignmentTitle.isNotEmpty ? widget.assignmentTitle : "Canvas", style: const TextStyle(color: Color(0xFFE0E0EE), fontSize: 14, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(color: _sel.baseColor.withOpacity(0.15), borderRadius: BorderRadius.circular(4)),
+            decoration: BoxDecoration(color: _sel.baseColor.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(4)),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               Icon(_sel.icon, color: _sel.baseColor, size: 13),
               const SizedBox(width: 4),
@@ -1131,7 +1132,7 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> {
 
   Widget _barBtn(String label, Color c, {VoidCallback? onTap}) {
     return Material(
-      color: c.withOpacity(0.15),
+      color: c.withValues(alpha: 0.15),
       borderRadius: BorderRadius.circular(6),
       child: InkWell(onTap: onTap, borderRadius: BorderRadius.circular(6),
         child: Padding(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -1188,8 +1189,8 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> {
               onLongPress: widget.isReviewMode ? null : () => _onDeleteObject(i),
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 4), padding: const EdgeInsets.symmetric(horizontal: 10),
-                decoration: BoxDecoration(color: s ? o.baseColor.withOpacity(0.12) : Colors.transparent, borderRadius: BorderRadius.circular(6),
-                  border: s ? Border.all(color: o.baseColor.withOpacity(0.4)) : null),
+                decoration: BoxDecoration(color: s ? o.baseColor.withValues(alpha: 0.12) : Colors.transparent, borderRadius: BorderRadius.circular(6),
+                  border: s ? Border.all(color: o.baseColor.withValues(alpha: 0.4)) : null),
                 child: Row(children: [
                   Icon(o.icon, size: 13, color: s ? o.baseColor : const Color(0xFF666680)),
                   const SizedBox(width: 4),
@@ -1207,8 +1208,8 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> {
               onTap: () => setState(() => _bgIndex = i),
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 2), padding: const EdgeInsets.symmetric(horizontal: 8),
-                decoration: BoxDecoration(color: a ? bg.color.withOpacity(0.3) : const Color(0xFF2A2A3E), borderRadius: BorderRadius.circular(4),
-                  border: a ? Border.all(color: bg.color.withOpacity(0.5)) : null),
+                decoration: BoxDecoration(color: a ? bg.color.withValues(alpha: 0.3) : const Color(0xFF2A2A3E), borderRadius: BorderRadius.circular(4),
+                  border: a ? Border.all(color: bg.color.withValues(alpha: 0.5)) : null),
                 child: Row(children: [
                   Icon(bg.icon, size: 10, color: a ? Colors.white70 : const Color(0xFF555566)),
                   const SizedBox(width: 3),
@@ -1294,11 +1295,11 @@ class _ToastWidgetState extends State<_ToastWidget> with SingleTickerProviderSta
   @override
   Widget build(BuildContext context) {
     return Positioned(top: 12, left: 0, right: 0,
-      child: AnimatedBuilder(animation: _ac, builder: (_, __) => Opacity(opacity: _ac.value,
+      child: AnimatedBuilder(animation: _ac, builder: (context, child) => Opacity(opacity: _ac.value,
         child: Transform.translate(offset: Offset(0, -16 * (1 - _ac.value)),
           child: Center(child: Material(color: Colors.transparent, child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-            decoration: BoxDecoration(color: const Color(0xFF2A2A3E), borderRadius: BorderRadius.circular(6), border: Border.all(color: widget.color.withOpacity(0.25))),
+            decoration: BoxDecoration(color: const Color(0xFF2A2A3E), borderRadius: BorderRadius.circular(6), border: Border.all(color: widget.color.withValues(alpha: 0.25))),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               Icon(widget.icon, color: widget.color, size: 15), const SizedBox(width: 8),
               Text(widget.message, style: const TextStyle(color: Color(0xFFDDDDEE), fontSize: 12, fontWeight: FontWeight.w500, decoration: TextDecoration.none)),
