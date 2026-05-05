@@ -8,6 +8,9 @@ import 'package:flutter/foundation.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
 import '../../../../firebase_options.dart';
+import 'package:mailer/mailer.dart';
+import 'package:mailer/smtp_server.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 abstract class AuthRemoteDataSource {
   Future<UserModel> registerGuru(UserModel user);
@@ -15,10 +18,14 @@ abstract class AuthRemoteDataSource {
   Future<UserModel> login(String email, String password);
   Future<UserModel> signInWithGoogle();
   Future<void> updateProfile(UserModel user);
+  Future<void> sendPasswordResetOtp(String email);
+  Future<void> verifyResetOtp(String email, String otp);
+  Future<void> resetPassword(String email, String newPassword);
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final MongoService mongoService;
+  final Map<String, String> _otpStorage = {}; // Penyimpanan OTP sementara untuk simulasi
 
   AuthRemoteDataSourceImpl({required this.mongoService});
 
@@ -74,7 +81,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       throw Exception("Gagal login: ${e.toString()}");
     }
   }
-
   @override
   Future<UserModel> signInWithGoogle() async {
     try {
@@ -137,5 +143,86 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     final bytes = utf8.encode(password);
     final digest = sha256.convert(bytes);
     return digest.toString();
+  }
+
+  @override
+  Future<void> sendPasswordResetOtp(String email) async {
+    try {
+      final collection = await mongoService.userCollection;
+      final user = await collection.findOne(where.eq('email', email));
+      
+      if (user == null) {
+        throw Exception("Email tidak terdaftar.");
+      }
+      
+      if (user['password'] == 'GOOGLE_AUTH') {
+        throw Exception("Gunakan login Google untuk akun ini.");
+      }
+
+      // Generate random 6 digit OTP
+      final otp = (100000 + DateTime.now().microsecondsSinceEpoch % 900000).toString();
+      _otpStorage[email] = otp;
+
+      print("==================================================");
+      print("MENGIRIM EMAIL OTP");
+      print("Ke: $email");
+      print("Kode OTP: $otp");
+      print("==================================================");
+
+      final smtpEmail = dotenv.env['SMTP_EMAIL'];
+      final smtpPassword = dotenv.env['SMTP_PASSWORD'];
+
+      if (smtpEmail == null || smtpPassword == null || smtpEmail.isEmpty || smtpPassword.isEmpty || smtpEmail == 'your_email@gmail.com') {
+        print("WARNING: Kredensial SMTP belum diatur di .env. Menggunakan mode simulasi.");
+        return; // Fallback ke mode simulasi jika belum ada di .env
+      }
+
+      final smtpServer = gmail(smtpEmail, smtpPassword);
+
+      final message = Message()
+        ..from = Address(smtpEmail, 'Komet App')
+        ..recipients.add(email)
+        ..subject = 'Kode Verifikasi Lupa Password Komet'
+        ..html = '''
+          <div style="font-family: sans-serif; padding: 20px; text-align: center;">
+            <h2>Reset Password Anda</h2>
+            <p>Anda menerima email ini karena Anda meminta untuk mengatur ulang kata sandi akun Komet Anda.</p>
+            <p>Berikut adalah kode OTP Anda:</p>
+            <h1 style="color: #4A7473; letter-spacing: 5px;">$otp</h1>
+            <p>Kode ini hanya berlaku sementara. Jangan bagikan kode ini kepada siapa pun.</p>
+          </div>
+        ''';
+
+      final sendReport = await send(message, smtpServer);
+      print('Email terkirim: ${sendReport.toString()}');
+
+    } catch (e) {
+      print("Error mengirim email: ${e.toString()}");
+      throw Exception("Gagal mengirim OTP: ${e.toString()}");
+    }
+  }
+
+  @override
+  Future<void> verifyResetOtp(String email, String otp) async {
+    if (_otpStorage[email] != otp) {
+      throw Exception("Kode OTP salah atau sudah kadaluarsa.");
+    }
+  }
+
+  @override
+  Future<void> resetPassword(String email, String newPassword) async {
+    try {
+      final collection = await mongoService.userCollection;
+      final hashedNewPassword = _hashPassword(newPassword);
+      
+      await collection.update(
+        where.eq('email', email),
+        modify.set('password', hashedNewPassword),
+      );
+
+      _otpStorage.remove(email);
+    } catch (e) {
+      throw Exception("Gagal mereset password: \${e.toString()}");
+    }
   }
 }

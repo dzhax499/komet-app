@@ -20,4 +20,6 @@ abstract class KelasRepository {
   KometResult<void> removeStudent(String kelasId, String siswaId);
   
   KometResult<List<UserModel>> getSiswaInKelas(String kelasId);
+
+  KometResult<void> leaveKelas(String kelasId, String siswaId);
 }

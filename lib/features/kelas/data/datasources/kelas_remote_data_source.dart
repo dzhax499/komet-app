@@ -14,6 +14,7 @@ abstract class KelasRemoteDataSource {
   Future<void> removeStudent(String kelasId, String siswaId);
   Future<List<UserModel>> getSiswaInKelas(String kelasId);
   Future<bool> isKodeKelasAvailable(String kodeKelas);
+  Future<void> leaveKelas(String kelasId, String siswaId);
 }
 
 class KelasRemoteDataSourceImpl implements KelasRemoteDataSource {
@@ -210,5 +211,14 @@ class KelasRemoteDataSourceImpl implements KelasRemoteDataSource {
     final collection = await mongoService.classCollection;
     final map = await collection.findOne(where.eq('classCode', kodeKelas));
     return map == null;
+  }
+
+  @override
+  Future<void> leaveKelas(String kelasId, String siswaId) async {
+    final collection = await mongoService.classCollection;
+    await collection.updateOne(
+      where.eq('_id', kelasId),
+      modify.pull('students', siswaId),
+    );
   }
 }

@@ -29,20 +29,20 @@ class AppTheme {
       ),
       scaffoldBackgroundColor: const Color(0xFFEEF2EE),
       textTheme: TextTheme(
-        displayLarge: GoogleFonts.outfit(color: AppColors.primaryDark),
-        displayMedium: GoogleFonts.outfit(color: AppColors.primaryDark),
-        displaySmall: GoogleFonts.outfit(color: AppColors.primaryDark),
-        bodyLarge: GoogleFonts.dmSans(color: AppColors.primaryDark),
-        bodyMedium: GoogleFonts.dmSans(color: AppColors.primaryDark),
-        bodySmall: GoogleFonts.dmSans(color: AppColors.textSecondary),
-        labelLarge: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+        displayLarge: GoogleFonts.nunito(color: AppColors.primaryDark),
+        displayMedium: GoogleFonts.nunito(color: AppColors.primaryDark),
+        displaySmall: GoogleFonts.nunito(color: AppColors.primaryDark),
+        bodyLarge: GoogleFonts.nunito(color: AppColors.primaryDark),
+        bodyMedium: GoogleFonts.nunito(color: AppColors.primaryDark),
+        bodySmall: GoogleFonts.nunito(color: AppColors.textSecondary),
+        labelLarge: GoogleFonts.nunito(fontWeight: FontWeight.w600),
       ),
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.white,
         foregroundColor: AppColors.primaryDark,
         elevation: 0,
         centerTitle: false,
-        titleTextStyle: GoogleFonts.outfit(
+        titleTextStyle: GoogleFonts.nunito(
           fontSize: 20,
           fontWeight: FontWeight.bold,
           color: AppColors.primaryDark,
@@ -65,7 +65,7 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
-          textStyle: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+          textStyle: GoogleFonts.nunito(fontWeight: FontWeight.w600),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           elevation: 0,
@@ -82,7 +82,7 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
-          textStyle: GoogleFonts.dmSans(fontWeight: FontWeight.w600),
+          textStyle: GoogleFonts.nunito(fontWeight: FontWeight.w600),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -105,11 +105,11 @@ class AppTheme {
           borderRadius: BorderRadius.circular(50),
           borderSide: const BorderSide(color: AppColors.error, width: 1.5),
         ),
-        hintStyle: GoogleFonts.dmSans(color: AppColors.textDisabled),
+        hintStyle: GoogleFonts.nunito(color: AppColors.textDisabled),
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.primaryDark,
-        contentTextStyle: GoogleFonts.dmSans(color: Colors.white),
+        contentTextStyle: GoogleFonts.nunito(color: Colors.white),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
@@ -140,20 +140,20 @@ class AppTheme {
       ),
       scaffoldBackgroundColor: AppColors.primaryDark,
       textTheme: TextTheme(
-        displayLarge: GoogleFonts.outfit(color: Colors.white),
-        displayMedium: GoogleFonts.outfit(color: Colors.white),
-        displaySmall: GoogleFonts.outfit(color: Colors.white),
-        bodyLarge: GoogleFonts.dmSans(color: Colors.white.withValues(alpha: 0.9)),
-        bodyMedium: GoogleFonts.dmSans(color: Colors.white.withValues(alpha: 0.8)),
-        bodySmall: GoogleFonts.dmSans(color: Colors.white.withValues(alpha: 0.6)),
-        labelLarge: GoogleFonts.outfit(fontWeight: FontWeight.w600, color: Colors.white),
+        displayLarge: GoogleFonts.nunito(color: Colors.white),
+        displayMedium: GoogleFonts.nunito(color: Colors.white),
+        displaySmall: GoogleFonts.nunito(color: Colors.white),
+        bodyLarge: GoogleFonts.nunito(color: Colors.white.withValues(alpha: 0.9)),
+        bodyMedium: GoogleFonts.nunito(color: Colors.white.withValues(alpha: 0.8)),
+        bodySmall: GoogleFonts.nunito(color: Colors.white.withValues(alpha: 0.6)),
+        labelLarge: GoogleFonts.nunito(fontWeight: FontWeight.w600, color: Colors.white),
       ),
       appBarTheme: AppBarTheme(
         backgroundColor: AppColors.primaryDark,
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: false,
-        titleTextStyle: GoogleFonts.outfit(
+        titleTextStyle: GoogleFonts.nunito(
           fontSize: 20,
           fontWeight: FontWeight.bold,
           color: Colors.white,
@@ -176,7 +176,7 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
-          textStyle: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+          textStyle: GoogleFonts.nunito(fontWeight: FontWeight.w600),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           elevation: 0,
@@ -202,11 +202,11 @@ class AppTheme {
           borderRadius: BorderRadius.circular(50),
           borderSide: const BorderSide(color: AppColors.error, width: 1.5),
         ),
-        hintStyle: GoogleFonts.dmSans(color: Colors.white.withValues(alpha: 0.3)),
+        hintStyle: GoogleFonts.nunito(color: Colors.white.withValues(alpha: 0.3)),
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.secondary,
-        contentTextStyle: GoogleFonts.dmSans(color: AppColors.primaryDark),
+        contentTextStyle: GoogleFonts.nunito(color: AppColors.primaryDark),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),

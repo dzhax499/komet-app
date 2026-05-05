@@ -29,6 +29,9 @@ class KometRoutes {
   static const String registerSiswa = '/register/siswa';
   static const String registerGuru = '/register/guru';
   static const String profileGuru = '/profile/guru';
+  static const String forgotPassword = '/forgot-password';
+  static const String forgotPasswordOtp = '/forgot-password/otp';
+  static const String forgotPasswordReset = '/forgot-password/reset';
 
   // Dashboard — PIC A
   static const String dashboardGuru = '/dashboard/guru';

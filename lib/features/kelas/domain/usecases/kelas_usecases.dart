@@ -74,3 +74,19 @@ class GetSiswaInKelasUseCase implements UseCase<List<UserModel>, String> {
     return repository.getSiswaInKelas(kelasId);
   }
 }
+
+class LeaveKelasParams {
+  final String kelasId;
+  final String siswaId;
+  LeaveKelasParams({required this.kelasId, required this.siswaId});
+}
+
+class LeaveKelasUseCase implements UseCase<void, LeaveKelasParams> {
+  final KelasRepository repository;
+  LeaveKelasUseCase(this.repository);
+
+  @override
+  KometResult<void> call(LeaveKelasParams params) {
+    return repository.leaveKelas(params.kelasId, params.siswaId);
+  }
+}

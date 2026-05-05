@@ -115,7 +115,6 @@ class AuthRepositoryImpl implements AuthRepository {
       return kometFailure(AuthFailure(e.toString()));
     }
   }
-
   @override
   KometResult<UserModel> signInWithGoogle() async {
     try {
@@ -156,6 +155,36 @@ class AuthRepositoryImpl implements AuthRepository {
       }
 
       return kometSuccess(updatedUser);
+    } catch (e) {
+      return kometFailure(AuthFailure(e.toString()));
+    }
+  }
+
+  @override
+  KometResult<void> sendPasswordResetOtp(String email) async {
+    try {
+      await remoteDataSource.sendPasswordResetOtp(email);
+      return kometSuccess(null);
+    } catch (e) {
+      return kometFailure(AuthFailure(e.toString()));
+    }
+  }
+
+  @override
+  KometResult<void> verifyResetOtp(String email, String otp) async {
+    try {
+      await remoteDataSource.verifyResetOtp(email, otp);
+      return kometSuccess(null);
+    } catch (e) {
+      return kometFailure(AuthFailure(e.toString()));
+    }
+  }
+
+  @override
+  KometResult<void> resetPassword(String email, String newPassword) async {
+    try {
+      await remoteDataSource.resetPassword(email, newPassword);
+      return kometSuccess(null);
     } catch (e) {
       return kometFailure(AuthFailure(e.toString()));
     }

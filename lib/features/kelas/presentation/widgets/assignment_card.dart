@@ -3,11 +3,15 @@ import 'package:flutter/material.dart';
 class AssignmentCard extends StatelessWidget {
   final String title;
   final String deadline;
+  final bool isStudent;
+  final VoidCallback? onTap;
 
   const AssignmentCard({
     super.key,
     required this.title,
     required this.deadline,
+    this.isStudent = false,
+    this.onTap,
   });
 
   @override
@@ -75,8 +79,73 @@ class AssignmentCard extends StatelessWidget {
               ],
             ),
           ),
+          if (isStudent)
+            GestureDetector(
+              onTap: onTap,
+              child: Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.18),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CustomPaint(
+                      painter: _PlayIconPainter(),
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
+}
+
+class _PlayIconPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFF1F410F)
+      ..style = PaintingStyle.fill;
+
+    // Garis vertikal
+    final barRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0, 0, 3, size.height),
+      const Radius.circular(1.5),
+    );
+    canvas.drawRRect(barRect, paint);
+
+    // Segitiga play dengan ujung sedikit membulat (strokeJoin = round)
+    // Gap 3px dari garis (dari x=3 sampai x=6)
+    final triangleStartX = 6.0;
+    
+    final path = Path();
+    path.moveTo(triangleStartX + 1, 1);
+    path.lineTo(size.width - 1, size.height / 2);
+    path.lineTo(triangleStartX + 1, size.height - 1);
+    path.close();
+
+    final trianglePaint = Paint()
+      ..color = const Color(0xFF1F410F)
+      ..style = PaintingStyle.fill
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = 2.0;
+
+    canvas.drawPath(path, trianglePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
