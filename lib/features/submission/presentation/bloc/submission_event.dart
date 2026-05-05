@@ -40,3 +40,10 @@ class GetReviewCountEvent extends SubmissionEvent {
   @override
   List<Object?> get props => [assignmentIds];
 }
+
+class GetSubmissionsByStudentEvent extends SubmissionEvent {
+  final String studentId;
+  GetSubmissionsByStudentEvent(this.studentId);
+  @override
+  List<Object?> get props => [studentId];
+}
