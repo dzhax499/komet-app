@@ -175,6 +175,7 @@ Future<void> setupServiceLocator() async {
   sl.registerLazySingleton(() => DeleteKelasUseCase(sl()));
   sl.registerLazySingleton(() => GetSiswaInKelasUseCase(sl()));
   sl.registerLazySingleton(() => GetKelasByIdUseCase(sl()));
+  sl.registerLazySingleton(() => LeaveKelasUseCase(sl()));
   sl.registerLazySingleton(() => UpdateKelasUseCase(sl()));
   sl.registerLazySingleton(() => RemoveStudentUseCase(sl()));
 
@@ -186,6 +187,7 @@ Future<void> setupServiceLocator() async {
       joinKelasUseCase: sl(),
       deleteKelasUseCase: sl(),
       getKelasByIdUseCase: sl(),
+      leaveKelasUseCase: sl(),
       getSiswaInKelasUseCase: sl(),
     ),
   );

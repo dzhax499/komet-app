@@ -145,6 +145,7 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const DashboardSiswaPage(), // PIC C (Nike)
     ),
 
+    // ── Kelas (PIC B - Helga) ─────────────────────────────────────
     GoRoute(
       path: KometRoutes.kelasDetail,
       name: 'kelasDetail',
