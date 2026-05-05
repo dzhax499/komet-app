@@ -60,7 +60,6 @@ class _RegisterGuruPageState extends State<RegisterGuruPage> {
                         shape: const CircleBorder(),
                       ),
                     ),
-                  ),
                 ),
                 
                 // Fixed height for the logo space (matching login page)

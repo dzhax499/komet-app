@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "514431532526-tj8rgdib1qhr892ne878idcafd25s1ns.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.dnhsquad.komet",
+            "certificate_hash": "66bdc10669ccd2e30f24e435907ec1d6f13c2d32"
+          }
+        },
+        {
           "client_id": "514431532526-7tunelqplf2mjf126dvsj646g9c42nj4.apps.googleusercontent.com",
           "client_type": 3
         }
