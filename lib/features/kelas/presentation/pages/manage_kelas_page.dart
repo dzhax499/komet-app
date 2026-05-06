@@ -12,6 +12,7 @@ import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../bloc/kelas_bloc.dart';
 import 'package:ming_cute_icons/ming_cute_icons.dart';
 import '../widgets/komet_action_dialog.dart';
+import 'student_detail_page.dart';
 
 class ManageKelasPage extends StatefulWidget {
   final String kelasId;
@@ -68,11 +69,9 @@ class _ManageKelasPageState extends State<ManageKelasPage> {
                 backgroundColor: Colors.green,
               ),
             );
-            // Jika yang dihapus adalah kelas, maka kembali ke dashboard
             if (state.message.contains('Kelas berhasil dihapus')) {
               context.pop(true);
             } else {
-              // Jika aksi lain (misal hapus siswa), baru refresh detail
               _kelasBloc.add(KelasFetchDetailRequested(widget.kelasId));
               _kelasBloc.add(KelasFetchStudentsRequested(widget.kelasId));
             }
@@ -112,7 +111,6 @@ class _ManageKelasPageState extends State<ManageKelasPage> {
                         ),
                         const SliverToBoxAdapter(child: SizedBox(height: 16)),
                         _buildStudentListSliver(context, isSmallScreen),
-                        // Use SliverFillRemaining to handle empty state centering and push the button to the bottom
                         SliverFillRemaining(
                           hasScrollBody: false,
                           child: Column(
@@ -177,10 +175,9 @@ class _ManageKelasPageState extends State<ManageKelasPage> {
               Expanded(
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.edit_outlined,
-                      color: Colors.white,
-                      size: isSmall ? 24 : 28,
+                    Image.asset(
+                      'assets/images/logo.png',
+                      height: isSmall ? 24 : 28,
                     ),
                     const SizedBox(width: 8),
                     Flexible(
@@ -188,7 +185,7 @@ class _ManageKelasPageState extends State<ManageKelasPage> {
                         'Teacher Hub',
                         style: GoogleFonts.nunito(
                           color: Colors.white,
-                          fontSize: isSmall ? 22 : 28,
+                          fontSize: 22,
                           fontWeight: FontWeight.w400,
                         ),
                       ),
@@ -449,25 +446,65 @@ class _ManageKelasPageState extends State<ManageKelasPage> {
                     ),
                   ),
                 ),
+                // Detail button
+                ElevatedButton(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => BlocProvider.value(
+                        value: context.read<KelasBloc>(),
+                        child: StudentDetailPage(
+                          student: student,
+                          kelasId: widget.kelasId,
+                        ),
+                      ),
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black87,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isSmall ? 10 : 16,
+                      vertical: 6,
+                    ),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    'Detail',
+                    style: GoogleFonts.nunito(
+                      fontWeight: FontWeight.w600,
+                      fontSize: isSmall ? 11 : 13,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Remove button
                 ElevatedButton(
                   onPressed: () => _showRemoveStudentDialog(context, student),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFC62828),
-                    foregroundColor: Colors.white,
-                    elevation: 4,
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black87,
+                    elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(20),
                     ),
                     padding: EdgeInsets.symmetric(
-                      horizontal: isSmall ? 12 : 20,
-                      vertical: 8,
+                      horizontal: isSmall ? 10 : 16,
+                      vertical: 6,
                     ),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                   child: Text(
                     'Remove',
                     style: GoogleFonts.nunito(
-                      fontWeight: FontWeight.bold,
-                      fontSize: isSmall ? 12 : 14,
+                      fontWeight: FontWeight.w600,
+                      fontSize: isSmall ? 11 : 13,
                     ),
                   ),
                 ),

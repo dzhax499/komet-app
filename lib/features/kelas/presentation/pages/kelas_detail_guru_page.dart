@@ -458,8 +458,8 @@ class _KelasDetailGuruPageState extends State<KelasDetailGuruPage> {
         }
 
         return Container(
-          padding: const EdgeInsets.only(
-            top: 32,
+          padding: EdgeInsets.only(
+            top: MediaQuery.of(context).padding.top + 6, // dynamically clear status bar
             left: 24,
             right: 24,
             bottom: 0,
@@ -474,9 +474,9 @@ class _KelasDetailGuruPageState extends State<KelasDetailGuruPage> {
               bottomLeft: Radius.circular(20),
               bottomRight: Radius.circular(20),
             ),
-            border: Border(
+            border: const Border(
               bottom: BorderSide(
-                color: Colors.white.withValues(alpha: 0.8),
+                color: Colors.white,
                 width: 4,
               ),
             ),
@@ -489,13 +489,13 @@ class _KelasDetailGuruPageState extends State<KelasDetailGuruPage> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.school, color: Colors.white, size: 22),
+                      Image.asset('assets/images/logo.png', height: 22),
                       const SizedBox(width: 8),
                       Text(
                         'Teacher Hub',
                         style: GoogleFonts.nunito(
                           color: Colors.white,
-                          fontSize: 16,
+                          fontSize: 22,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -511,7 +511,7 @@ class _KelasDetailGuruPageState extends State<KelasDetailGuruPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 6),
               Text(
                 className,
                 style: GoogleFonts.nunito(
@@ -543,7 +543,7 @@ class _KelasDetailGuruPageState extends State<KelasDetailGuruPage> {
                   _buildCopyButton(classCode),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
               _buildTabs(),
             ],
           ),

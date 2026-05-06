@@ -131,13 +131,13 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
                 onTap: () => Navigator.pop(context),
                 child: Row(
                   children: [
-                    Icon(Icons.school_outlined, color: Colors.white, size: 20),
+                    Image.asset('assets/images/logo.png', height: 20),
                     SizedBox(width: 8),
                     Text(
                       'Teacher Hub',
                       style: GoogleFonts.nunito(
                         color: Colors.white,
-                        fontSize: 16,
+                        fontSize: 22,
                         fontWeight: FontWeight.w400,
                       ),
                     ),
@@ -172,7 +172,7 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
   Widget _buildStudentInfoCard() {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF6F8226),
+        color: const Color(0xFF758837),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -190,7 +190,7 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFF19320C), Color(0xFF4C661D)],
+                colors: [Color(0xFF1A3C0A), Color(0xFF758837)],
               ),
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
@@ -321,30 +321,61 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
       },
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        height: 65,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
         ),
-        child: Center(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: Stack(
+            alignment: Alignment.center,
             children: [
-              Icon(Icons.play_arrow, color: Color(0xFF4C661D), size: 36),
-              SizedBox(width: 8),
-              Text(
-                "Preview Scene",
-                style: GoogleFonts.nunito(
-                  color: Color(0xFF4C661D),
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+              Positioned(
+                top: -10,
+                left: -10,
+                right: -10,
+                height: 10,
+                child: Container(
+                  decoration: BoxDecoration(
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.25),
+                        blurRadius: 4,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Center(
+                child: SizedBox(
+                  height: 48,
+                  width: 48,
+                  child: ShaderMask(
+                    shaderCallback: (bounds) => const LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0xFF1A3C0A), Color(0xFF758837)],
+                    ).createShader(bounds),
+                    child: const Stack(
+                      children: [
+                        Icon(
+                          Icons.play_arrow,
+                          color: Colors.white,
+                          size: 48,
+                        ),
+                        Positioned(
+                          left: 10,
+                          top: 10.5,
+                          child: ColoredBox(
+                            color: Colors.white,
+                            child: SizedBox(width: 2.0, height: 27),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -357,7 +388,7 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
   Widget _buildAssessmentCard() {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF6F8226),
+        color: const Color(0xFF758837),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -376,9 +407,11 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFF19320C), Color(0xFF4C661D)],
+                colors: [Color(0xFF1A3C0A), Color(0xFF758837)],
               ),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.2),
@@ -473,6 +506,10 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
                     hintText: 'Feedback...',
                     hintStyle: GoogleFonts.nunito(color: Colors.grey[400]),
                     border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    errorBorder: InputBorder.none,
+                    focusedErrorBorder: InputBorder.none,
                     contentPadding: const EdgeInsets.all(16),
                   ),
                 ),
@@ -488,7 +525,7 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: const Color(0xFF19320C),
+        color: const Color(0xFF1A3C0A),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -536,7 +573,7 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
       decoration: BoxDecoration(
         color: const Color(0xFFD3D8CA),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF19320C), width: 1.5),
+        border: Border.all(color: const Color(0xFF1A3C0A), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.1),
@@ -565,7 +602,7 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
               child: Text(
                 'Revision',
                 style: GoogleFonts.nunito(
-                  color: Color(0xFF19320C),
+                  color: Color(0xFF1A3C0A),
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
@@ -595,3 +632,4 @@ class CustomTrackShape extends RoundedRectSliderTrackShape {
     return Rect.fromLTWH(trackLeft, trackTop, trackWidth, trackHeight);
   }
 }
+

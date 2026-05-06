@@ -131,17 +131,16 @@ class _DashboardGuruPageState extends State<DashboardGuruPage> {
       children: [
         Row(
           children: [
-            Icon(
-              Icons.school_outlined,
-              color: Colors.white,
-              size: isSmall ? 24 : 28,
+            Image.asset(
+              'assets/images/logo.png',
+              height: isSmall ? 24 : 28,
             ),
             const SizedBox(width: 8),
             Text(
               'Teacher Hub',
               style: GoogleFonts.nunito(
                 color: Colors.white,
-                fontSize: isSmall ? 18 : 22,
+                fontSize: 22,
                 fontWeight: FontWeight.w400,
               ),
             ),
@@ -404,7 +403,7 @@ class _DashboardGuruPageState extends State<DashboardGuruPage> {
                 return Center(
                   child: Text(
                     state.message,
-                    style: const TextStyle(color: Colors.red),
+                    style: GoogleFonts.nunito(color: Colors.red),
                   ),
                 );
               }

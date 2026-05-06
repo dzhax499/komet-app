@@ -50,7 +50,7 @@ class AssignmentCard extends StatelessWidget {
                       backgroundColor: Colors.white,
                       child: const Icon(
                         Icons.edit_rounded,
-                        color: Color(0xFF19320C),
+                        color: Color(0xFF1A3C0A),
                         size: 32,
                       ),
                     ),
@@ -82,8 +82,8 @@ class AssignmentCard extends StatelessWidget {
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
                 colors: [
-                  Color(0xFF19320C), // Dark green
-                  Color(0xFF6F8226), // Olive green
+                  Color(0xFF1A3C0A), // Dark green
+                  Color(0xFF758837), // Olive green
                 ],
               ),
             ),
@@ -100,7 +100,7 @@ class AssignmentCard extends StatelessWidget {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        Color(0xFF19320C), // Dark green
+                        Color(0xFF1A3C0A), // Dark green
                         Color(0xFF82903C), // Olive green
                       ],
                     ).createShader(bounds),
@@ -207,3 +207,4 @@ class _PlayIconPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+

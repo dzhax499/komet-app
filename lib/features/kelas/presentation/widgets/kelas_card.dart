@@ -39,7 +39,7 @@ class KelasCard extends StatelessWidget {
                 backgroundColor: Colors.white,
                 child: const Icon(
                   Icons.edit_rounded,
-                  color: Color(0xFF19320C),
+                  color: Color(0xFF1A3C0A),
                   size: 32,
                 ),
               ),
@@ -154,3 +154,4 @@ class KelasCard extends StatelessWidget {
     );
   }
 }
+

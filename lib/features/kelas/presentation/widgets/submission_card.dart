@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/models/submission_model.dart';
 
 class SubmissionCard extends StatelessWidget {
@@ -25,6 +26,195 @@ class SubmissionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isReviewed = submission.status == SubmissionStatus.reviewed;
+    final hasNeedsRevision = submission.status == SubmissionStatus.needsRevision;
+    final hasCancel = onCancel != null;
+    
+    final hasBottomLayer = isReviewed || hasNeedsRevision || hasCancel;
+
+    Color bottomColor = Colors.transparent;
+    Widget? bottomTextWidget;
+
+    if (isReviewed) {
+      bottomColor = const Color(0xFF1A3C0A);
+      bottomTextWidget = Text(
+        'Completed | ${submission.nilai ?? 0} | ${_formatDate(submission.updatedAt)}',
+        style: GoogleFonts.nunito(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      );
+    } else if (hasNeedsRevision) {
+      bottomColor = const Color(0xFFD4941A);
+      bottomTextWidget = Text(
+        'Needs Revision | ${_formatDate(submission.updatedAt)}',
+        style: GoogleFonts.nunito(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      );
+    } else if (hasCancel) {
+      bottomColor = const Color(0xFFF12929);
+      bottomTextWidget = Text(
+        'Cancel',
+        style: GoogleFonts.nunito(
+          color: Colors.white,
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
+      );
+    }
+
+    Widget card = Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.25),
+            blurRadius: 4,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            height: 100,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [
+                  Color(0xFF1A3C0A),
+                  Color(0xFF758837),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.25),
+                  blurRadius: 4,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 26,
+                  backgroundColor: Colors.blue[100],
+                  child: Text(
+                    studentName.isNotEmpty
+                        ? studentName[0].toUpperCase()
+                        : '?',
+                    style: GoogleFonts.nunito(
+                      color: Colors.blueGrey,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        studentName,
+                        style: GoogleFonts.nunito(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        isReviewed
+                            ? 'Completed'
+                            : (hasCancel && !hasNeedsRevision ? 'Waiting for review...' : 'Review'),
+                        style: GoogleFonts.nunito(
+                          color: Colors.white70,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Icon(
+                    Icons.edit,
+                    color: Color(0xFF1A3C0A),
+                    size: 24,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 4,
+            ),
+            child: Center(
+              child: Text(
+                'Task : $assignmentTitle',
+                style: GoogleFonts.nunito(
+                  color: Colors.black87,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (hasBottomLayer) {
+      card = Container(
+        decoration: BoxDecoration(
+          color: bottomColor,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            card,
+            if (hasCancel && !isReviewed && !hasNeedsRevision)
+              GestureDetector(
+                onTap: onCancel,
+                child: Container(
+                  color: Colors.transparent,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: Center(child: bottomTextWidget),
+                ),
+              )
+            else
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Center(child: bottomTextWidget),
+              ),
+          ],
+        ),
+      );
+    }
+
     return GestureDetector(
       onTap: onTap ?? () {
         context.pushNamed('reviewDetail', extra: {
@@ -36,206 +226,9 @@ class SubmissionCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
         child: Column(
           children: [
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                        colors: [
-                          Color(0xFF19320C),
-                          Color(0xFF6F8226),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
-                          blurRadius: 6,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 24,
-                          backgroundColor: Colors.blue[100],
-                          child: Text(
-                            studentName.isNotEmpty
-                                ? studentName[0].toUpperCase()
-                                : '?',
-                            style: const TextStyle(
-                              color: Colors.blueGrey,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                studentName,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                isReviewed
-                                    ? 'Completed'
-                                    : (onCancel != null ? 'Waiting for review...' : 'Review'),
-                                style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: SizedBox(
-                            height: 28,
-                            width: 28,
-                            child: Stack(
-                              children: [
-                                const Icon(
-                                  Icons.play_arrow,
-                                  color: Color(0xFF4C661D),
-                                  size: 28,
-                                ),
-                                Positioned(
-                                  left: 5.8,
-                                  top: 6,
-                                  child: Container(
-                                    width: 2,
-                                    height: 16,
-                                    color: const Color(0xFF4C661D),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    child: Center(
-                      child: Text(
-                        'Task : $assignmentTitle',
-                        style: const TextStyle(
-                          color: Colors.black87,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (isReviewed)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF19320C),
-                        borderRadius: BorderRadius.only(
-                          bottomLeft: Radius.circular(16),
-                          bottomRight: Radius.circular(16),
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          'Completed | ${submission.nilai ?? 0} | ${_formatDate(submission.updatedAt)}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    )
-                  else if (submission.status == SubmissionStatus.needsRevision)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFD4941A),
-                        borderRadius: BorderRadius.only(
-                          bottomLeft: Radius.circular(16),
-                          bottomRight: Radius.circular(16),
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          'Needs Revision | ${_formatDate(submission.updatedAt)}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    )
-                  else if (onCancel != null)
-                    GestureDetector(
-                      onTap: onCancel,
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFF12929),
-                          borderRadius: BorderRadius.only(
-                            bottomLeft: Radius.circular(16),
-                            bottomRight: Radius.circular(16),
-                          ),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            'Cancel',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            if ((isReviewed || submission.status == SubmissionStatus.needsRevision) && (submission.komentarUmum?.isNotEmpty ?? false)) ...[
+            card,
+            if ((isReviewed || hasNeedsRevision) &&
+                (submission.komentarUmum?.isNotEmpty ?? false)) ...[
               const SizedBox(height: 12),
               Container(
                 width: double.infinity,
@@ -253,7 +246,7 @@ class SubmissionCard extends StatelessWidget {
                 ),
                 child: Text(
                   submission.komentarUmum!,
-                  style: const TextStyle(
+                  style: GoogleFonts.nunito(
                     color: Colors.black87,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
