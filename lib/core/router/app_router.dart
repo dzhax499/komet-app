@@ -60,7 +60,7 @@ class _PlaceholderScreen extends StatelessWidget {
 
 // ── Router Instance ──────────────────────────────────────────────────────────
 
-/// Instance GoRouter singleton. Gunakan via GetIt: sl<GoRouter>()
+/// Instance GoRouter singleton. Gunakan via GetIt: `sl<GoRouter>()`
 /// atau langsung di MaterialApp.router sebagai routerConfig.
 final GoRouter appRouter = GoRouter(
   initialLocation: KometRoutes.splash,

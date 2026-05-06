@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../../../core/models/submission_model.dart';
 import '../../../submission/presentation/bloc/submission_bloc.dart';
@@ -10,7 +11,11 @@ import 'submission_canvas_page.dart';
 class ReviewSubmissionPage extends StatefulWidget {
   final SubmissionModel submission;
   final String assignmentTitle;
-  const ReviewSubmissionPage({super.key, required this.submission, required this.assignmentTitle});
+  const ReviewSubmissionPage({
+    super.key,
+    required this.submission,
+    required this.assignmentTitle,
+  });
 
   @override
   State<ReviewSubmissionPage> createState() => _ReviewSubmissionPageState();
@@ -43,16 +48,12 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
         listener: (context, state) {
           if (state is SubmissionGradedSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Penilaian berhasil disimpan!'),
-              ),
+              const SnackBar(content: Text('Penilaian berhasil disimpan!')),
             );
             Navigator.pop(context);
           } else if (state is SubmissionFailure) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Gagal menilai: ${state.message}'),
-              ),
+              SnackBar(content: Text('Gagal menilai: ${state.message}')),
             );
           }
         },
@@ -62,10 +63,7 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFF86B3C0),
-                  Color(0xFFE3E2E0),
-                ],
+                colors: [Color(0xFF86B3C0), Color(0xFFE3E2E0)],
                 stops: [0.0, 1.0],
               ),
             ),
@@ -104,31 +102,18 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
 
   Widget _buildHeader(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.only(
-        top: 50,
-        left: 24,
-        right: 24,
-        bottom: 20,
-      ),
+      padding: const EdgeInsets.only(top: 50, left: 24, right: 24, bottom: 20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF6B7E25),
-            Color(0xFF1F410F),
-          ],
+          colors: [Color(0xFF6B7E25), Color(0xFF1F410F)],
         ),
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(24),
           bottomRight: Radius.circular(24),
         ),
-        border: const Border(
-          bottom: BorderSide(
-            color: Colors.white,
-            width: 2,
-          ),
-        ),
+        border: const Border(bottom: BorderSide(color: Colors.white, width: 2)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.2),
@@ -144,17 +129,13 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
             children: [
               GestureDetector(
                 onTap: () => Navigator.pop(context),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(
-                      Icons.school_outlined,
-                      color: Colors.white,
-                      size: 20,
-                    ),
+                    Icon(Icons.school_outlined, color: Colors.white, size: 20),
                     SizedBox(width: 8),
                     Text(
                       'Teacher Hub',
-                      style: TextStyle(
+                      style: GoogleFonts.nunito(
                         color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.w400,
@@ -168,17 +149,13 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
           const SizedBox(height: 16),
           GestureDetector(
             onTap: () => Navigator.pop(context),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(
-                  Icons.reply,
-                  color: Colors.white,
-                  size: 28,
-                ),
+                Icon(Icons.reply, color: Colors.white, size: 28),
                 SizedBox(width: 12),
                 Text(
                   'Review Submission',
-                  style: TextStyle(
+                  style: GoogleFonts.nunito(
                     color: Colors.white,
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -213,10 +190,7 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF19320C),
-                  Color(0xFF4C661D),
-                ],
+                colors: [Color(0xFF19320C), Color(0xFF4C661D)],
               ),
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
@@ -232,11 +206,7 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
                 CircleAvatar(
                   radius: 28,
                   backgroundColor: Colors.blue[100],
-                  child: const Icon(
-                    Icons.person,
-                    color: Colors.blueGrey,
-                    size: 36,
-                  ),
+                  child: Icon(Icons.person, color: Colors.blueGrey, size: 36),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -245,7 +215,7 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
                     children: [
                       Text(
                         'Student ID: ${widget.submission.siswaId.substring(0, 8)}',
-                        style: const TextStyle(
+                        style: GoogleFonts.nunito(
                           color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -254,7 +224,7 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
                       const SizedBox(height: 4),
                       Text(
                         'Status: ${widget.submission.status.name}',
-                        style: const TextStyle(
+                        style: GoogleFonts.nunito(
                           color: Colors.white70,
                           fontSize: 14,
                         ),
@@ -269,32 +239,31 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Table(
               border: const TableBorder(
-                horizontalInside: BorderSide(
-                  color: Colors.white54,
-                  width: 1,
-                ),
-                verticalInside: BorderSide(
-                  color: Colors.white54,
-                  width: 1,
-                ),
+                horizontalInside: BorderSide(color: Colors.white54, width: 1),
+                verticalInside: BorderSide(color: Colors.white54, width: 1),
               ),
               columnWidths: const {
                 0: FlexColumnWidth(1),
                 1: FlexColumnWidth(2.5),
               },
               children: [
-                _buildTableRow(
-                  'Task',
-                  widget.assignmentTitle,
-                ),
+                _buildTableRow('Task', widget.assignmentTitle),
                 _buildTableRow(
                   'Blok',
-                  '${(widget.submission.storyDataJson?.split('<block')?.length ?? 1) - 1}',
+                  '${widget.submission.storyDataJson.split('<block').length - 1}',
                 ),
                 _buildTableRow(
                   'Submit',
                   widget.submission.submittedAt != null
-                      ? '${widget.submission.submittedAt!.day.toString().padLeft(2, '0')}/${widget.submission.submittedAt!.month.toString().padLeft(2, '0')}/${widget.submission.submittedAt!.year} ${widget.submission.submittedAt!.hour.toString().padLeft(2, '0')}:${widget.submission.submittedAt!.minute.toString().padLeft(2, '0')}'
+                      ? () {
+                          final dt = widget.submission.submittedAt!;
+                          final d = dt.day.toString().padLeft(2, '0');
+                          final m = dt.month.toString().padLeft(2, '0');
+                          final y = dt.year;
+                          final h = dt.hour.toString().padLeft(2, '0');
+                          final min = dt.minute.toString().padLeft(2, '0');
+                          return "$d/$m/$y $h:$min";
+                        }()
                       : '-',
                 ),
               ],
@@ -309,27 +278,21 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
     return TableRow(
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 8,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Text(
             label,
-            style: const TextStyle(
+            style: GoogleFonts.nunito(
               color: Colors.white,
               fontWeight: FontWeight.w500,
             ),
           ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 8,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Text(
             value,
             textAlign: TextAlign.right,
-            style: const TextStyle(color: Colors.white),
+            style: GoogleFonts.nunito(color: Colors.white),
           ),
         ),
       ],
@@ -370,19 +333,15 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
             ),
           ],
         ),
-        child: const Center(
+        child: Center(
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.play_arrow,
-                color: Color(0xFF4C661D),
-                size: 36,
-              ),
+              Icon(Icons.play_arrow, color: Color(0xFF4C661D), size: 36),
               SizedBox(width: 8),
               Text(
                 "Preview Scene",
-                style: TextStyle(
+                style: GoogleFonts.nunito(
                   color: Color(0xFF4C661D),
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -417,10 +376,7 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF19320C),
-                  Color(0xFF4C661D),
-                ],
+                colors: [Color(0xFF19320C), Color(0xFF4C661D)],
               ),
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
@@ -437,9 +393,9 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'Assessment',
-                      style: TextStyle(
+                      style: GoogleFonts.nunito(
                         color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -456,7 +412,7 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
                       ),
                       child: Text(
                         '${_assessmentValue.toInt()}/100',
-                        style: const TextStyle(
+                        style: GoogleFonts.nunito(
                           color: Colors.black87,
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
@@ -512,10 +468,10 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
                   maxLines: null,
                   expands: true,
                   textAlignVertical: TextAlignVertical.top,
-                  style: const TextStyle(color: Colors.black87),
+                  style: GoogleFonts.nunito(color: Colors.black87),
                   decoration: InputDecoration(
                     hintText: 'Feedback...',
-                    hintStyle: TextStyle(color: Colors.grey[400]),
+                    hintStyle: GoogleFonts.nunito(color: Colors.grey[400]),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.all(16),
                   ),
@@ -556,12 +512,12 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
             );
           },
           borderRadius: BorderRadius.circular(20),
-          child: const Padding(
+          child: Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
             child: Center(
               child: Text(
                 'Approve',
-                style: TextStyle(
+                style: GoogleFonts.nunito(
                   color: Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -580,10 +536,7 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
       decoration: BoxDecoration(
         color: const Color(0xFFD3D8CA),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFF19320C),
-          width: 1.5,
-        ),
+        border: Border.all(color: const Color(0xFF19320C), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.1),
@@ -606,12 +559,12 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
             );
           },
           borderRadius: BorderRadius.circular(20),
-          child: const Padding(
+          child: Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
             child: Center(
               child: Text(
                 'Revision',
-                style: TextStyle(
+                style: GoogleFonts.nunito(
                   color: Color(0xFF19320C),
                   fontSize: 18,
                   fontWeight: FontWeight.bold,

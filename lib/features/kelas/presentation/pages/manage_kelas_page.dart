@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:boxicons/boxicons.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../../../core/models/kelas_model.dart';
@@ -124,7 +125,7 @@ class _ManageKelasPageState extends State<ManageKelasPage> {
                                       child: Text(
                                         "Belum ada siswa di kelas ini",
                                         textAlign: TextAlign.center,
-                                        style: const TextStyle(
+                                        style: GoogleFonts.nunito(
                                           color: Colors.white70,
                                           fontSize: 16,
                                         ),
@@ -185,7 +186,7 @@ class _ManageKelasPageState extends State<ManageKelasPage> {
                     Flexible(
                       child: Text(
                         'Teacher Hub',
-                        style: TextStyle(
+                        style: GoogleFonts.nunito(
                           color: Colors.white,
                           fontSize: isSmall ? 22 : 28,
                           fontWeight: FontWeight.w400,
@@ -283,7 +284,7 @@ class _ManageKelasPageState extends State<ManageKelasPage> {
                     child: Center(
                       child: Text(
                         initial,
-                        style: TextStyle(
+                        style: GoogleFonts.nunito(
                           color: Colors.black,
                           fontWeight: FontWeight.bold,
                           fontSize: isSmall ? 14 : 18,
@@ -315,7 +316,7 @@ class _ManageKelasPageState extends State<ManageKelasPage> {
                   child: Text(
                     'Code: ${kelas.kodeKelas}',
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
+                    style: GoogleFonts.nunito(
                       color: Colors.white,
                       fontSize: isSmall ? 12 : 14,
                       fontWeight: FontWeight.w500,
@@ -391,7 +392,7 @@ class _ManageKelasPageState extends State<ManageKelasPage> {
               child: Text(
                 label,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
+                style: GoogleFonts.nunito(
                   color: Colors.white,
                   fontSize: isSmall ? 10 : 12,
                   fontWeight: FontWeight.w400,
@@ -441,7 +442,7 @@ class _ManageKelasPageState extends State<ManageKelasPage> {
                 Expanded(
                   child: Text(
                     student.nama,
-                    style: TextStyle(
+                    style: GoogleFonts.nunito(
                       color: Colors.white,
                       fontSize: isSmall ? 16 : 18,
                       fontWeight: FontWeight.w500,
@@ -464,7 +465,7 @@ class _ManageKelasPageState extends State<ManageKelasPage> {
                   ),
                   child: Text(
                     'Remove',
-                    style: TextStyle(
+                    style: GoogleFonts.nunito(
                       fontWeight: FontWeight.bold,
                       fontSize: isSmall ? 12 : 14,
                     ),
@@ -517,7 +518,7 @@ class _ManageKelasPageState extends State<ManageKelasPage> {
             ),
             child: Text(
               'Remove Class',
-              style: TextStyle(
+              style: GoogleFonts.nunito(
                 color: Colors.white,
                 fontSize: isSmall ? 18 : 22,
                 fontWeight: FontWeight.bold,
