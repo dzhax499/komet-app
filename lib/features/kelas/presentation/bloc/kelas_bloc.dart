@@ -6,6 +6,9 @@ import '../../domain/usecases/kelas_usecases.dart';
 import '../../domain/usecases/get_kelas_by_id_use_case.dart';
 import '../../domain/usecases/update_kelas_use_case.dart';
 import '../../domain/usecases/remove_student_use_case.dart';
+import 'package:hive/hive.dart';
+import '../../../../core/utils/constants.dart';
+import '../../../../core/local_storage/hive_service.dart';
 import '../../../../core/di/service_locator.dart';
 
 // EVENTS
@@ -87,6 +90,14 @@ class KelasRemoveStudentRequested extends KelasEvent {
   List<Object?> get props => [kelasId, siswaId];
 }
 
+class KelasLeaveRequested extends KelasEvent {
+  final String kelasId;
+  final String siswaId;
+  KelasLeaveRequested({required this.kelasId, required this.siswaId});
+  @override
+  List<Object?> get props => [kelasId, siswaId];
+}
+
 // STATES 
 abstract class KelasState extends Equatable {
   @override
@@ -155,6 +166,24 @@ class KelasBloc extends Bloc<KelasEvent, KelasState> {
     on<KelasUpdateRequested>(_onUpdate);
     on<KelasFetchStudentsRequested>(_onFetchStudents);
     on<KelasRemoveStudentRequested>(_onRemoveStudent);
+    on<KelasLeaveRequested>(_onLeave);
+  }
+
+  Future<void> _onLeave(
+    KelasLeaveRequested event,
+    Emitter<KelasState> emit,
+  ) async {
+    emit(KelasLoading());
+    final result = await leaveKelasUseCase(LeaveKelasParams(
+      kelasId: event.kelasId,
+      siswaId: event.siswaId,
+    ));
+    
+    if (result.failure != null) {
+      emit(KelasError(result.failure!.message));
+    } else {
+      emit(KelasActionSuccess("Berhasil keluar dari kelas"));
+    }
   }
 
   final GetKelasByIdUseCase getKelasByIdUseCase;
@@ -173,6 +202,7 @@ class KelasBloc extends Bloc<KelasEvent, KelasState> {
 
   Future<void> _onFetchSiswa(KelasFetchSiswaRequested event, Emitter<KelasState> emit) async {
     emit(KelasLoading());
+    
     final result = await getKelasSiswaUseCase(event.siswaId);
     if (result.data != null) {
       emit(KelasLoaded(result.data!));

@@ -1,9 +1,12 @@
 import 'dart:io' as dart_io;
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import '../../../../core/di/service_locator.dart';
+import '../../../../core/models/kelas_model.dart';
 import '../../../../core/models/user_model.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../bloc/kelas_bloc.dart';
@@ -47,8 +50,8 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
 
   @override
   void dispose() {
-    _kelasBloc.close();
-    _submissionBloc.close();
+    // JANGAN memanggil .close() pada singleton Bloc dari Service Locator (sl)
+    // karena akan membuat Bloc tersebut mati selamanya selama session ini.
     super.dispose();
   }
 
@@ -161,8 +164,11 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
                             }
                             
                             if (kelasState is KelasLoaded) {
-                              activeClass = kelasState.kelasList.length;
-                              for (var k in kelasState.kelasList) {
+                              // Filter kelas yang benar-benar diikuti oleh siswa ini
+                              final myClasses = kelasState.kelasList.where((k) => k.siswaIds.contains(user.id)).toList();
+                              
+                              activeClass = myClasses.length;
+                              for (var k in myClasses) {
                                 totalAssignments += k.assignmentIds.length;
                               }
                               // Subtract completed to get 'Remaining Tasks'
@@ -268,47 +274,80 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
                                   color: Colors.white),
                             );
                           } else if (state is KelasLoaded) {
-                            if (state.kelasList.isEmpty) {
+                            // Jaring pengaman: Filter lagi di UI agar hanya menampilkan kelas yang 
+                            // benar-benar berisi ID siswa ini.
+                            final myClasses = state.kelasList.where((k) => k.siswaIds.contains(user.id)).toList();
+
+                            if (myClasses.isEmpty) {
                               return _buildEmptyState();
                             }
                             return ListView.separated(
-                              itemCount: state.kelasList.length,
-                              separatorBuilder: (_, __) =>
-                                  const SizedBox(height: 12),
+                              itemCount: myClasses.length,
+                              separatorBuilder: (_, __) => const SizedBox(height: 12),
                               itemBuilder: (context, index) {
-                                final kelas = state.kelasList[index];
-                                return BlocBuilder<SubmissionBloc, SubmissionState>(
-                                  builder: (context, submissionState) {
-                                    int classTasks = kelas.assignmentIds.length;
-                                    int classCompleted = 0;
+                                final kelas = myClasses[index];
+                                return ClipRRect(
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: Slidable(
+                                    key: ValueKey(kelas.id),
+                                    endActionPane: ActionPane(
+                                      motion: const DrawerMotion(),
+                                      extentRatio: 0.2,
+                                      children: [
+                                        CustomSlidableAction(
+                                          onPressed: (context) {
+                                            _showLeaveConfirmation(context, kelas, user.id);
+                                          },
+                                          backgroundColor: Colors.white,
+                                          child: ShaderMask(
+                                            shaderCallback: (bounds) => const LinearGradient(
+                                              begin: Alignment.bottomLeft,
+                                              end: Alignment.topRight,
+                                              colors: [Color(0xFFE5B5B1), Color(0xFFC77A75)],
+                                            ).createShader(bounds),
+                                            child: const Icon(
+                                              Icons.logout_rounded,
+                                              color: Colors.white,
+                                              size: 32,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    child: BlocBuilder<SubmissionBloc, SubmissionState>(
+                                      builder: (context, submissionState) {
+                                        int classTasks = kelas.assignmentIds.length;
+                                        int classCompleted = 0;
 
-                                    if (submissionState is SubmissionSuccess) {
-                                      classCompleted = submissionState.submissions
-                                          .where((s) => (s.status == SubmissionStatus.submitted || s.status == SubmissionStatus.reviewed || s.status == SubmissionStatus.needsRevision) && kelas.assignmentIds.contains(s.assignmentId))
-                                          .length;
-                                    }
-                                    classTasks -= classCompleted;
-                                    if (classTasks < 0) classTasks = 0;
+                                        if (submissionState is SubmissionSuccess) {
+                                          classCompleted = submissionState.submissions
+                                              .where((s) => (s.status == SubmissionStatus.submitted || s.status == SubmissionStatus.reviewed || s.status == SubmissionStatus.needsRevision) && kelas.assignmentIds.contains(s.assignmentId))
+                                              .length;
+                                        }
+                                        classTasks -= classCompleted;
+                                        if (classTasks < 0) classTasks = 0;
 
-                                    return GestureDetector(
-                                      onTap: () {
-                                        context.pushNamed('kelasDetail',
-                                            pathParameters: {
-                                              'kelasId': kelas.id
-                                            }).then((_) {
-                                          context.read<SubmissionBloc>().add(GetSubmissionsByStudentEvent(user.id));
-                                        });
+                                        return GestureDetector(
+                                          onTap: () {
+                                            context.pushNamed('kelasDetail',
+                                                pathParameters: {
+                                                  'kelasId': kelas.id
+                                                }).then((_) {
+                                              context.read<SubmissionBloc>().add(GetSubmissionsByStudentEvent(user.id));
+                                            });
+                                          },
+                                          child: _buildUltraSlimClassCard(
+                                            _phthaloGreen,
+                                            _mustardGreen,
+                                            kelas.nama,
+                                            kelas.kodeKelas,
+                                            classTasks,
+                                            classCompleted,
+                                          ),
+                                        );
                                       },
-                                      child: _buildUltraSlimClassCard(
-                                        _phthaloGreen,
-                                        _mustardGreen,
-                                        kelas.nama,
-                                        kelas.kodeKelas,
-                                        classTasks,
-                                        classCompleted,
-                                      ),
-                                    );
-                                  },
+                                    ),
+                                  ),
                                 );
                               },
                             );
@@ -546,6 +585,121 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
       child: imageProvider == null
           ? Icon(Icons.person, color: Colors.white, size: size * 0.5)
           : null,
+    );
+  }
+
+  void _showLeaveConfirmation(BuildContext context, KelasModel kelas, String siswaId) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.4),
+      builder: (dialogContext) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.3),
+                width: 1.5,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Leave',
+                  style: GoogleFonts.outfit(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                // Tombol Leave (Red Gradient)
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pop(dialogContext);
+                    _kelasBloc.add(
+                      KelasLeaveRequested(kelasId: kelas.id, siswaId: siswaId),
+                    );
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    height: 55,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFFE5B5B1),
+                          const Color(0xFFC77A75).withValues(alpha: 0.8),
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                      borderRadius: BorderRadius.circular(25),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                     ),
+                      ],
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      'Leave',
+                      style: GoogleFonts.outfit(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF19350C),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Tombol Cancel (Blue Gradient)
+                GestureDetector(
+                  onTap: () => Navigator.pop(dialogContext),
+                  child: Container(
+                    width: double.infinity,
+                    height: 55,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFFD4E9EC),
+                          const Color(0xFF90C2C8).withValues(alpha: 0.8),
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                      borderRadius: BorderRadius.circular(25),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      'Cancel',
+                      style: GoogleFonts.outfit(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF19350C),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

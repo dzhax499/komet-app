@@ -11,6 +11,7 @@ abstract class KelasLocalDataSource {
   Future<KelasModel> updateKelas(KelasModel kelas);
   Future<void> deleteKelas(String kelasId);
   Future<void> removeStudent(String kelasId, String siswaId);
+  Future<void> leaveKelas(String kelasId, String siswaId);
   Future<List<UserModel>> getSiswaInKelas(String kelasId);
 }
 
@@ -84,6 +85,19 @@ class KelasLocalDataSourceImpl implements KelasLocalDataSource {
     if (kelas != null) {
       final updatedSiswaIds = List<String>.from(kelas.siswaIds)..remove(siswaId);
       await hiveService.saveKelas(kelas.copyWith(siswaIds: updatedSiswaIds));
+    }
+  }
+
+  @override
+  Future<void> leaveKelas(String kelasId, String siswaId) async {
+    // 1. Hapus kelas dari daftar kelas lokal
+    await hiveService.deleteKelas(kelasId);
+
+    // 2. Update user lokal agar kelasIds-nya berkurang
+    final user = hiveService.getCurrentUser();
+    if (user != null && user.id == siswaId) {
+      final updatedKelasIds = List<String>.from(user.kelasIds)..remove(kelasId);
+      await hiveService.saveUser(user.copyWith(kelasIds: updatedKelasIds));
     }
   }
 

@@ -71,17 +71,27 @@ class KelasRemoteDataSourceImpl implements KelasRemoteDataSource {
     final collection = await mongoService.classCollection;
     final assignmentCol = await mongoService.assignmentCollection;
 
-    // Mencari kelas di mana siswaId ada di dalam array students
-    // Gunakan raw query untuk memastikan array membership check benar
+    // Gunakan native query untuk memastikan MongoDB mencari siswaId di dalam array 'students'
     final result = await collection.find(
       where.raw({
-        'students': siswaId,
+        'students': { '\$elemMatch': { '\$eq': siswaId } },
         'deletedAt': null,
       })
     ).toList();
 
+    // Jika elemMatch tidak jalan karena students adalah array of strings (bukan objects), 
+    // MongoDB standar { 'students': siswaId } seharusnya cukup.
+    // Mari kita pakai query paling dasar tapi paling ampuh:
+    final fallbackResult = await collection.find({
+      'students': siswaId,
+      'deletedAt': null,
+    }).toList();
+
+    final finalResult = result.isNotEmpty ? result : fallbackResult;
+    print("DEBUG: getKelasSiswa query: {'students': '$siswaId'}, found: ${finalResult.length}");
+    
     List<KelasModel> kelasList = [];
-    for (var map in result) {
+    for (var map in finalResult) {
       // Sync jumlah tugas secara realtime
       final assignments = await assignmentCol.find(
         where.eq('classId', map['_id']).eq('deletedAt', null)
@@ -222,9 +232,26 @@ class KelasRemoteDataSourceImpl implements KelasRemoteDataSource {
   @override
   Future<void> leaveKelas(String kelasId, String siswaId) async {
     final collection = await mongoService.classCollection;
-    await collection.updateOne(
-      where.eq('_id', kelasId),
+    
+    // Gunakan modify.pull untuk menghapus siswaId dari array students
+    final result = await collection.updateOne(
+      where.raw({'_id': kelasId}), // Coba sebagai String ID
       modify.pull('students', siswaId),
     );
+
+    if (result.nModified == 0) {
+      // Jika gagal, mungkin ID-nya perlu dikonversi atau dicari berdasarkan classCode
+      print("DEBUG: Gagal leave kelas via ID String, mencoba fallback...");
+      // Kita coba cari dulu kelasnya untuk ambil _id aslinya jika perlu
+      final kelas = await collection.findOne(where.raw({'students': siswaId, 'deletedAt': null}));
+      if (kelas != null) {
+        await collection.updateOne(
+          where.eq('_id', kelas['_id']),
+          modify.pull('students', siswaId),
+        );
+      }
+    }
+    
+    print("DEBUG: leaveKelas remote selesai untuk siswa: $siswaId di kelas: $kelasId");
   }
 }

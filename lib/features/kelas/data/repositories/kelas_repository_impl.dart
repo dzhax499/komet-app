@@ -114,10 +114,14 @@ class KelasRepositoryImpl implements KelasRepository {
   KometResult<List<KelasModel>> getKelasSiswa(String siswaId) async {
     try {
       final remoteData = await remoteDataSource.getKelasSiswa(siswaId);
-      for (final kelas in remoteData) {
+      
+      // Jaring pengaman tambahan: Filter agar hanya kelas yang benar-benar ada ID siswa ini
+      final filteredData = remoteData.where((k) => k.siswaIds.contains(siswaId)).toList();
+      
+      for (final kelas in filteredData) {
         await localDataSource.createKelas(kelas);
       }
-      return kometSuccess(remoteData);
+      return kometSuccess(filteredData);
     } catch (e) {
       try {
         final localData = await localDataSource.getKelasSiswa(siswaId);
@@ -167,9 +171,12 @@ class KelasRepositoryImpl implements KelasRepository {
   @override
   KometResult<void> leaveKelas(String kelasId, String siswaId) async {
     try {
+      // 1. Hapus lokal dulu agar UI langsung update (Optimistic UI)
+      await localDataSource.leaveKelas(kelasId, siswaId);
+      
+      // 2. Baru hapus di remote
       await remoteDataSource.leaveKelas(kelasId, siswaId);
-      // Wait, there's no leaveKelas in localDataSource yet.
-      // We can just ignore local for now or add it later if needed.
+      
       return kometSuccess(null);
     } catch (e) {
       return kometFailure(LocalStorageFailure(e.toString()));
