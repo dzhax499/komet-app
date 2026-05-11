@@ -274,8 +274,6 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
                                   color: Colors.white),
                             );
                           } else if (state is KelasLoaded) {
-                            // Jaring pengaman: Filter lagi di UI agar hanya menampilkan kelas yang 
-                            // benar-benar berisi ID siswa ini.
                             final myClasses = state.kelasList.where((k) => k.siswaIds.contains(user.id)).toList();
 
                             if (myClasses.isEmpty) {
@@ -286,67 +284,83 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
                               separatorBuilder: (_, __) => const SizedBox(height: 12),
                               itemBuilder: (context, index) {
                                 final kelas = myClasses[index];
-                                return ClipRRect(
-                                  borderRadius: BorderRadius.circular(20),
-                                  child: Slidable(
-                                    key: ValueKey(kelas.id),
-                                    endActionPane: ActionPane(
-                                      motion: const DrawerMotion(),
-                                      extentRatio: 0.2,
-                                      children: [
-                                        CustomSlidableAction(
-                                          onPressed: (context) {
-                                            _showLeaveConfirmation(context, kelas, user.id);
-                                          },
-                                          backgroundColor: Colors.white,
-                                          child: ShaderMask(
-                                            shaderCallback: (bounds) => const LinearGradient(
-                                              begin: Alignment.bottomLeft,
-                                              end: Alignment.topRight,
-                                              colors: [Color(0xFFE5B5B1), Color(0xFFC77A75)],
-                                            ).createShader(bounds),
-                                            child: const Icon(
+                                return SizedBox(
+                                  height: 108,
+                                  child: Stack(
+                                    children: [
+                                      // Background putih (panel action) - tetap di belakang
+                                      Positioned.fill(
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(28),
+                                          ),
+                                          alignment: Alignment.centerRight,
+                                          child: Padding(
+                                            padding: const EdgeInsets.only(right: 24),
+                                            child: Icon(
                                               Icons.logout_rounded,
-                                              color: Colors.white,
+                                              color: Colors.red,
                                               size: 32,
                                             ),
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                    child: BlocBuilder<SubmissionBloc, SubmissionState>(
-                                      builder: (context, submissionState) {
-                                        int classTasks = kelas.assignmentIds.length;
-                                        int classCompleted = 0;
-
-                                        if (submissionState is SubmissionSuccess) {
-                                          classCompleted = submissionState.submissions
-                                              .where((s) => (s.status == SubmissionStatus.submitted || s.status == SubmissionStatus.reviewed || s.status == SubmissionStatus.needsRevision) && kelas.assignmentIds.contains(s.assignmentId))
-                                              .length;
-                                        }
-                                        classTasks -= classCompleted;
-                                        if (classTasks < 0) classTasks = 0;
-
-                                        return GestureDetector(
-                                          onTap: () {
-                                            context.pushNamed('kelasDetail',
-                                                pathParameters: {
-                                                  'kelasId': kelas.id
-                                                }).then((_) {
-                                              context.read<SubmissionBloc>().add(GetSubmissionsByStudentEvent(user.id));
-                                            });
+                                      ),
+                                      Slidable(
+                                        key: ValueKey(kelas.id),
+                                        closeOnScroll: true,
+                                        endActionPane: ActionPane(
+                                          motion: const DrawerMotion(),
+                                          extentRatio: 0.28, // lebar panel putih (sesuai referensi)
+                                          children: [
+                                            CustomSlidableAction(
+                                              onPressed: (context) {
+                                                _showLeaveConfirmation(context, kelas, user.id);
+                                              },
+                                              backgroundColor: Colors.transparent,
+                                              foregroundColor: Colors.transparent,
+                                              child: const SizedBox.shrink(),
+                                            ),
+                                          ],
+                                        ),
+                                        child: BlocBuilder<SubmissionBloc, SubmissionState>(
+                                          builder: (context, submissionState) {
+                                            int classTasks = kelas.assignmentIds.length;
+                                            int classCompleted = 0;
+                                            if (submissionState is SubmissionSuccess) {
+                                              classCompleted = submissionState.submissions
+                                                  .where((s) => (s.status == SubmissionStatus.submitted ||
+                                                      s.status == SubmissionStatus.reviewed ||
+                                                      s.status == SubmissionStatus.needsRevision) &&
+                                                      kelas.assignmentIds.contains(s.assignmentId))
+                                                  .length;
+                                            }
+                                            classTasks -= classCompleted;
+                                            if (classTasks < 0) classTasks = 0;
+                                            return GestureDetector(
+                                              onTap: () {
+                                                context.pushNamed(
+                                                  'kelasDetail',
+                                                  pathParameters: {'kelasId': kelas.id}
+                                                ).then((_) {
+                                                  context.read<SubmissionBloc>().add(
+                                                      GetSubmissionsByStudentEvent(user.id),
+                                                  );
+                                                });
+                                              },
+                                              child: _buildUltraSlimClassCard(
+                                                _phthaloGreen,
+                                                _mustardGreen,
+                                                kelas.nama,
+                                                kelas.kodeKelas,
+                                                classTasks,
+                                                classCompleted,
+                                              ),
+                                            );
                                           },
-                                          child: _buildUltraSlimClassCard(
-                                            _phthaloGreen,
-                                            _mustardGreen,
-                                            kelas.nama,
-                                            kelas.kodeKelas,
-                                            classTasks,
-                                            classCompleted,
-                                          ),
-                                        );
-                                      },
-                                    ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 );
                               },
@@ -445,6 +459,7 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
   ) {
     return Container(
       width: double.infinity,
+      height: 108,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -452,14 +467,7 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
         ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(28),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -703,3 +711,4 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
     );
   }
 }
+

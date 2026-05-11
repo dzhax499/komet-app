@@ -88,9 +88,6 @@ class _KelasDetailPageState extends State<KelasDetailPage> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text(state.message)),
                           );
-                          if (state.message.contains('keluar')) {
-                            context.pop(); // Kembali ke Dashboard
-                          }
                         } else if (state is KelasError) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text(state.message)),
@@ -408,56 +405,7 @@ class _KelasDetailPageState extends State<KelasDetailPage> {
                       fontWeight: FontWeight.w400,
                     ),
                   ),
-                  const Spacer(),
-                  if (!isGuru)
-                    GestureDetector(
-                      onTap: () {
-                        final authState = context.read<AuthBloc>().state;
-                        if (authState is AuthAuthenticated) {
-                          showDialog(
-                            context: context,
-                            builder: (dialogContext) => AlertDialog(
-                              title: const Text('Keluar Kelas'),
-                              content: const Text('Apakah Anda yakin ingin keluar dari kelas ini?'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(dialogContext),
-                                  child: const Text('Batal'),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.pop(dialogContext);
-                                    _kelasBloc.add(KelasLeaveRequested(
-                                      kelasId: widget.kelasId,
-                                      siswaId: authState.user.id,
-                                    ));
-                                  },
-                                  child: const Text('Ya, Keluar', style: TextStyle(color: Colors.red)),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.red.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.red.withValues(alpha: 0.5)),
-                        ),
-                        child: const Row(
-                          children: [
-                            Icon(Icons.logout, color: Colors.white, size: 14),
-                            SizedBox(width: 4),
-                            Text(
-                              'Leave',
-                              style: TextStyle(color: Colors.white, fontSize: 12),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+
                 ],
               ),
               const SizedBox(height: 12),

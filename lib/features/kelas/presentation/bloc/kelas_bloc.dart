@@ -183,6 +183,7 @@ class KelasBloc extends Bloc<KelasEvent, KelasState> {
       emit(KelasError(result.failure!.message));
     } else {
       emit(KelasActionSuccess("Berhasil keluar dari kelas"));
+      add(KelasFetchSiswaRequested(event.siswaId));
     }
   }
 

@@ -233,24 +233,10 @@ class KelasRemoteDataSourceImpl implements KelasRemoteDataSource {
   Future<void> leaveKelas(String kelasId, String siswaId) async {
     final collection = await mongoService.classCollection;
     
-    // Gunakan modify.pull untuk menghapus siswaId dari array students
-    final result = await collection.updateOne(
-      where.raw({'_id': kelasId}), // Coba sebagai String ID
-      modify.pull('students', siswaId),
+    await collection.updateOne(
+      where.eq('_id', kelasId),
+      modify.pull('students', siswaId)
     );
-
-    if (result.nModified == 0) {
-      // Jika gagal, mungkin ID-nya perlu dikonversi atau dicari berdasarkan classCode
-      print("DEBUG: Gagal leave kelas via ID String, mencoba fallback...");
-      // Kita coba cari dulu kelasnya untuk ambil _id aslinya jika perlu
-      final kelas = await collection.findOne(where.raw({'students': siswaId, 'deletedAt': null}));
-      if (kelas != null) {
-        await collection.updateOne(
-          where.eq('_id', kelas['_id']),
-          modify.pull('students', siswaId),
-        );
-      }
-    }
     
     print("DEBUG: leaveKelas remote selesai untuk siswa: $siswaId di kelas: $kelasId");
   }
