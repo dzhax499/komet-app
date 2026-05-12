@@ -90,8 +90,12 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.auto_stories_outlined,
-                                color: Colors.white, size: 18),
+                            Image.asset(
+                              'assets/images/logo.png',
+                              height: 18,
+                              width: 18,
+                              fit: BoxFit.contain,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               'Student Hub',

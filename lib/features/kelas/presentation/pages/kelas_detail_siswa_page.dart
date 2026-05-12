@@ -219,7 +219,12 @@ class _KelasDetailSiswaPageState extends State<KelasDetailSiswaPage> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.auto_stories_outlined, color: Colors.white, size: 20),
+                  Image.asset(
+                    'assets/images/logo.png',
+                    height: 20,
+                    width: 20,
+                    fit: BoxFit.contain,
+                  ),
                   const SizedBox(width: 8),
                   Text('Student Hub', style: GoogleFonts.nunito(color: Colors.white, fontSize: 16)),
                 ],
