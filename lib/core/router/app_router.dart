@@ -30,6 +30,9 @@ import '../di/service_locator.dart';
 import '../../features/kelas/presentation/pages/review_submission_page.dart';
 import '../models/submission_model.dart';
 
+import '../../features/project/presentation/pages/dashboard_guest_page.dart';
+import '../../features/kelas/presentation/pages/submission_canvas_page.dart';
+
 class _PlaceholderScreen extends StatelessWidget {
   final String title;
   final String pic;
@@ -144,6 +147,11 @@ final GoRouter appRouter = GoRouter(
       name: 'dashboardSiswa',
       builder: (context, state) => const DashboardSiswaPage(), // PIC C (Nike)
     ),
+    GoRoute(
+      path: KometRoutes.dashboardGuest,
+      name: 'dashboardGuest',
+      builder: (context, state) => const DashboardGuestPage(), // Guest Module
+    ),
 
     // ── Kelas (PIC B - Helga) ─────────────────────────────────────
     GoRoute(
@@ -196,6 +204,24 @@ final GoRouter appRouter = GoRouter(
         return _PlaceholderScreen(
           title: 'Editor Cerita: $submissionId',
           pic: 'PIC D (Dzakir)',
+        );
+      },
+    ),
+
+    // ── Canvas Workspace ──────────────────────────────────────────────────────
+    GoRoute(
+      path: KometRoutes.canvasWorkspace,
+      name: 'canvasWorkspace',
+      builder: (context, state) {
+        final projectId = state.pathParameters['projectId']!;
+        return BlocProvider<SubmissionBloc>(
+          create: (context) => sl<SubmissionBloc>(),
+          child: SubmissionCanvasPage(
+            assignmentId: projectId,
+            assignmentTitle: 'Project $projectId',
+            deadline: DateTime.now().add(const Duration(days: 365)).toIso8601String(),
+            studentId: 'guest',
+          ),
         );
       },
     ),
