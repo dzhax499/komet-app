@@ -36,6 +36,7 @@ class KometRoutes {
   // Dashboard — PIC A
   static const String dashboardGuru = '/dashboard/guru';
   static const String dashboardSiswa = '/dashboard/siswa';
+  static const String guestDashboard = '/guest/dashboard';
 
   // Kelas — PIC A
   static const String kelasDetail = '/kelas/:kelasId';

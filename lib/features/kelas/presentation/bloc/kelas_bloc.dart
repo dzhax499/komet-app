@@ -87,6 +87,14 @@ class KelasRemoveStudentRequested extends KelasEvent {
   List<Object?> get props => [kelasId, siswaId];
 }
 
+class KelasLeaveRequested extends KelasEvent {
+  final String kelasId;
+  final String siswaId;
+  KelasLeaveRequested({required this.kelasId, required this.siswaId});
+  @override
+  List<Object?> get props => [kelasId, siswaId];
+}
+
 // STATES 
 abstract class KelasState extends Equatable {
   @override
@@ -135,6 +143,9 @@ class KelasBloc extends Bloc<KelasEvent, KelasState> {
   final GetKelasSiswaUseCase getKelasSiswaUseCase;
   final JoinKelasUseCase joinKelasUseCase;
   final DeleteKelasUseCase deleteKelasUseCase;
+  final GetKelasByIdUseCase getKelasByIdUseCase;
+  final GetSiswaInKelasUseCase getSiswaInKelasUseCase;
+  final LeaveKelasUseCase leaveKelasUseCase;
 
   KelasBloc({
     required this.createKelasUseCase,
@@ -144,6 +155,7 @@ class KelasBloc extends Bloc<KelasEvent, KelasState> {
     required this.deleteKelasUseCase,
     required this.getKelasByIdUseCase,
     required this.getSiswaInKelasUseCase,
+    required this.leaveKelasUseCase,
   }) : super(KelasInitial()) {
     on<KelasFetchGuruRequested>(_onFetchGuru);
     on<KelasFetchSiswaRequested>(_onFetchSiswa);
@@ -154,10 +166,8 @@ class KelasBloc extends Bloc<KelasEvent, KelasState> {
     on<KelasUpdateRequested>(_onUpdate);
     on<KelasFetchStudentsRequested>(_onFetchStudents);
     on<KelasRemoveStudentRequested>(_onRemoveStudent);
+    on<KelasLeaveRequested>(_onLeave);
   }
-
-  final GetKelasByIdUseCase getKelasByIdUseCase;
-  final GetSiswaInKelasUseCase getSiswaInKelasUseCase;
 
   Future<void> _onFetchGuru(KelasFetchGuruRequested event, Emitter<KelasState> emit) async {
     emit(KelasLoading());
@@ -256,6 +266,20 @@ class KelasBloc extends Bloc<KelasEvent, KelasState> {
       add(KelasFetchStudentsRequested(event.kelasId));
     } else {
       emit(KelasError(result.failure?.message ?? 'Gagal menghapus siswa'));
+    }
+  }
+
+  Future<void> _onLeave(KelasLeaveRequested event, Emitter<KelasState> emit) async {
+    emit(KelasLoading());
+    final result = await leaveKelasUseCase(LeaveKelasParams(
+      kelasId: event.kelasId,
+      siswaId: event.siswaId,
+    ));
+    if (result.failure == null) {
+      emit(KelasActionSuccess('Berhasil keluar dari kelas'));
+      add(KelasFetchSiswaRequested(event.siswaId));
+    } else {
+      emit(KelasError(result.failure?.message ?? 'Gagal keluar dari kelas'));
     }
   }
 }

@@ -31,6 +31,8 @@ import '../../features/submission/presentation/bloc/submission_bloc.dart';
 import '../di/service_locator.dart';
 import '../../features/kelas/presentation/pages/review_submission_page.dart';
 import '../models/submission_model.dart';
+import '../../features/project/presentation/pages/guest_dashboard_page.dart';
+import '../../features/project/presentation/bloc/project_bloc.dart';
 
 class _PlaceholderScreen extends StatelessWidget {
   final String title;
@@ -145,6 +147,14 @@ final GoRouter appRouter = GoRouter(
       path: KometRoutes.dashboardSiswa,
       name: 'dashboardSiswa',
       builder: (context, state) => const DashboardSiswaPage(), // PIC C (Nike)
+    ),
+    GoRoute(
+      path: KometRoutes.guestDashboard,
+      name: 'guestDashboard',
+      builder: (context, state) => BlocProvider<ProjectBloc>(
+        create: (context) => sl<ProjectBloc>(),
+        child: const GuestDashboardPage(),
+      ),
     ),
 
     // ── Kelas (PIC B - Helga) ─────────────────────────────────────

@@ -40,6 +40,9 @@ import '../../features/project/data/datasources/project_remote_data_source.dart'
 import '../../features/kelas/domain/usecases/get_kelas_by_id_use_case.dart';
 import '../../features/project/data/repositories/project_repository_impl.dart';
 import '../../features/project/domain/repositories/project_repository.dart';
+import '../../features/project/domain/usecases/save_project_use_case.dart';
+import '../../features/project/domain/usecases/get_projects_by_user_use_case.dart';
+import '../../features/project/presentation/bloc/project_bloc.dart';
 import '../../features/kelas/domain/usecases/update_kelas_use_case.dart';
 import '../../features/kelas/domain/usecases/remove_student_use_case.dart';
 
@@ -268,6 +271,13 @@ Future<void> setupServiceLocator() async {
       uuid: sl(),
     ),
   );
+
+  sl.registerLazySingleton(() => SaveProjectUseCase(sl()));
+  sl.registerLazySingleton(() => GetProjectsByUserUseCase(sl()));
+  sl.registerFactory(() => ProjectBloc(
+        saveProjectUseCase: sl(),
+        getProjectsByUserUseCase: sl(),
+      ));
 
   // ── PIC D: Editor Engine ───────────────────────────────────────────────
   sl.registerFactory(() => EditorBloc());
