@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:ming_cute_icons/ming_cute_icons.dart';
 
 class AssignmentCard extends StatelessWidget {
   final String title;
   final String deadline;
   final bool isStudent;
   final VoidCallback? onTap;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   const AssignmentCard({
     super.key,
@@ -12,25 +17,15 @@ class AssignmentCard extends StatelessWidget {
     required this.deadline,
     this.isStudent = false,
     this.onTap,
+    this.onEdit,
+    this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(
-        horizontal: 24,
-        vertical: 8,
-      ),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [
-            Color(0xFF19320C), // Dark green
-            Color(0xFF6F8226), // Olive green
-          ],
-        ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -40,74 +35,137 @@ class AssignmentCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Slidable(
+          key: ValueKey(title + deadline),
+          // Swipe Right to reveal Edit
+          startActionPane: onEdit != null
+              ? ActionPane(
+                  motion: const DrawerMotion(),
+                  extentRatio: 0.25,
+                  children: [
+                    CustomSlidableAction(
+                      onPressed: (context) => onEdit?.call(),
+                      backgroundColor: Colors.white,
+                      child: const Icon(
+                        Icons.edit_rounded,
+                        color: Color(0xFF1A3C0A),
+                        size: 32,
+                      ),
+                    ),
+                  ],
+                )
+              : null,
+          // Swipe Left to reveal Delete
+          endActionPane: onDelete != null
+              ? ActionPane(
+                  motion: const DrawerMotion(),
+                  extentRatio: 0.25,
+                  children: [
+                    CustomSlidableAction(
+                      onPressed: (context) => onDelete?.call(),
+                      backgroundColor: Colors.white,
+                      child: const Icon(
+                        Icons.delete_rounded,
+                        color: Colors.redAccent,
+                        size: 32,
+                      ),
+                    ),
+                  ],
+                )
+              : null,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [
+                  Color(0xFF1A3C0A), // Dark green
+                  Color(0xFF758837), // Olive green
+                ],
+              ),
             ),
-            child: const Icon(
-              Icons.assignment,
-              color: Color(0xFF4C661D),
-              size: 28,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
                     color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: ShaderMask(
+                    shaderCallback: (bounds) => const LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Color(0xFF1A3C0A), // Dark green
+                        Color(0xFF82903C), // Olive green
+                      ],
+                    ).createShader(bounds),
+                    child: const Icon(
+                      MingCuteIcons.mgc_task_2_fill,
+                      color: Colors.white,
+                      size: 26,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Deadline : $deadline',
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: GoogleFonts.nunito(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Deadline : $deadline',
+                        style: GoogleFonts.nunito(
+                          color: Colors.white70,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+                if (isStudent)
+                  GestureDetector(
+                    onTap: onTap,
+                    child: Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.18),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CustomPaint(painter: _PlayIconPainter()),
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
-          if (isStudent)
-            GestureDetector(
-              onTap: onTap,
-              child: Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.18),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CustomPaint(
-                      painter: _PlayIconPainter(),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-        ],
+        ),
       ),
     );
   }
@@ -130,7 +188,7 @@ class _PlayIconPainter extends CustomPainter {
     // Segitiga play dengan ujung sedikit membulat (strokeJoin = round)
     // Gap 3px dari garis (dari x=3 sampai x=6)
     final triangleStartX = 6.0;
-    
+
     final path = Path();
     path.moveTo(triangleStartX + 1, 1);
     path.lineTo(size.width - 1, size.height / 2);
@@ -149,3 +207,4 @@ class _PlayIconPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+

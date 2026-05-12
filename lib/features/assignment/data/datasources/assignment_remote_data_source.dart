@@ -6,6 +6,7 @@ abstract class AssignmentRemoteDataSource {
   Future<AssignmentModel> createAssignment(AssignmentModel assignment);
   Future<List<AssignmentModel>> getAssignmentsByClass(String kelasId);
   Future<void> deleteAssignment(String assignmentId);
+  Future<AssignmentModel> updateAssignment(AssignmentModel assignment);
 }
 
 class AssignmentRemoteDataSourceImpl implements AssignmentRemoteDataSource {
@@ -47,5 +48,20 @@ class AssignmentRemoteDataSourceImpl implements AssignmentRemoteDataSource {
       where.eq('_id', assignmentId),
       modify.set('deletedAt', DateTime.now().toIso8601String())
     );
+  }
+
+  @override
+  Future<AssignmentModel> updateAssignment(AssignmentModel assignment) async {
+    final collection = await mongoService.assignmentCollection;
+
+    await collection.updateOne(
+      where.eq('_id', assignment.id),
+      modify
+        .set('title', assignment.judul)
+        .set('deadline', assignment.deadline.toIso8601String())
+        .set('updatedAt', DateTime.now().toIso8601String())
+    );
+
+    return assignment;
   }
 }

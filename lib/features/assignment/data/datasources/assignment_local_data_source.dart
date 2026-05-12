@@ -5,6 +5,7 @@ abstract class AssignmentLocalDataSource {
   Future<AssignmentModel> createAssignment(AssignmentModel assignment);
   Future<List<AssignmentModel>> getAssignmentsByClass(String kelasId);
   Future<void> deleteAssignment(String assignmentId);
+  Future<AssignmentModel> updateAssignment(AssignmentModel assignment);
 }
 
 class AssignmentLocalDataSourceImpl implements AssignmentLocalDataSource {
@@ -14,17 +15,30 @@ class AssignmentLocalDataSourceImpl implements AssignmentLocalDataSource {
 
   @override
   Future<AssignmentModel> createAssignment(AssignmentModel assignment) async {
-    await hiveService.saveAssignment(assignment);
+    await hiveService.assignmentBoxInstance.put(assignment.id, assignment);
     return assignment;
   }
 
   @override
   Future<List<AssignmentModel>> getAssignmentsByClass(String kelasId) async {
-    return hiveService.getAssignmentsByKelasId(kelasId);
+    final result = hiveService.assignmentBoxInstance.values
+        .where((a) => a.kelasId == kelasId && a.deletedAt == null)
+        .toList();
+    return result;
   }
 
   @override
   Future<void> deleteAssignment(String assignmentId) async {
-    await hiveService.deleteAssignment(assignmentId);
+    final assignment = hiveService.assignmentBoxInstance.get(assignmentId);
+    if (assignment != null) {
+      final updated = assignment.copyWith(deletedAt: DateTime.now());
+      await hiveService.assignmentBoxInstance.put(assignmentId, updated);
+    }
+  }
+
+  @override
+  Future<AssignmentModel> updateAssignment(AssignmentModel assignment) async {
+    await hiveService.assignmentBoxInstance.put(assignment.id, assignment);
+    return assignment;
   }
 }

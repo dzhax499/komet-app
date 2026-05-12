@@ -1,12 +1,3 @@
-// lib/core/di/service_locator.dart
-// PIC D — Dzakir Tsabit Asy Syafiq
-// GetIt Service Locator — dependency injection entry point.
-// Panggil setupServiceLocator() di main() sebelum runApp().
-//
-// Cara menggunakan:
-//   final connectivity = sl<ConnectivityService>();
-//   final router = sl<GoRouter>();
-
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/foundation.dart';
@@ -18,6 +9,8 @@ import '../../features/submission/domain/usecases/get_submissions_by_assignment_
 import '../../features/submission/domain/usecases/get_submissions_by_class_use_case.dart';
 import '../../features/submission/domain/usecases/get_review_count_use_case.dart';
 import '../../features/submission/domain/usecases/grade_submission_use_case.dart';
+import '../../features/submission/domain/usecases/get_submissions_by_student_use_case.dart';
+import '../../features/submission/domain/usecases/submit_task_use_case.dart';
 import '../../features/submission/presentation/bloc/submission_bloc.dart';
 import '../../features/auth/data/datasources/auth_local_data_source.dart';
 import '../../features/auth/data/datasources/auth_remote_data_source.dart';
@@ -52,6 +45,8 @@ import '../../features/kelas/domain/usecases/remove_student_use_case.dart';
 
 import '../../features/assignment/domain/usecases/create_assignment_use_case.dart';
 import '../../features/assignment/domain/usecases/get_assignments_by_class_use_case.dart';
+import '../../features/assignment/domain/usecases/update_assignment_use_case.dart';
+import '../../features/assignment/domain/usecases/delete_assignment_use_case.dart';
 import '../../features/assignment/presentation/bloc/assignment_bloc.dart';
 
 import '../../features/editor_engine/presentation/bloc/editor_bloc.dart';
@@ -175,6 +170,7 @@ Future<void> setupServiceLocator() async {
   sl.registerLazySingleton(() => GetKelasByIdUseCase(sl()));
   sl.registerLazySingleton(() => UpdateKelasUseCase(sl()));
   sl.registerLazySingleton(() => RemoveStudentUseCase(sl()));
+  sl.registerLazySingleton(() => LeaveKelasUseCase(sl()));
 
   sl.registerFactory(
     () => KelasBloc(
@@ -185,6 +181,7 @@ Future<void> setupServiceLocator() async {
       deleteKelasUseCase: sl(),
       getKelasByIdUseCase: sl(),
       getSiswaInKelasUseCase: sl(),
+      leaveKelasUseCase: sl(),
     ),
   );
 
@@ -208,11 +205,15 @@ Future<void> setupServiceLocator() async {
 
   sl.registerLazySingleton(() => CreateAssignmentUseCase(sl()));
   sl.registerLazySingleton(() => GetAssignmentsByClassUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateAssignmentUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteAssignmentUseCase(sl()));
 
   sl.registerFactory(
     () => AssignmentBloc(
       createAssignmentUseCase: sl(),
       getAssignmentsByClassUseCase: sl(),
+      updateAssignmentUseCase: sl(),
+      deleteAssignmentUseCase: sl(),
     ),
   );
 
@@ -237,6 +238,8 @@ Future<void> setupServiceLocator() async {
   sl.registerLazySingleton(() => GetSubmissionsByClassUseCase(sl()));
   sl.registerLazySingleton(() => GetReviewCountUseCase(sl()));
   sl.registerLazySingleton(() => GradeSubmissionUseCase(sl()));
+  sl.registerLazySingleton(() => GetSubmissionsByStudentUseCase(sl()));
+  sl.registerLazySingleton(() => SubmitTaskUseCase(sl()));
 
   sl.registerFactory(
     () => SubmissionBloc(
@@ -244,6 +247,8 @@ Future<void> setupServiceLocator() async {
       getSubmissionsByClassUseCase: sl(),
       getReviewCountUseCase: sl(),
       gradeSubmissionUseCase: sl(),
+      getSubmissionsByStudentUseCase: sl(),
+      submitTaskUseCase: sl(),
     ),
   );
 

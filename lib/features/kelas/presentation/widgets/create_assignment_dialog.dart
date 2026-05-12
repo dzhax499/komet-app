@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class CreateAssignmentDialog extends StatefulWidget {
   final Function(String assignmentName, String deadline) onCreated;
@@ -24,98 +25,79 @@ class _CreateAssignmentDialogState extends State<CreateAssignmentDialog> {
   @override
   Widget build(BuildContext context) {
     return BackdropFilter(
-      filter: ImageFilter.blur(
-        sigmaX: 8,
-        sigmaY: 8,
-      ),
+      filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
       child: Dialog(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 40),
         child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 24,
-            vertical: 32,
-          ),
+          padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Colors.white.withValues(alpha: 0.2),
-                Colors.white.withValues(alpha: 0.05),
+                Colors.white.withValues(alpha: 0.4),
+                Colors.white.withValues(alpha: 0.1),
               ],
             ),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.4),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 30,
-              ),
-            ],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Create Task',
-                style: TextStyle(
+                style: GoogleFonts.nunito(
                   color: Colors.white,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 24),
-              _buildTransparentInput(
+              _buildGlassInput(
                 controller: _assignmentController,
                 hint: 'Task ...',
-                icon: Icons.assignment,
+                icon: Icons.assignment_outlined,
               ),
               const SizedBox(height: 16),
               GestureDetector(
                 onTap: () async {
-                  DateTime? pickedDate = await showDatePicker(
+                  final date = await showDatePicker(
                     context: context,
-                    initialDate: DateTime.now().add(
-                      const Duration(days: 1),
-                    ),
+                    initialDate: DateTime.now().add(const Duration(days: 1)),
                     firstDate: DateTime.now(),
-                    lastDate: DateTime(2101),
-                    builder: (context, child) {
-                      return Theme(
-                        data: Theme.of(context).copyWith(
-                          colorScheme: const ColorScheme.light(
-                            primary: Color(0xFF6B7E25),
-                            onPrimary: Colors.white,
-                            onSurface: Colors.black87,
-                          ),
-                        ),
-                        child: child!,
-                      );
-                    },
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
                   );
-                  if (pickedDate != null) {
+                  if (date != null) {
                     setState(() {
                       _deadlineController.text =
-                          pickedDate.toString().split(' ')[0];
+                          "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
                     });
                   }
                 },
                 child: AbsorbPointer(
-                  child: _buildTransparentInput(
+                  child: _buildGlassInput(
                     controller: _deadlineController,
                     hint: 'Deadline ...',
-                    icon: Icons.calendar_today,
+                    icon: Icons.calendar_today_outlined,
                   ),
                 ),
               ),
               const SizedBox(height: 32),
-              _buildCreateButton(context),
+              _buildGlassButton(
+                label: 'Create',
+                onTap: () {
+                  if (_assignmentController.text.isNotEmpty) {
+                    widget.onCreated(
+                      _assignmentController.text,
+                      _deadlineController.text,
+                    );
+                    Navigator.pop(context);
+                  }
+                },
+              ),
             ],
           ),
         ),
@@ -123,85 +105,65 @@ class _CreateAssignmentDialogState extends State<CreateAssignmentDialog> {
     );
   }
 
-  Widget _buildTransparentInput({
+  Widget _buildGlassInput({
     required TextEditingController controller,
     required String hint,
     required IconData icon,
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(50),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.8),
-          width: 1,
-        ),
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.8)),
       ),
       child: TextField(
         controller: controller,
-        style: const TextStyle(
-          color: Colors.white,
-        ),
+        style: GoogleFonts.nunito(color: Colors.white),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(
-            color: Colors.white70,
-          ),
-          prefixIcon: Icon(
-            icon,
-            color: Colors.white,
-            size: 20,
-          ),
+          hintStyle: GoogleFonts.nunito(color: Colors.white70),
+          prefixIcon: Icon(icon, color: Colors.white, size: 20),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 20,
-            vertical: 14,
+            vertical: 12,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildCreateButton(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFFE8F6F8),
-            Color(0xFF90BAC8),
+  Widget _buildGlassButton({
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFFDFBEE), Color(0xFF7AB3C4)],
+          ),
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.2),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
           ],
         ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            if (_assignmentController.text.isNotEmpty) {
-              widget.onCreated(
-                _assignmentController.text,
-                _deadlineController.text,
-              );
-              Navigator.pop(context);
-            }
-          },
-          borderRadius: BorderRadius.circular(16),
-          child: const Padding(
-            padding: EdgeInsets.symmetric(
-              vertical: 14,
-            ),
-            child: Center(
-              child: Text(
-                'Create',
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+        child: Center(
+          child: Text(
+            label,
+            style: GoogleFonts.nunito(
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
             ),
           ),
         ),

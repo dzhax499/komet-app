@@ -9,6 +9,9 @@ import '../../../../core/models/submission_model.dart';
 import '../../../submission/presentation/bloc/submission_bloc.dart';
 import '../../../submission/presentation/bloc/submission_event.dart';
 import '../../../submission/presentation/bloc/submission_state.dart';
+import 'dart:ui';
+import '../../../../core/theme/app_colors.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 // ─────────────────────────────────────────────────────────────
 // Custom Block Definitions (JavaScript)
@@ -278,9 +281,10 @@ class _SceneBg {
   final IconData icon;
   const _SceneBg(this.name, this.color, this.icon);
 }
-class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> {
+class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with TickerProviderStateMixin {
   late final blockly.BlocklyOptions workspaceConfiguration;
   late final blockly.BlocklyEditor _editor;
+  late final AnimationController _bgController;
   int _blockCount = 0;
   
   // Multi-object scene system
@@ -311,6 +315,7 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> {
   @override
   void initState() {
     super.initState();
+    _bgController = AnimationController(vsync: this, duration: const Duration(seconds: 8))..repeat(reverse: true);
     // 1. Kunci orientasi ke landscape
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
@@ -344,17 +349,17 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> {
       grid: blockly.GridOptions(
         spacing: 30,
         length: 3,
-        colour: '#80FFFFFF', // Titik putih semi transparan seperti di desain
+        colour: '#40FFFFFF', // Visible dotted texture
         snap: true,
       ),
       trashcan: true,
       theme: blockly.Theme(
         name: 'komet_theme',
         componentStyles: blockly.BlocklyComponentStyle(
-          workspaceBackgroundColour: '#363636', // Warna gelap canvas di tengah
-          toolboxBackgroundColour: '#4B797A', // Warna teal sidebar kiri UI Anda
+          workspaceBackgroundColour: '#162822', // Premium Komet Dark Canvas
+          toolboxBackgroundColour: '#1A3C0A', // AppColors.kometDarkGreen
           toolboxForegroundColour: '#FFFFFF', // Teks kategori putih
-          flyoutBackgroundColour: '#4B797A', // Warna background saat blok ditarik
+          flyoutBackgroundColour: '#4A7473', // AppColors.kometTeal
           flyoutForegroundColour: '#FFFFFF',
         ),
       ),
@@ -461,6 +466,7 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> {
 
   @override
   void dispose() {
+    _bgController.dispose();
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
@@ -499,9 +505,13 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> {
           _onBack();
         },
         child: Scaffold(
-          backgroundColor: const Color(0xFF1E1E2E),
-          body: Column(
+          backgroundColor: AppColors.kometDarkGreen,
+          body: Stack(
             children: [
+              AnimatedGlowingBackground(animation: _bgController),
+              SafeArea(
+                child: Column(
+                  children: [
           _buildTopBar(),
           Expanded(
             child: Row(
@@ -531,13 +541,15 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> {
               ],
             ),
           ),
+                ],
+              ),
+            ),
             ],
           ),
         ),
       ),
     );
   }
-
   // ── FUNGSI TOMBOL ─────────────────────────────────────────────
   void _onBack() {
     SystemChrome.setPreferredOrientations([
@@ -1022,203 +1034,255 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (ctx) => SafeArea(
-        child: Container(
-        margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1C1C30),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xFF3A3A4E)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFF3A3A4E), borderRadius: BorderRadius.circular(2))),
-            const SizedBox(height: 16),
-            Row(children: [
-              const Text("Choose Character", style: TextStyle(color: Color(0xFFE0E0EE), fontWeight: FontWeight.w700, fontSize: 17)),
-              const Spacer(),
-              Text("${_objects.length} active", style: const TextStyle(color: Color(0xFF666680), fontSize: 12)),
-            ]),
-            const SizedBox(height: 16),
-            Flexible(
-              child: SingleChildScrollView(
-                child: GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 0.9),
-              itemCount: chars.length,
-              itemBuilder: (_, i) {
-                final c = chars[i];
-                final clr = Color(c['color'] as int);
-                return Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(16),
-                    onTap: () async {
-                      Navigator.pop(ctx);
-                      // Save current workspace
-                      try {
-                        final r = await _editor.blocklyController.runJavaScriptReturningResult('(function(){return Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(Blockly.getMainWorkspace()));})();');
-                        String x = r.toString(); if (x.startsWith('"')&&x.endsWith('"')) x = jsonDecode(x) as String;
-                        _sel.workspaceXml = x.replaceAll('\\"','"').replaceAll('\\n','');
-                      } catch (_) {}
-                      // Add new object
-                      final newObj = SceneObject(name: '${c['name']} ${_objects.length+1}', icon: c['icon'] as IconData, baseColor: clr, spawnX: 20.0*_objects.length, spawnY: 20.0*_objects.length);
-                      setState(() { _objects.add(newObj); _selectedObjectIndex = _objects.length - 1; });
-                      // Load empty workspace
-                      final nx = newObj.workspaceXml.replaceAll("'", "\\'");
-                      try { await _editor.blocklyController.runJavaScriptReturningResult('(function(){var w=Blockly.getMainWorkspace();w.clear();Blockly.Xml.domToWorkspace(Blockly.utils.xml.textToDom(\'$nx\'),w);return"ok";})();'); } catch (_) {}
-                      if (mounted) _showToast("${c['name']} added", Icons.person_add_alt_1_rounded, clr);
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(color: clr.withOpacity(0.08), borderRadius: BorderRadius.circular(16), border: Border.all(color: clr.withOpacity(0.15))),
-                      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                        Container(width: 42, height: 42, decoration: BoxDecoration(shape: BoxShape.circle, color: clr), child: Icon(c['icon'] as IconData, color: Colors.white, size: 22)),
-                        const SizedBox(height: 8),
-                        Text(c['name'] as String, style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w500)),
-                      ]),
-                    ),
+        child: ClipRRect(
+          borderRadius: const BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+            child: Container(
+              margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              decoration: BoxDecoration(
+                color: AppColors.kometDarkGreen.withValues(alpha: 0.85),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(width: 48, height: 5, decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(3))),
+                  const SizedBox(height: 20),
+                  Row(children: [
+                    Text("Choose Character", style: GoogleFonts.nunito(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
+                    const Spacer(),
+                    Text("${_objects.length} active", style: GoogleFonts.nunito(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600)),
+                  ]),
+                  const SizedBox(height: 20),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 0.85),
+                        itemCount: chars.length,
+                        itemBuilder: (_, i) {
+                          final c = chars[i];
+                          final clr = Color(c['color'] as int);
+                          return Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(16),
+                              onTap: () async {
+                                Navigator.pop(ctx);
+                                // Save current workspace
+                                try {
+                                  final r = await _editor.blocklyController.runJavaScriptReturningResult('(function(){return Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(Blockly.getMainWorkspace()));})();');
+                                  String x = r.toString(); if (x.startsWith('"')&&x.endsWith('"')) x = jsonDecode(x) as String;
+                                  _sel.workspaceXml = x.replaceAll('\\"','"').replaceAll('\\n','');
+                                } catch (_) {}
+                                // Add new object
+                                final newObj = SceneObject(name: '${c['name']} ${_objects.length+1}', icon: c['icon'] as IconData, baseColor: clr, spawnX: 20.0*_objects.length, spawnY: 20.0*_objects.length);
+                                setState(() { _objects.add(newObj); _selectedObjectIndex = _objects.length - 1; });
+                                // Load empty workspace
+                                final nx = newObj.workspaceXml.replaceAll("'", "\\'");
+                                try { await _editor.blocklyController.runJavaScriptReturningResult('(function(){var w=Blockly.getMainWorkspace();w.clear();Blockly.Xml.domToWorkspace(Blockly.utils.xml.textToDom(\'$nx\'),w);return"ok";})();'); } catch (_) {}
+                                if (mounted) _showToast("${c['name']} added", Icons.person_add_alt_1_rounded, clr);
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(color: clr.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(16), border: Border.all(color: clr.withValues(alpha: 0.3))),
+                                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                                  Container(width: 46, height: 46, decoration: BoxDecoration(shape: BoxShape.circle, color: clr, boxShadow: [BoxShadow(color: clr.withValues(alpha: 0.4), blurRadius: 8, offset: const Offset(0, 4))]), child: Icon(c['icon'] as IconData, color: Colors.white, size: 24)),
+                                  const SizedBox(height: 10),
+                                  Text(c['name'] as String, style: GoogleFonts.nunito(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+                                ]),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    )
                   ),
-                );
-              },
+                ],
+              ),
             ),
-            )),
-          ],
+          ),
         ),
-      )),
+      ),
     );
   }
-
   Widget _buildTopBar() {
-    return Container(
-      height: 48,
-      color: const Color(0xFF252536),
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      child: Row(
-        children: [
-          IconButton(onPressed: _onBack, icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFFCCCCDD), size: 20), splashRadius: 18, padding: EdgeInsets.zero, constraints: const BoxConstraints(minWidth: 36, minHeight: 36)),
-          const SizedBox(width: 4),
-          Expanded(child: Text(widget.assignmentTitle.isNotEmpty ? widget.assignmentTitle : "Canvas", style: const TextStyle(color: Color(0xFFE0E0EE), fontSize: 14, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(color: _sel.baseColor.withOpacity(0.15), borderRadius: BorderRadius.circular(4)),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(_sel.icon, color: _sel.baseColor, size: 13),
-              const SizedBox(width: 4),
-              Text(_sel.name, style: TextStyle(color: _sel.baseColor, fontSize: 11, fontWeight: FontWeight.w500)),
-            ]),
+    return ClipRRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: Container(
+          height: 60,
+          decoration: BoxDecoration(
+            color: AppColors.kometDarkGreen.withValues(alpha: 0.6),
+            border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1)),
           ),
-          const SizedBox(width: 8),
-          Container(width: 1, height: 20, color: const Color(0xFF3A3A4E)),
-          const SizedBox(width: 4),
-          if (!widget.isReviewMode) ...[
-            _barBtn("Save", const Color(0xFF6B9B5E), onTap: _onSave),
-            const SizedBox(width: 4),
-          ],
-          _isPlaying ? _barBtn("Stop", const Color(0xFFCC5555), onTap: _onStop) : _barBtn("Play", const Color(0xFF5588BB), onTap: _onPlay),
-          if (!widget.isReviewMode) ...[
-            const SizedBox(width: 4),
-            if (_existingSubmission?.status == SubmissionStatus.submitted)
-              _barBtn("Batalkan", const Color(0xFFCC5555), onTap: _onUnsubmit)
-            else
-              _barBtn("Submit", const Color(0xFFCC9933), onTap: _onSubmit),
-          ],
-        ],
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              IconButton(onPressed: _onBack, icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 24), splashRadius: 20, padding: EdgeInsets.zero, constraints: const BoxConstraints(minWidth: 40, minHeight: 40)),
+              const SizedBox(width: 12),
+              Expanded(child: Text(widget.assignmentTitle.isNotEmpty ? widget.assignmentTitle : "Canvas Workspace", style: GoogleFonts.nunito(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700), overflow: TextOverflow.ellipsis)),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white.withValues(alpha: 0.2))),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(_sel.icon, color: Colors.white, size: 16),
+                  const SizedBox(width: 6),
+                  Text(_sel.name, style: GoogleFonts.nunito(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                ]),
+              ),
+              const SizedBox(width: 16),
+              Container(width: 1, height: 28, color: Colors.white.withValues(alpha: 0.2)),
+              const SizedBox(width: 16),
+              if (!widget.isReviewMode) ...[
+                _barBtn("Save", Icons.save_outlined, AppColors.kometTeal, onTap: _onSave),
+                const SizedBox(width: 10),
+              ],
+              _isPlaying ? _barBtn("Stop", Icons.stop_rounded, const Color(0xFFCC5555), onTap: _onStop) : _barBtn("Play", Icons.play_arrow_rounded, AppColors.kometOlive, onTap: _onPlay),
+              if (!widget.isReviewMode) ...[
+                const SizedBox(width: 10),
+                if (_existingSubmission?.status == SubmissionStatus.submitted)
+                  _barBtn("Unsubmit", Icons.cancel_outlined, const Color(0xFFCC5555), onTap: _onUnsubmit)
+                else
+                  _barBtn("Submit", Icons.send_rounded, AppColors.kometBlue, onTap: _onSubmit),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  Widget _barBtn(String label, Color c, {VoidCallback? onTap}) {
-    return Material(
-      color: c.withOpacity(0.15),
-      borderRadius: BorderRadius.circular(6),
-      child: InkWell(onTap: onTap, borderRadius: BorderRadius.circular(6),
-        child: Padding(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          child: Text(label, style: TextStyle(color: c, fontSize: 12, fontWeight: FontWeight.w600)))),
+  Widget _barBtn(String label, IconData icon, Color c, {VoidCallback? onTap}) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(color: c.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4))
+        ],
+      ),
+      child: Material(
+        color: c.withValues(alpha: 0.25),
+        borderRadius: BorderRadius.circular(24),
+        child: InkWell(onTap: onTap, borderRadius: BorderRadius.circular(24),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: c.withValues(alpha: 0.8), width: 1.5),
+            ),
+            child: Row(
+              children: [
+                Icon(icon, color: Colors.white, size: 16),
+                const SizedBox(width: 6),
+                Text(label, style: GoogleFonts.nunito(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800)),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
   Widget _buildScenePanel() {
-    Widget panel = Container(
-      width: widget.isReviewMode ? null : 270,
-      decoration: const BoxDecoration(color: Color(0xFF212133), border: Border(left: BorderSide(color: Color(0xFF2E2E42), width: 1))),
-      child: Column(children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Row(children: [
-            const Text("Scene", style: TextStyle(color: Color(0xFF8888AA), fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
-            const Spacer(),
-            if (!widget.isReviewMode)
-              Material(color: const Color(0xFF2E2E42), borderRadius: BorderRadius.circular(6),
-                child: InkWell(onTap: _onAddObject, borderRadius: BorderRadius.circular(6),
-                  child: const Padding(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    child: Text("+ Object", style: TextStyle(color: Color(0xFF88BB88), fontSize: 11, fontWeight: FontWeight.w600))))),
-          ]),
-        ),
-        const Divider(height: 1, color: Color(0xFF2E2E42)),
-        Expanded(
-          child: Padding(padding: const EdgeInsets.all(6),
-            child: ClipRRect(borderRadius: BorderRadius.circular(8),
-              child: GestureDetector(
-                onPanUpdate: (d) => setState(() { _sceneOffsetX += d.delta.dx; _sceneOffsetY += d.delta.dy; }),
-                child: Container(
-                  decoration: BoxDecoration(color: _backgrounds[_bgIndex].color, borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: _isPlaying ? const Color(0xFF66BB6A) : const Color(0xFF2E2E42), width: _isPlaying ? 2 : 1)),
-                  child: Stack(children: [
-                    Positioned.fill(child: Opacity(opacity: 0.05, child: CustomPaint(painter: GridPainter(offsetX: _sceneOffsetX, offsetY: _sceneOffsetY)))),
-                    for (int i = 0; i < _objects.length; i++) _buildObj(i),
-                    if (_isPlaying) Positioned(top: 6, right: 6, child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(color: const Color(0xFF66BB6A), borderRadius: BorderRadius.circular(4)),
-                      child: const Text("LIVE", style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w700, letterSpacing: 0.8)))),
-                  ]),
+    Widget panel = ClipRRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: Container(
+          width: widget.isReviewMode ? null : 270,
+          decoration: BoxDecoration(
+            color: AppColors.kometDarkGreen.withValues(alpha: 0.5),
+            border: Border(left: BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1)),
+          ),
+          child: Column(children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(children: [
+                Text("Scene", style: GoogleFonts.nunito(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
+                const Spacer(),
+                if (!widget.isReviewMode)
+                  Material(color: AppColors.kometOlive.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(16),
+                    child: InkWell(onTap: _onAddObject, borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.kometOlive.withValues(alpha: 0.8)),
+                        ),
+                        child: Text("+ Object", style: GoogleFonts.nunito(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+                      ))),
+              ]),
+            ),
+            Divider(height: 1, color: Colors.white.withValues(alpha: 0.1)),
+            Expanded(
+              child: Padding(padding: const EdgeInsets.all(8),
+                child: ClipRRect(borderRadius: BorderRadius.circular(12),
+                  child: GestureDetector(
+                    onPanUpdate: (d) => setState(() { _sceneOffsetX += d.delta.dx; _sceneOffsetY += d.delta.dy; }),
+                    child: Container(
+                      decoration: BoxDecoration(color: _backgrounds[_bgIndex].color, borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: _isPlaying ? AppColors.kometOlive : Colors.white.withValues(alpha: 0.2), width: _isPlaying ? 2 : 1)),
+                      child: Stack(children: [
+                        Positioned.fill(child: Opacity(opacity: 0.05, child: CustomPaint(painter: GridPainter(offsetX: _sceneOffsetX, offsetY: _sceneOffsetY)))),
+                        for (int i = 0; i < _objects.length; i++) _buildObj(i),
+                        if (_isPlaying) Positioned(top: 8, right: 8, child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(color: AppColors.kometOlive, borderRadius: BorderRadius.circular(6)),
+                          child: Text("LIVE", style: GoogleFonts.nunito(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w800, letterSpacing: 1.0)))),
+                      ]),
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
+            Divider(height: 1, color: Colors.white.withValues(alpha: 0.1)),
+            SizedBox(height: 44, child: ListView.builder(
+              scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), itemCount: _objects.length,
+              itemBuilder: (_, i) {
+                final o = _objects[i]; final s = i == _selectedObjectIndex;
+                return GestureDetector(
+                  onTap: () => _switchObject(i),
+                  onLongPress: widget.isReviewMode ? null : () => _onDeleteObject(i),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2), padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(color: s ? o.baseColor.withValues(alpha: 0.25) : Colors.transparent, borderRadius: BorderRadius.circular(20),
+                      border: s ? Border.all(color: o.baseColor.withValues(alpha: 0.6)) : Border.all(color: Colors.transparent)),
+                    child: Row(children: [
+                      Icon(o.icon, size: 14, color: s ? Colors.white : Colors.white60),
+                      const SizedBox(width: 6),
+                      Text(o.name, style: GoogleFonts.nunito(color: s ? Colors.white : Colors.white60, fontSize: 11, fontWeight: s ? FontWeight.w700 : FontWeight.w500)),
+                    ]),
+                  ),
+                );
+              },
+            )),
+            Padding(padding: const EdgeInsets.fromLTRB(10, 4, 10, 10), child: SizedBox(height: 28, child: ListView.builder(
+              scrollDirection: Axis.horizontal, itemCount: _backgrounds.length,
+              itemBuilder: (_, i) {
+                final bg = _backgrounds[i]; final a = i == _bgIndex;
+                return GestureDetector(
+                  onTap: () => setState(() => _bgIndex = i),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    margin: const EdgeInsets.symmetric(horizontal: 3), padding: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(color: a ? bg.color.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(14),
+                      border: a ? Border.all(color: bg.color.withValues(alpha: 0.8)) : Border.all(color: Colors.transparent)),
+                    child: Row(children: [
+                      Icon(bg.icon, size: 12, color: a ? Colors.white : Colors.white54),
+                      const SizedBox(width: 4),
+                      Text(bg.name, style: GoogleFonts.nunito(color: a ? Colors.white : Colors.white54, fontSize: 10, fontWeight: a ? FontWeight.w700 : FontWeight.w500)),
+                    ]),
+                  ),
+                );
+              },
+            ))),
+          ]),
         ),
-        const Divider(height: 1, color: Color(0xFF2E2E42)),
-        SizedBox(height: 34, child: ListView.builder(
-          scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 6), itemCount: _objects.length,
-          itemBuilder: (_, i) {
-            final o = _objects[i]; final s = i == _selectedObjectIndex;
-            return GestureDetector(
-              onTap: () => _switchObject(i),
-              onLongPress: widget.isReviewMode ? null : () => _onDeleteObject(i),
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 4), padding: const EdgeInsets.symmetric(horizontal: 10),
-                decoration: BoxDecoration(color: s ? o.baseColor.withOpacity(0.12) : Colors.transparent, borderRadius: BorderRadius.circular(6),
-                  border: s ? Border.all(color: o.baseColor.withOpacity(0.4)) : null),
-                child: Row(children: [
-                  Icon(o.icon, size: 13, color: s ? o.baseColor : const Color(0xFF666680)),
-                  const SizedBox(width: 4),
-                  Text(o.name, style: TextStyle(color: s ? Colors.white : const Color(0xFF666680), fontSize: 10, fontWeight: s ? FontWeight.w600 : FontWeight.w400)),
-                ]),
-              ),
-            );
-          },
-        )),
-        Padding(padding: const EdgeInsets.fromLTRB(8, 2, 8, 8), child: SizedBox(height: 24, child: ListView.builder(
-          scrollDirection: Axis.horizontal, itemCount: _backgrounds.length,
-          itemBuilder: (_, i) {
-            final bg = _backgrounds[i]; final a = i == _bgIndex;
-            return GestureDetector(
-              onTap: () => setState(() => _bgIndex = i),
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 2), padding: const EdgeInsets.symmetric(horizontal: 8),
-                decoration: BoxDecoration(color: a ? bg.color.withOpacity(0.3) : const Color(0xFF2A2A3E), borderRadius: BorderRadius.circular(4),
-                  border: a ? Border.all(color: bg.color.withOpacity(0.5)) : null),
-                child: Row(children: [
-                  Icon(bg.icon, size: 10, color: a ? Colors.white70 : const Color(0xFF555566)),
-                  const SizedBox(width: 3),
-                  Text(bg.name, style: TextStyle(color: a ? Colors.white70 : const Color(0xFF555566), fontSize: 9)),
-                ]),
-              ),
-            );
-          },
-        ))),
-      ]),
+      ),
     );
 
     if (widget.isReviewMode) {
@@ -1251,15 +1315,16 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> {
           child: Transform.rotate(angle: obj.rotation * 3.14159 / 180,
             child: Transform.scale(scale: obj.scale, child: Column(mainAxisSize: MainAxisSize.min, children: [
               if (obj.speech.isNotEmpty) Container(
-                margin: const EdgeInsets.only(bottom: 6), padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)]),
-                child: Text(obj.speech, style: const TextStyle(color: Color(0xFF333333), fontSize: 11, fontWeight: FontWeight.w500))),
-              Container(width: 50, height: 50,
+                margin: const EdgeInsets.only(bottom: 8), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.95), borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 8, offset: const Offset(0, 4))]),
+                child: Text(obj.speech, style: GoogleFonts.nunito(color: AppColors.kometDarkGreen, fontSize: 12, fontWeight: FontWeight.w700))),
+              Container(width: 56, height: 56,
                 decoration: BoxDecoration(shape: BoxShape.circle, color: obj.color,
-                  border: Border.all(color: sel ? const Color(0xFFFFD54F) : Colors.white24, width: sel ? 2.5 : 1.5)),
-                child: Icon(obj.icon, size: 24, color: Colors.white)),
-              if (sel && !_isPlaying) Padding(padding: const EdgeInsets.only(top: 3),
-                child: Text(obj.name, style: const TextStyle(color: Color(0xFF8888AA), fontSize: 8, fontWeight: FontWeight.w500))),
+                  boxShadow: sel ? [BoxShadow(color: obj.color.withValues(alpha: 0.5), blurRadius: 12, spreadRadius: 2)] : [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4, offset: const Offset(0, 2))],
+                  border: Border.all(color: sel ? Colors.white : Colors.white.withValues(alpha: 0.5), width: sel ? 3.0 : 1.5)),
+                child: Icon(obj.icon, size: 28, color: Colors.white)),
+              if (sel && !_isPlaying) Padding(padding: const EdgeInsets.only(top: 6),
+                child: Text(obj.name, style: GoogleFonts.nunito(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800, shadows: [const Shadow(color: Colors.black54, blurRadius: 2)]))),
             ]))))),
       ),
     );
@@ -1288,20 +1353,88 @@ class _ToastWidget extends StatefulWidget {
 }
 class _ToastWidgetState extends State<_ToastWidget> with SingleTickerProviderStateMixin {
   late AnimationController _ac;
-  @override void initState() { super.initState(); _ac = AnimationController(vsync: this, duration: const Duration(milliseconds: 250))..forward();
-    Future.delayed(const Duration(seconds: 2), () { if (mounted) _ac.reverse().then((_) { if (mounted) widget.onDismiss(); }); }); }
+  @override void initState() { super.initState(); _ac = AnimationController(vsync: this, duration: const Duration(milliseconds: 300))..forward();
+    Future.delayed(const Duration(seconds: 3), () { if (mounted) _ac.reverse().then((_) { if (mounted) widget.onDismiss(); }); }); }
   @override void dispose() { _ac.dispose(); super.dispose(); }
   @override
   Widget build(BuildContext context) {
-    return Positioned(top: 12, left: 0, right: 0,
+    return Positioned(top: 24, left: 0, right: 0,
       child: AnimatedBuilder(animation: _ac, builder: (_, __) => Opacity(opacity: _ac.value,
-        child: Transform.translate(offset: Offset(0, -16 * (1 - _ac.value)),
-          child: Center(child: Material(color: Colors.transparent, child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-            decoration: BoxDecoration(color: const Color(0xFF2A2A3E), borderRadius: BorderRadius.circular(6), border: Border.all(color: widget.color.withOpacity(0.25))),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(widget.icon, color: widget.color, size: 15), const SizedBox(width: 8),
-              Text(widget.message, style: const TextStyle(color: Color(0xFFDDDDEE), fontSize: 12, fontWeight: FontWeight.w500, decoration: TextDecoration.none)),
-            ]))))))));
+        child: Transform.translate(offset: Offset(0, -20 * (1 - _ac.value)),
+          child: Center(child: Material(color: Colors.transparent, child: ClipRRect(
+            borderRadius: BorderRadius.circular(30),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                decoration: BoxDecoration(color: widget.color.withValues(alpha: 0.85), borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.white.withValues(alpha: 0.3))),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(widget.icon, color: Colors.white, size: 18), const SizedBox(width: 10),
+                  Text(widget.message, style: GoogleFonts.nunito(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700, decoration: TextDecoration.none)),
+                ]),
+              ),
+            ),
+          )))))));
+  }
+}
+
+class AnimatedGlowingBackground extends StatelessWidget {
+  final Animation<double> animation;
+  const AnimatedGlowingBackground({super.key, required this.animation});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (context, child) {
+        return Stack(
+          children: [
+            Container(color: AppColors.kometDarkGreen),
+            // Orb 1: Teal
+            Positioned(
+              top: -150 + (animation.value * 100),
+              left: -100 - (animation.value * 50),
+              child: Container(
+                width: 500, height: 500,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(color: AppColors.kometTeal.withValues(alpha: 0.4), blurRadius: 200, spreadRadius: 50)
+                  ]
+                ),
+              ),
+            ),
+            // Orb 2: Olive
+            Positioned(
+              bottom: -200 - (animation.value * 80),
+              right: -50 + (animation.value * 60),
+              child: Container(
+                width: 600, height: 600,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(color: AppColors.kometOlive.withValues(alpha: 0.35), blurRadius: 200, spreadRadius: 80)
+                  ]
+                ),
+              ),
+            ),
+            // Orb 3: Blue
+            Positioned(
+              top: MediaQuery.of(context).size.height * 0.3 + (animation.value * 60),
+              left: MediaQuery.of(context).size.width * 0.4 - (animation.value * 70),
+              child: Container(
+                width: 400, height: 400,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(color: AppColors.kometBlue.withValues(alpha: 0.25), blurRadius: 250, spreadRadius: 60)
+                  ]
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

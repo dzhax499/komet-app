@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import '../../../../core/models/kelas_model.dart';
-import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:ming_cute_icons/ming_cute_icons.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class KelasCard extends StatelessWidget {
   final KelasModel kelas;
@@ -37,13 +37,10 @@ class KelasCard extends StatelessWidget {
               CustomSlidableAction(
                 onPressed: (context) => onEdit?.call(),
                 backgroundColor: Colors.white,
-                child: ShaderMask(
-                  shaderCallback: (bounds) => const LinearGradient(
-                    begin: Alignment.bottomLeft,
-                    end: Alignment.topRight,
-                    colors: [Color(0xFF758837), Color(0xFF1A3C0A)],
-                  ).createShader(bounds),
-                  child: Icon(Symbols.edit, color: Colors.white, size: 32),
+                child: const Icon(
+                  Icons.edit_rounded,
+                  color: Color(0xFF1A3C0A),
+                  size: 32,
                 ),
               ),
             ],
@@ -76,7 +73,7 @@ class KelasCard extends StatelessWidget {
                         child: Center(
                           child: Text(
                             initial,
-                            style: const TextStyle(
+                            style: GoogleFonts.nunito(
                               color: Colors.black,
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
@@ -96,7 +93,7 @@ class KelasCard extends StatelessWidget {
                         ),
                         child: Text(
                           'Code: ${kelas.kodeKelas}',
-                          style: const TextStyle(
+                          style: GoogleFonts.nunito(
                             color: Colors.white,
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
@@ -146,7 +143,7 @@ class KelasCard extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             label,
-            style: const TextStyle(
+            style: GoogleFonts.nunito(
               color: Colors.white,
               fontSize: 12,
               fontWeight: FontWeight.w400,
@@ -157,3 +154,4 @@ class KelasCard extends StatelessWidget {
     );
   }
 }
+

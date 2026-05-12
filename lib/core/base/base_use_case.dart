@@ -25,8 +25,8 @@ typedef KometResult<T> = Future<({T? data, Failure? failure})>;
 ///   KometResult<StoryProjectData> call(LoadStoryParams params) async { ... }
 /// }
 /// ```
-abstract class UseCase<Type, Params> {
-  KometResult<Type> call(Params params);
+abstract class UseCase<T, Params> {
+  KometResult<T> call(Params params);
 }
 
 /// Base class untuk use case yang tidak membutuhkan parameter.
@@ -37,8 +37,8 @@ abstract class UseCase<Type, Params> {
 ///   KometResult<UserModel> call() async { ... }
 /// }
 /// ```
-abstract class UseCaseNoParams<Type> {
-  KometResult<Type> call();
+abstract class UseCaseNoParams<T> {
+  KometResult<T> call();
 }
 
 /// Placeholder untuk use case yang memang tidak butuh parameter.

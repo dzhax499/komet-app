@@ -79,4 +79,15 @@ class AssignmentRepositoryImpl implements AssignmentRepository {
       }
     }
   }
+
+  @override
+  KometResult<AssignmentModel> updateAssignment(AssignmentModel assignment) async {
+    try {
+      final remoteAssignment = await remoteDataSource.updateAssignment(assignment);
+      final result = await localDataSource.updateAssignment(remoteAssignment);
+      return kometSuccess(result);
+    } catch (e) {
+      return kometFailure(LocalStorageFailure(e.toString()));
+    }
+  }
 }
