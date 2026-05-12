@@ -30,6 +30,17 @@ class AssignmentCreatedSuccess extends AssignmentState {
   List<Object?> get props => [assignment];
 }
 
+class AssignmentUpdatedSuccess extends AssignmentState {
+  final AssignmentModel assignment;
+
+  const AssignmentUpdatedSuccess(this.assignment);
+
+  @override
+  List<Object?> get props => [assignment];
+}
+
+class AssignmentDeletedSuccess extends AssignmentState {}
+
 class AssignmentFailure extends AssignmentState {
   final String message;
 

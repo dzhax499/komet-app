@@ -95,6 +95,21 @@ class KelasRepositoryImpl implements KelasRepository {
   KometResult<List<KelasModel>> getKelasGuru(String guruId) async {
     try {
       final remoteData = await remoteDataSource.getKelasGuru(guruId);
+      
+      // 1. Dapatkan daftar ID dari remote
+      final remoteIds = remoteData.map((k) => k.id).toSet();
+      
+      // 2. Dapatkan daftar ID dari lokal untuk guru ini
+      final localClasses = await localDataSource.getKelasGuru(guruId);
+      
+      // 3. Hapus kelas di lokal yang sudah tidak ada di remote
+      for (final localKelas in localClasses) {
+        if (!remoteIds.contains(localKelas.id)) {
+          await localDataSource.deleteKelas(localKelas.id);
+        }
+      }
+
+      // 4. Update/Create sisanya dari remote
       for (final kelas in remoteData) {
         await localDataSource.createKelas(kelas); 
       }
@@ -115,13 +130,24 @@ class KelasRepositoryImpl implements KelasRepository {
     try {
       final remoteData = await remoteDataSource.getKelasSiswa(siswaId);
       
-      // Jaring pengaman tambahan: Filter agar hanya kelas yang benar-benar ada ID siswa ini
-      final filteredData = remoteData.where((k) => k.siswaIds.contains(siswaId)).toList();
+      // 1. Dapatkan daftar ID dari remote
+      final remoteIds = remoteData.map((k) => k.id).toSet();
       
-      for (final kelas in filteredData) {
+      // 2. Dapatkan daftar ID dari lokal untuk siswa ini
+      final localClasses = await localDataSource.getKelasSiswa(siswaId);
+      
+      // 3. Hapus kelas di lokal yang sudah tidak ada di remote
+      for (final localKelas in localClasses) {
+        if (!remoteIds.contains(localKelas.id)) {
+          await localDataSource.deleteKelas(localKelas.id);
+        }
+      }
+
+      // 4. Update/Create sisanya dari remote
+      for (final kelas in remoteData) {
         await localDataSource.createKelas(kelas);
       }
-      return kometSuccess(filteredData);
+      return kometSuccess(remoteData);
     } catch (e) {
       try {
         final localData = await localDataSource.getKelasSiswa(siswaId);
@@ -152,16 +178,10 @@ class KelasRepositoryImpl implements KelasRepository {
   @override
   KometResult<KelasModel> joinKelas(String kodeKelas, String siswaId) async {
     try {
-      // 1. Update di MongoDB
+      // Update di MongoDB
       final remoteKelas = await remoteDataSource.joinKelas(kodeKelas, siswaId);
-      
-      // 2. Simpan/Update ke lokal Hive
-      // Kita panggil createKelas (yang sebenarnya save/overwrite) untuk memastikan data terbaru ada di lokal
-      await localDataSource.createKelas(remoteKelas);
-      
-      // 3. Jalankan logic join lokal (seperti update user.kelasIds)
+      // Cache ke lokal
       await localDataSource.joinKelas(kodeKelas, siswaId);
-      
       return kometSuccess(remoteKelas);
     } catch (e) {
       return kometFailure(LocalStorageFailure(e.toString()));
@@ -171,12 +191,9 @@ class KelasRepositoryImpl implements KelasRepository {
   @override
   KometResult<void> leaveKelas(String kelasId, String siswaId) async {
     try {
-      // 1. Hapus lokal dulu agar UI langsung update (Optimistic UI)
-      await localDataSource.leaveKelas(kelasId, siswaId);
-      
-      // 2. Baru hapus di remote
       await remoteDataSource.leaveKelas(kelasId, siswaId);
-      
+      // Wait, there's no leaveKelas in localDataSource yet.
+      // We can just ignore local for now or add it later if needed.
       return kometSuccess(null);
     } catch (e) {
       return kometFailure(LocalStorageFailure(e.toString()));

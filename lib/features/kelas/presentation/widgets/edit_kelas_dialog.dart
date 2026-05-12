@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/models/kelas_model.dart';
 
 class EditKelasDialog extends StatefulWidget {
@@ -66,9 +67,9 @@ class _EditKelasDialogState extends State<EditKelasDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Edit Class',
-                style: TextStyle(
+              Text(
+                'Edit Class Name',
+                style: GoogleFonts.nunito(
                   color: Colors.white,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -86,7 +87,7 @@ class _EditKelasDialogState extends State<EditKelasDialog> {
                 ),
                 child: TextField(
                   controller: _controller,
-                  style: const TextStyle(color: Colors.white),
+                  style: GoogleFonts.nunito(color: Colors.black87),
                   decoration: const InputDecoration(
                     hintText: 'Nama Kelas (misal: Kelas 5A)',
                     hintStyle: TextStyle(color: Colors.white70),
@@ -130,12 +131,12 @@ class _EditKelasDialogState extends State<EditKelasDialog> {
                       }
                     },
                     borderRadius: BorderRadius.circular(16),
-                    child: const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 14),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                       child: Center(
                         child: Text(
-                          'Save Changes',
-                          style: TextStyle(
+                          'Save',
+                          style: GoogleFonts.nunito(
                             color: Colors.black87,
                             fontSize: 16,
                             fontWeight: FontWeight.bold,

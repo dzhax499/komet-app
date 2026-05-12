@@ -154,8 +154,8 @@ class KelasBloc extends Bloc<KelasEvent, KelasState> {
     required this.joinKelasUseCase,
     required this.deleteKelasUseCase,
     required this.getKelasByIdUseCase,
-    required this.leaveKelasUseCase,
     required this.getSiswaInKelasUseCase,
+    required this.leaveKelasUseCase,
   }) : super(KelasInitial()) {
     on<KelasFetchGuruRequested>(_onFetchGuru);
     on<KelasFetchSiswaRequested>(_onFetchSiswa);
@@ -239,6 +239,8 @@ class KelasBloc extends Bloc<KelasEvent, KelasState> {
     final result = await deleteKelasUseCase(event.kelasId);
     if (result.failure == null) {
       emit(KelasActionSuccess('Kelas berhasil dihapus'));
+      // Refresh daftar kelas guru agar UI langsung update
+      add(KelasFetchGuruRequested(event.guruId));
     } else {
       emit(KelasError(result.failure!.message));
     }

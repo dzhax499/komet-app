@@ -18,6 +18,14 @@ class HiveService {
   static const String projectBox = KometBoxNames.storyProjects;
   static const String authBox = KometBoxNames.settings; 
 
+  Box<UserModel> get userBoxInstance => Hive.box<UserModel>(userBox);
+  Box<KelasModel> get kelasBoxInstance => Hive.box<KelasModel>(kelasBox);
+  Box<AssignmentModel> get assignmentBoxInstance => Hive.box<AssignmentModel>(assignmentBox);
+  Box<SubmissionModel> get submissionBoxInstance => Hive.box<SubmissionModel>(submissionBox);
+  Box<NotificationModel> get notificationBoxInstance => Hive.box<NotificationModel>(notificationBox);
+  Box<SyncQueueItemModel> get syncQueueBoxInstance => Hive.box<SyncQueueItemModel>(syncQueueBox);
+  Box<ProjectModel> get projectBoxInstance => Hive.box<ProjectModel>(projectBox);
+  Box get authBoxInstance => Hive.box(authBox);
   Future<void> init() async {
     await Hive.initFlutter();
 

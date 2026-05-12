@@ -6,7 +6,7 @@
 import 'package:equatable/equatable.dart';
 
 /// Base class untuk semua kegagalan (failures) di domain layer.
-/// Gunakan ini sebagai return type untuk Either<Failure, T> di repository.
+/// Gunakan ini sebagai return type untuk `Either<Failure, T>` di repository.
 sealed class Failure extends Equatable {
   final String message;
   const Failure(this.message);

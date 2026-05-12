@@ -104,7 +104,7 @@ class ConnectivityServiceImpl implements ConnectivityService {
     _subscription = null;
   }
 
-  /// Konversi List<ConnectivityResult> connectivity_plus ke [ConnectivityStatus].
+  /// Konversi `List<ConnectivityResult>` connectivity_plus ke [ConnectivityStatus].
   ConnectivityStatus _resultsToStatus(List<ConnectivityResult> results) {
     if (results.isEmpty || results.contains(ConnectivityResult.none)) {
       return ConnectivityStatus.disconnected;

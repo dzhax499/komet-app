@@ -21,11 +21,13 @@ import '../../features/auth/presentation/pages/forgot_password_otp_page.dart';
 import '../../features/auth/presentation/pages/forgot_password_reset_page.dart';
 import '../../features/kelas/presentation/pages/dashboard_guru_page.dart';
 import '../../features/kelas/presentation/pages/dashboard_siswa_page.dart';
-import '../../features/kelas/presentation/pages/kelas_detail_page.dart';
+import '../../features/kelas/presentation/pages/kelas_detail_guru_page.dart';
+import '../../features/kelas/presentation/pages/kelas_detail_siswa_page.dart';
 import '../../features/kelas/presentation/pages/manage_kelas_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/kelas/presentation/bloc/kelas_bloc.dart';
+import '../../features/assignment/presentation/bloc/assignment_bloc.dart';
 import '../../features/submission/presentation/bloc/submission_bloc.dart';
 import '../../features/submission/presentation/bloc/submission_event.dart';
 import '../di/service_locator.dart';
@@ -60,7 +62,7 @@ class _PlaceholderScreen extends StatelessWidget {
 
 // ── Router Instance ──────────────────────────────────────────────────────────
 
-/// Instance GoRouter singleton. Gunakan via GetIt: sl<GoRouter>()
+/// Instance GoRouter singleton. Gunakan via GetIt: `sl<GoRouter>()`
 /// atau langsung di MaterialApp.router sebagai routerConfig.
 final GoRouter appRouter = GoRouter(
   initialLocation: KometRoutes.splash,
@@ -171,7 +173,19 @@ final GoRouter appRouter = GoRouter(
       name: 'kelasDetail',
       builder: (context, state) {
         final kelasId = state.pathParameters['kelasId']!;
-        return KelasDetailPage(kelasId: kelasId);
+        final authState = context.read<AuthBloc>().state;
+        final bool isGuru = authState is AuthAuthenticated && authState.user.role == 'guru';
+
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider<KelasBloc>(create: (_) => sl<KelasBloc>()),
+            BlocProvider<AssignmentBloc>(create: (_) => sl<AssignmentBloc>()),
+            BlocProvider<SubmissionBloc>(create: (_) => sl<SubmissionBloc>()),
+          ],
+          child: isGuru 
+              ? KelasDetailGuruPage(kelasId: kelasId) 
+              : KelasDetailSiswaPage(kelasId: kelasId),
+        );
       },
     ),
     GoRoute(

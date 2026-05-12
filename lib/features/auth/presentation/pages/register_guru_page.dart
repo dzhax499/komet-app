@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -60,18 +59,8 @@ class _RegisterGuruPageState extends State<RegisterGuruPage> {
                         backgroundColor: Colors.white.withValues(alpha: 0.14),
                         shape: const CircleBorder(),
                       ),
-                    ),
                   ),
                 ),
-                const SizedBox(height: 6),
-                SizedBox(
-                  width: 68,
-                  height: 68,
-                  child: const Icon(
-                    Icons.auto_stories,
-                    size: 52,
-                    color: Colors.white,
-                  ),
                 ),
                 
                 // Fixed height for the logo space (matching login page)

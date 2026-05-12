@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/models/user_model.dart';
@@ -87,7 +88,7 @@ class _DashboardGuruPageState extends State<DashboardGuruPage> {
                             const SizedBox(height: 24),
                             Text(
                               'Welcome back,',
-                              style: TextStyle(
+                              style: GoogleFonts.nunito(
                                 color: Colors.white,
                                 fontSize: isSmallScreen ? 18 : 20,
                                 fontWeight: FontWeight.w400,
@@ -96,7 +97,7 @@ class _DashboardGuruPageState extends State<DashboardGuruPage> {
                             const SizedBox(height: 4),
                             Text(
                               user.nama,
-                              style: TextStyle(
+                              style: GoogleFonts.nunito(
                                 color: Colors.white,
                                 fontSize: isSmallScreen ? 22 : 24,
                                 fontWeight: FontWeight.bold,
@@ -130,17 +131,16 @@ class _DashboardGuruPageState extends State<DashboardGuruPage> {
       children: [
         Row(
           children: [
-            Icon(
-              Icons.school_outlined,
-              color: Colors.white,
-              size: isSmall ? 24 : 28,
+            Image.asset(
+              'assets/images/logo.png',
+              height: isSmall ? 24 : 28,
             ),
             const SizedBox(width: 8),
             Text(
               'Teacher Hub',
-              style: TextStyle(
+              style: GoogleFonts.nunito(
                 color: Colors.white,
-                fontSize: isSmall ? 18 : 22,
+                fontSize: 22,
                 fontWeight: FontWeight.w400,
               ),
             ),
@@ -280,7 +280,7 @@ class _DashboardGuruPageState extends State<DashboardGuruPage> {
           children: [
             Text(
               'My Class',
-              style: TextStyle(
+              style: GoogleFonts.nunito(
                 color: Colors.white,
                 fontSize: isSmall ? 20 : 24,
                 fontWeight: FontWeight.bold,
@@ -318,7 +318,7 @@ class _DashboardGuruPageState extends State<DashboardGuruPage> {
                 ),
                 child: Text(
                   '+ Create Class',
-                  style: TextStyle(
+                  style: GoogleFonts.nunito(
                     color: Colors.black87,
                     fontSize: isSmall ? 12 : 14,
                     fontWeight: FontWeight.w500,
@@ -359,10 +359,13 @@ class _DashboardGuruPageState extends State<DashboardGuruPage> {
 
               if (state is KelasLoaded) {
                 if (state.kelasList.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Text(
                       "You don't have any class yet",
-                      style: TextStyle(color: Colors.white70, fontSize: 16),
+                      style: GoogleFonts.nunito(
+                        color: Colors.white70,
+                        fontSize: 16,
+                      ),
                     ),
                   );
                 }
@@ -400,7 +403,7 @@ class _DashboardGuruPageState extends State<DashboardGuruPage> {
                 return Center(
                   child: Text(
                     state.message,
-                    style: const TextStyle(color: Colors.red),
+                    style: GoogleFonts.nunito(color: Colors.red),
                   ),
                 );
               }
@@ -433,7 +436,7 @@ class _DashboardGuruPageState extends State<DashboardGuruPage> {
           const SizedBox(height: 8),
           Text(
             number,
-            style: TextStyle(
+            style: GoogleFonts.nunito(
               color: Colors.white,
               fontSize: isSmall ? 24 : 28,
               fontWeight: FontWeight.bold,
@@ -442,7 +445,7 @@ class _DashboardGuruPageState extends State<DashboardGuruPage> {
           Text(
             label,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: GoogleFonts.nunito(
               color: Colors.white,
               fontSize: isSmall ? 10 : 12,
               fontWeight: FontWeight.w400,
@@ -493,7 +496,7 @@ class _DashboardGuruPageState extends State<DashboardGuruPage> {
         ),
         child: Text(
           label,
-          style: const TextStyle(
+          style: GoogleFonts.nunito(
             color: Colors.white,
             fontSize: 14,
             fontWeight: FontWeight.w500,

@@ -54,6 +54,8 @@ import '../../features/kelas/domain/usecases/remove_student_use_case.dart';
 
 import '../../features/assignment/domain/usecases/create_assignment_use_case.dart';
 import '../../features/assignment/domain/usecases/get_assignments_by_class_use_case.dart';
+import '../../features/assignment/domain/usecases/update_assignment_use_case.dart';
+import '../../features/assignment/domain/usecases/delete_assignment_use_case.dart';
 import '../../features/assignment/presentation/bloc/assignment_bloc.dart';
 
 import '../../features/editor_engine/presentation/bloc/editor_bloc.dart';
@@ -175,9 +177,9 @@ Future<void> setupServiceLocator() async {
   sl.registerLazySingleton(() => DeleteKelasUseCase(sl()));
   sl.registerLazySingleton(() => GetSiswaInKelasUseCase(sl()));
   sl.registerLazySingleton(() => GetKelasByIdUseCase(sl()));
-  sl.registerLazySingleton(() => LeaveKelasUseCase(sl()));
   sl.registerLazySingleton(() => UpdateKelasUseCase(sl()));
   sl.registerLazySingleton(() => RemoveStudentUseCase(sl()));
+  sl.registerLazySingleton(() => LeaveKelasUseCase(sl()));
 
   sl.registerFactory(
     () => KelasBloc(
@@ -187,8 +189,8 @@ Future<void> setupServiceLocator() async {
       joinKelasUseCase: sl(),
       deleteKelasUseCase: sl(),
       getKelasByIdUseCase: sl(),
-      leaveKelasUseCase: sl(),
       getSiswaInKelasUseCase: sl(),
+      leaveKelasUseCase: sl(),
     ),
   );
 
@@ -212,11 +214,15 @@ Future<void> setupServiceLocator() async {
 
   sl.registerLazySingleton(() => CreateAssignmentUseCase(sl()));
   sl.registerLazySingleton(() => GetAssignmentsByClassUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateAssignmentUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteAssignmentUseCase(sl()));
 
   sl.registerFactory(
     () => AssignmentBloc(
       createAssignmentUseCase: sl(),
       getAssignmentsByClassUseCase: sl(),
+      updateAssignmentUseCase: sl(),
+      deleteAssignmentUseCase: sl(),
     ),
   );
 

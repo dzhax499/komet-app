@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class KometActionDialog extends StatelessWidget {
   final String title;
@@ -57,7 +58,7 @@ class KometActionDialog extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: GoogleFonts.nunito(
                   color: Colors.white,
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -66,7 +67,7 @@ class KometActionDialog extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 content,
-                style: const TextStyle(
+                style: GoogleFonts.nunito(
                   color: Colors.white70,
                   fontSize: 16,
                   height: 1.5,
@@ -152,7 +153,7 @@ class KometActionDialog extends StatelessWidget {
             child: Center(
               child: Text(
                 label,
-                style: TextStyle(
+                style: GoogleFonts.nunito(
                   color: getTextColor(),
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -165,4 +166,3 @@ class KometActionDialog extends StatelessWidget {
     );
   }
 }
-
