@@ -8,7 +8,7 @@ class SubmitTaskUseCase implements UseCase<SubmissionModel, SubmissionModel> {
   SubmitTaskUseCase(this.repository);
 
   @override
-  KometResult<SubmissionModel> call(SubmissionModel params) async {
-    return await repository.submitTask(params);
+  KometResult<SubmissionModel> call(SubmissionModel params) {
+    return repository.submitTask(params);
   }
 }

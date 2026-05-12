@@ -15,6 +15,7 @@ import '../../features/auth/presentation/pages/register_guru_page.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/pages/get_started_page.dart';
 import '../../features/auth/presentation/pages/teacher_profile_page.dart';
+import '../../features/auth/presentation/pages/student_profile_page.dart';
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/auth/presentation/pages/forgot_password_otp_page.dart';
 import '../../features/auth/presentation/pages/forgot_password_reset_page.dart';
@@ -28,6 +29,7 @@ import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/kelas/presentation/bloc/kelas_bloc.dart';
 import '../../features/assignment/presentation/bloc/assignment_bloc.dart';
 import '../../features/submission/presentation/bloc/submission_bloc.dart';
+import '../../features/submission/presentation/bloc/submission_event.dart';
 import '../di/service_locator.dart';
 import '../../features/kelas/presentation/pages/review_submission_page.dart';
 import '../models/submission_model.dart';
@@ -145,6 +147,24 @@ final GoRouter appRouter = GoRouter(
       path: KometRoutes.dashboardSiswa,
       name: 'dashboardSiswa',
       builder: (context, state) => const DashboardSiswaPage(), // PIC C (Nike)
+    ),
+    GoRoute(
+      path: KometRoutes.profileSiswa,
+      name: 'profileSiswa',
+      builder: (context, state) {
+        final user = (context.read<AuthBloc>().state as AuthAuthenticated).user;
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider<KelasBloc>(
+              create: (context) => sl<KelasBloc>()..add(KelasFetchSiswaRequested(user.id)),
+            ),
+            BlocProvider<SubmissionBloc>(
+              create: (context) => sl<SubmissionBloc>()..add(GetSubmissionsByStudentEvent(user.id)),
+            ),
+          ],
+          child: const StudentProfilePage(),
+        );
+      },
     ),
 
     // ── Kelas (PIC B - Helga) ─────────────────────────────────────
