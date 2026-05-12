@@ -106,7 +106,7 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Row(
         children: [
-          const Icon(Icons.school_outlined, color: Colors.white, size: 24),
+          Image.asset('assets/images/logo.png', width: 24, height: 24),
           const SizedBox(width: 8),
           Text(
             title,
