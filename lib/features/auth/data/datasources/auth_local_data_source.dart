@@ -52,7 +52,10 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
 
     final kelas = hiveService.getKelasByKode(kodeKelas);
     if (kelas == null) {
-      throw Exception('Kode kelas tidak ditemukan');
+      // Jika kelas tidak ada di cache lokal, kita tetap simpan user.
+      // Data kelas akan sinkron saat user pertama kali masuk ke dashboard.
+      await hiveService.persistUser(user);
+      return user;
     }
 
     // Update user dengan ID kelas

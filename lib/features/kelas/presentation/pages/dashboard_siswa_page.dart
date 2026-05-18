@@ -1,8 +1,13 @@
+import 'dart:io' as dart_io;
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import '../../../../core/di/service_locator.dart';
+import '../../../../core/models/kelas_model.dart';
+import '../../../../core/models/user_model.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../bloc/kelas_bloc.dart';
 import '../widgets/join_kelas_dialog.dart';
@@ -11,8 +16,17 @@ import '../../../submission/presentation/bloc/submission_event.dart';
 import '../../../submission/presentation/bloc/submission_state.dart';
 import '../../../../core/models/submission_model.dart';
 
-class DashboardSiswaPage extends StatelessWidget {
+class DashboardSiswaPage extends StatefulWidget {
   const DashboardSiswaPage({super.key});
+
+  @override
+  State<DashboardSiswaPage> createState() => _DashboardSiswaPageState();
+}
+
+class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
+  bool _isProfileMenuOpen = false;
+  late KelasBloc _kelasBloc;
+  late SubmissionBloc _submissionBloc;
 
   // Palet warna sesuai tema KOMET
   static const Color _moonstoneBlue = Color(0xFF6FA9BB);
@@ -22,19 +36,33 @@ class DashboardSiswaPage extends StatelessWidget {
   static const Color _phthaloGreen = Color(0xFF19350C);
 
   @override
+  void initState() {
+    super.initState();
+    final authState = context.read<AuthBloc>().state;
+    if (authState is AuthAuthenticated) {
+      _kelasBloc = sl<KelasBloc>()..add(KelasFetchSiswaRequested(authState.user.id));
+      _submissionBloc = sl<SubmissionBloc>()..add(GetSubmissionsByStudentEvent(authState.user.id));
+    } else {
+      _kelasBloc = sl<KelasBloc>();
+      _submissionBloc = sl<SubmissionBloc>();
+    }
+  }
+
+  @override
+  void dispose() {
+    // JANGAN memanggil .close() pada singleton Bloc dari Service Locator (sl)
+    // karena akan membuat Bloc tersebut mati selamanya selama session ini.
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final user = (context.read<AuthBloc>().state as AuthAuthenticated).user;
 
     return MultiBlocProvider(
       providers: [
-        BlocProvider<KelasBloc>(
-          create: (context) =>
-              sl<KelasBloc>()..add(KelasFetchSiswaRequested(user.id)),
-        ),
-        BlocProvider<SubmissionBloc>(
-          create: (context) =>
-              sl<SubmissionBloc>()..add(GetSubmissionsByStudentEvent(user.id)),
-        ),
+        BlocProvider<KelasBloc>.value(value: _kelasBloc),
+        BlocProvider<SubmissionBloc>.value(value: _submissionBloc),
       ],
       child: Scaffold(
         body: Stack(
@@ -58,29 +86,56 @@ class DashboardSiswaPage extends StatelessWidget {
                     const SizedBox(height: 12),
                     // Header
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Icon(Icons.auto_stories_outlined,
-                            color: Colors.white, size: 18),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Student Hub',
-                          style: GoogleFonts.outfit(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w400,
-                            color: Colors.white,
-                          ),
+                        Row(
+                          children: [
+                            Image.asset(
+                              'assets/images/logo.png',
+                              height: 18,
+                              width: 18,
+                              fit: BoxFit.contain,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Student Hub',
+                              style: GoogleFonts.outfit(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
                         ),
-                        const Spacer(),
-                        // Tombol Logout
-                        IconButton(
-                          icon: const Icon(Icons.logout,
-                              color: Colors.white, size: 20),
-                          onPressed: () {
-                            context
-                                .read<AuthBloc>()
-                                .add(AuthLogoutRequested());
-                            context.go('/login');
-                          },
+                        Row(
+                          children: [
+                            if (_isProfileMenuOpen)
+                              Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  _buildPillButton(
+                                    label: 'Profile',
+                                    color: const Color(0xFF82903C),
+                                    onTap: () => context.pushNamed('profileSiswa'),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  _buildPillButton(
+                                    label: 'Logout',
+                                    color: const Color(0xFF650002),
+                                    onTap: () {
+                                      context.read<AuthBloc>().add(AuthLogoutRequested());
+                                      context.go('/login');
+                                    },
+                                  ),
+                                ],
+                              ),
+                            const SizedBox(width: 12),
+                            GestureDetector(
+                              onTap: () => setState(() => _isProfileMenuOpen = !_isProfileMenuOpen),
+                              child: _buildProfileAvatar(user, size: 48),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -113,8 +168,11 @@ class DashboardSiswaPage extends StatelessWidget {
                             }
                             
                             if (kelasState is KelasLoaded) {
-                              activeClass = kelasState.kelasList.length;
-                              for (var k in kelasState.kelasList) {
+                              // Filter kelas yang benar-benar diikuti oleh siswa ini
+                              final myClasses = kelasState.kelasList.where((k) => k.siswaIds.contains(user.id)).toList();
+                              
+                              activeClass = myClasses.length;
+                              for (var k in myClasses) {
                                 totalAssignments += k.assignmentIds.length;
                               }
                               // Subtract completed to get 'Remaining Tasks'
@@ -220,47 +278,94 @@ class DashboardSiswaPage extends StatelessWidget {
                                   color: Colors.white),
                             );
                           } else if (state is KelasLoaded) {
-                            if (state.kelasList.isEmpty) {
+                            final myClasses = state.kelasList.where((k) => k.siswaIds.contains(user.id)).toList();
+
+                            if (myClasses.isEmpty) {
                               return _buildEmptyState();
                             }
                             return ListView.separated(
-                              itemCount: state.kelasList.length,
-                              separatorBuilder: (_, __) =>
-                                  const SizedBox(height: 12),
+                              itemCount: myClasses.length,
+                              separatorBuilder: (_, __) => const SizedBox(height: 12),
                               itemBuilder: (context, index) {
-                                final kelas = state.kelasList[index];
-                                return BlocBuilder<SubmissionBloc, SubmissionState>(
-                                  builder: (context, submissionState) {
-                                    int classTasks = kelas.assignmentIds.length;
-                                    int classCompleted = 0;
-
-                                    if (submissionState is SubmissionSuccess) {
-                                      classCompleted = submissionState.submissions
-                                          .where((s) => (s.status == SubmissionStatus.submitted || s.status == SubmissionStatus.reviewed || s.status == SubmissionStatus.needsRevision) && kelas.assignmentIds.contains(s.assignmentId))
-                                          .length;
-                                    }
-                                    classTasks -= classCompleted;
-                                    if (classTasks < 0) classTasks = 0;
-
-                                    return GestureDetector(
-                                      onTap: () {
-                                        context.pushNamed('kelasDetail',
-                                            pathParameters: {
-                                              'kelasId': kelas.id
-                                            }).then((_) {
-                                          context.read<SubmissionBloc>().add(GetSubmissionsByStudentEvent(user.id));
-                                        });
-                                      },
-                                      child: _buildUltraSlimClassCard(
-                                        _phthaloGreen,
-                                        _mustardGreen,
-                                        kelas.nama,
-                                        kelas.kodeKelas,
-                                        classTasks,
-                                        classCompleted,
+                                final kelas = myClasses[index];
+                                return SizedBox(
+                                  height: 108,
+                                  child: Stack(
+                                    children: [
+                                      // Background putih (panel action) - tetap di belakang
+                                      Positioned.fill(
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(28),
+                                          ),
+                                          alignment: Alignment.centerRight,
+                                          child: Padding(
+                                            padding: const EdgeInsets.only(right: 24),
+                                            child: Icon(
+                                              Icons.logout_rounded,
+                                              color: Colors.red,
+                                              size: 32,
+                                            ),
+                                          ),
+                                        ),
                                       ),
-                                    );
-                                  },
+                                      Slidable(
+                                        key: ValueKey(kelas.id),
+                                        closeOnScroll: true,
+                                        endActionPane: ActionPane(
+                                          motion: const DrawerMotion(),
+                                          extentRatio: 0.28, // lebar panel putih (sesuai referensi)
+                                          children: [
+                                            CustomSlidableAction(
+                                              onPressed: (context) {
+                                                _showLeaveConfirmation(context, kelas, user.id);
+                                              },
+                                              backgroundColor: Colors.transparent,
+                                              foregroundColor: Colors.transparent,
+                                              child: const SizedBox.shrink(),
+                                            ),
+                                          ],
+                                        ),
+                                        child: BlocBuilder<SubmissionBloc, SubmissionState>(
+                                          builder: (context, submissionState) {
+                                            int classTasks = kelas.assignmentIds.length;
+                                            int classCompleted = 0;
+                                            if (submissionState is SubmissionSuccess) {
+                                              classCompleted = submissionState.submissions
+                                                  .where((s) => (s.status == SubmissionStatus.submitted ||
+                                                      s.status == SubmissionStatus.reviewed ||
+                                                      s.status == SubmissionStatus.needsRevision) &&
+                                                      kelas.assignmentIds.contains(s.assignmentId))
+                                                  .length;
+                                            }
+                                            classTasks -= classCompleted;
+                                            if (classTasks < 0) classTasks = 0;
+                                            return GestureDetector(
+                                              onTap: () {
+                                                context.pushNamed(
+                                                  'kelasDetail',
+                                                  pathParameters: {'kelasId': kelas.id}
+                                                ).then((_) {
+                                                  context.read<SubmissionBloc>().add(
+                                                      GetSubmissionsByStudentEvent(user.id),
+                                                  );
+                                                });
+                                              },
+                                              child: _buildUltraSlimClassCard(
+                                                _phthaloGreen,
+                                                _mustardGreen,
+                                                kelas.nama,
+                                                kelas.kodeKelas,
+                                                classTasks,
+                                                classCompleted,
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 );
                               },
                             );
@@ -358,6 +463,7 @@ class DashboardSiswaPage extends StatelessWidget {
   ) {
     return Container(
       width: double.infinity,
+      height: 108,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -365,14 +471,7 @@ class DashboardSiswaPage extends StatelessWidget {
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
         ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(28),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -449,4 +548,171 @@ class DashboardSiswaPage extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildPillButton({
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileAvatar(UserModel user, {required double size}) {
+    ImageProvider? imageProvider;
+    if (user.photoUrl != null) {
+      if (user.photoUrl!.startsWith('http')) {
+        imageProvider = NetworkImage(user.photoUrl!);
+      } else {
+        imageProvider = FileImage(dart_io.File(user.photoUrl!));
+      }
+    }
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.black87,
+        image: imageProvider != null
+            ? DecorationImage(image: imageProvider, fit: BoxFit.cover)
+            : null,
+      ),
+      child: imageProvider == null
+          ? Icon(Icons.person, color: Colors.white, size: size * 0.5)
+          : null,
+    );
+  }
+
+  void _showLeaveConfirmation(BuildContext context, KelasModel kelas, String siswaId) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.4),
+      builder: (dialogContext) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.3),
+                width: 1.5,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Leave',
+                  style: GoogleFonts.outfit(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                // Tombol Leave (Red Gradient)
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pop(dialogContext);
+                    _kelasBloc.add(
+                      KelasLeaveRequested(kelasId: kelas.id, siswaId: siswaId),
+                    );
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    height: 55,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFFE5B5B1),
+                          const Color(0xFFC77A75).withValues(alpha: 0.8),
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                      borderRadius: BorderRadius.circular(25),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                     ),
+                      ],
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      'Leave',
+                      style: GoogleFonts.outfit(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF19350C),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Tombol Cancel (Blue Gradient)
+                GestureDetector(
+                  onTap: () => Navigator.pop(dialogContext),
+                  child: Container(
+                    width: double.infinity,
+                    height: 55,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFFD4E9EC),
+                          const Color(0xFF90C2C8).withValues(alpha: 0.8),
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                      borderRadius: BorderRadius.circular(25),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      'Cancel',
+                      style: GoogleFonts.outfit(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF19350C),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
+

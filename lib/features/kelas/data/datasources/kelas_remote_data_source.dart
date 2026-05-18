@@ -66,16 +66,32 @@ class KelasRemoteDataSourceImpl implements KelasRemoteDataSource {
 
   @override
   Future<List<KelasModel>> getKelasSiswa(String siswaId) async {
+    if (siswaId.isEmpty) return [];
+
     final collection = await mongoService.classCollection;
     final assignmentCol = await mongoService.assignmentCollection;
 
-    // Mencari siswaId di dalam array students
+    // Gunakan native query untuk memastikan MongoDB mencari siswaId di dalam array 'students'
     final result = await collection.find(
-      where.eq('students', siswaId).eq('deletedAt', null)
+      where.raw({
+        'students': { '\$elemMatch': { '\$eq': siswaId } },
+        'deletedAt': null,
+      })
     ).toList();
 
+    // Jika elemMatch tidak jalan karena students adalah array of strings (bukan objects), 
+    // MongoDB standar { 'students': siswaId } seharusnya cukup.
+    // Mari kita pakai query paling dasar tapi paling ampuh:
+    final fallbackResult = await collection.find({
+      'students': siswaId,
+      'deletedAt': null,
+    }).toList();
+
+    final finalResult = result.isNotEmpty ? result : fallbackResult;
+    print("DEBUG: getKelasSiswa query: {'students': '$siswaId'}, found: ${finalResult.length}");
+    
     List<KelasModel> kelasList = [];
-    for (var map in result) {
+    for (var map in finalResult) {
       // Sync jumlah tugas secara realtime
       final assignments = await assignmentCol.find(
         where.eq('classId', map['_id']).eq('deletedAt', null)
@@ -224,9 +240,12 @@ class KelasRemoteDataSourceImpl implements KelasRemoteDataSource {
   @override
   Future<void> leaveKelas(String kelasId, String siswaId) async {
     final collection = await mongoService.classCollection;
+    
     await collection.updateOne(
       where.eq('_id', kelasId),
-      modify.pull('students', siswaId),
+      modify.pull('students', siswaId)
     );
+    
+    print("DEBUG: leaveKelas remote selesai untuk siswa: $siswaId di kelas: $kelasId");
   }
 }

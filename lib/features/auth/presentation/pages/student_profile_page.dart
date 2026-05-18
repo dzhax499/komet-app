@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/models/user_model.dart';
+import '../../../../core/models/submission_model.dart';
 import '../bloc/auth_bloc.dart';
 import '../../../kelas/presentation/bloc/kelas_bloc.dart';
 import '../../../submission/presentation/bloc/submission_bloc.dart';
@@ -15,14 +15,14 @@ import 'package:material_symbols_icons/material_symbols_icons.dart';
 
 enum ProfileViewState { view, editName, editPhoto }
 
-class TeacherProfilePage extends StatefulWidget {
-  const TeacherProfilePage({super.key});
+class StudentProfilePage extends StatefulWidget {
+  const StudentProfilePage({super.key});
 
   @override
-  State<TeacherProfilePage> createState() => _TeacherProfilePageState();
+  State<StudentProfilePage> createState() => _StudentProfilePageState();
 }
 
-class _TeacherProfilePageState extends State<TeacherProfilePage> {
+class _StudentProfilePageState extends State<StudentProfilePage> {
   ProfileViewState _viewState = ProfileViewState.view;
   late TextEditingController _nameController;
 
@@ -48,9 +48,9 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
     return BlocConsumer<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthError) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(state.message)));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message)),
+          );
         }
       },
       builder: (context, state) {
@@ -74,7 +74,10 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Color(0xFF86B3C0), Color(0xFFE3E2E0)],
+                colors: [
+                  Color(0xFF86B3C0),
+                  Color(0xFFE3E2E0),
+                ],
                 stops: [0.0, 1.0],
               ),
             ),
@@ -84,10 +87,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                   _buildHeader(),
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 32,
-                        vertical: 20,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
                       child: _buildContent(user),
                     ),
                   ),
@@ -106,11 +106,11 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Row(
         children: [
-          Image.asset('assets/images/logo.png', height: 24),
+          Image.asset('assets/images/logo.png', width: 24, height: 24),
           const SizedBox(width: 8),
           Text(
             title,
-            style: GoogleFonts.nunito(
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 22,
               fontWeight: FontWeight.w400,
@@ -137,13 +137,13 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
       children: [
         _buildAvatar(user, size: 140),
         const SizedBox(height: 24),
-        Text(
+        const Text(
           'Welcome back,',
-          style: GoogleFonts.nunito(color: Colors.white, fontSize: 20),
+          style: TextStyle(color: Colors.white, fontSize: 20),
         ),
         Text(
           user.nama,
-          style: GoogleFonts.nunito(
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 28,
             fontWeight: FontWeight.bold,
@@ -151,14 +151,11 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
         ),
         const SizedBox(height: 16),
         ElevatedButton(
-          onPressed: () =>
-              setState(() => _viewState = ProfileViewState.editName),
+          onPressed: () => setState(() => _viewState = ProfileViewState.editName),
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.white,
             foregroundColor: Colors.black87,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
           ),
           child: const Text('Edit Profile'),
@@ -172,21 +169,16 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
   Widget _buildEditNameView(UserModel user) {
     return Column(
       children: [
-        _buildAvatar(
-          user,
-          size: 140,
-          showEditIcon: true,
-          onEdit: () {
-            setState(() => _viewState = ProfileViewState.editPhoto);
-          },
-        ),
+        _buildAvatar(user, size: 140, showEditIcon: true, onEdit: () {
+          setState(() => _viewState = ProfileViewState.editPhoto);
+        }),
         const SizedBox(height: 40),
         TextField(
           controller: _nameController,
           textAlign: TextAlign.center,
           decoration: InputDecoration(
             hintText: 'Input Name ...',
-            hintStyle: GoogleFonts.nunito(color: Colors.white70),
+            hintStyle: const TextStyle(color: Colors.white70),
             filled: true,
             fillColor: Colors.white.withValues(alpha: 0.2),
             border: OutlineInputBorder(
@@ -195,22 +187,18 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
             ),
             contentPadding: const EdgeInsets.symmetric(vertical: 16),
           ),
-          style: GoogleFonts.nunito(color: Colors.white, fontSize: 18),
+          style: const TextStyle(color: Colors.white, fontSize: 18),
         ),
         const SizedBox(height: 24),
         ElevatedButton(
           onPressed: () {
-            context.read<AuthBloc>().add(
-              AuthUpdateProfileRequested(nama: _nameController.text),
-            );
+            context.read<AuthBloc>().add(AuthUpdateProfileRequested(nama: _nameController.text));
             setState(() => _viewState = ProfileViewState.view);
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.white,
             foregroundColor: Colors.black87,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
           ),
           child: const Text('Save'),
@@ -226,19 +214,14 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
         const SizedBox(height: 40),
         _buildActionButton('Take Photo', () => _pickImage(ImageSource.camera)),
         const SizedBox(height: 12),
-        _buildActionButton(
-          'Choose From Gallery',
-          () => _pickImage(ImageSource.gallery),
-        ),
+        _buildActionButton('Choose From Gallery', () => _pickImage(ImageSource.gallery)),
         const SizedBox(height: 24),
         ElevatedButton(
           onPressed: () => setState(() => _viewState = ProfileViewState.view),
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.white,
             foregroundColor: Colors.black87,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
           ),
           child: const Text('Save'),
@@ -259,16 +242,14 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
 
       if (pickedFile != null) {
         if (mounted) {
-          context.read<AuthBloc>().add(
-            AuthUpdateProfileRequested(photoUrl: pickedFile.path),
-          );
+          context.read<AuthBloc>().add(AuthUpdateProfileRequested(photoUrl: pickedFile.path));
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Gagal mengambil gambar: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal mengambil gambar: $e')),
+        );
       }
     }
   }
@@ -281,9 +262,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF82903C),
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           padding: const EdgeInsets.symmetric(vertical: 12),
         ),
         child: Text(label),
@@ -291,12 +270,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
     );
   }
 
-  Widget _buildAvatar(
-    UserModel user, {
-    required double size,
-    bool showEditIcon = false,
-    VoidCallback? onEdit,
-  }) {
+  Widget _buildAvatar(UserModel user, {required double size, bool showEditIcon = false, VoidCallback? onEdit}) {
     ImageProvider? imageProvider;
     if (user.photoUrl != null) {
       if (user.photoUrl!.startsWith('http')) {
@@ -330,10 +304,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
               onTap: onEdit,
               child: Container(
                 padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
+                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
                 child: const Icon(Icons.edit, size: 16, color: Colors.black87),
               ),
             ),
@@ -344,62 +315,55 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
 
   Widget _buildStatsSection() {
     return BlocBuilder<KelasBloc, KelasState>(
-      builder: (context, state) {
-        String activeClassCount = '0';
-        String totalAssignments = '0';
+      builder: (context, kelasState) {
+        return BlocBuilder<SubmissionBloc, SubmissionState>(
+          builder: (context, submissionState) {
+            int activeClass = 0;
+            int totalAssignments = 0;
+            int completedTasks = 0;
 
-        if (state is KelasLoaded) {
-          activeClassCount = state.kelasList.length.toString();
-          int total = 0;
-          List<String> allAssignmentIds = [];
-          for (var k in state.kelasList) {
-            total += k.assignmentIds.length;
-            allAssignmentIds.addAll(k.assignmentIds);
-          }
-          totalAssignments = total.toString();
+            if (submissionState is SubmissionSuccess) {
+              completedTasks = submissionState.submissions
+                  .where((s) => s.status == SubmissionStatus.submitted || s.status == SubmissionStatus.reviewed || s.status == SubmissionStatus.needsRevision)
+                  .length;
+            }
+            
+            if (kelasState is KelasLoaded) {
+              activeClass = kelasState.kelasList.length;
+              for (var k in kelasState.kelasList) {
+                totalAssignments += k.assignmentIds.length;
+              }
+              totalAssignments -= completedTasks;
+              if (totalAssignments < 0) totalAssignments = 0;
+            }
 
-          if (allAssignmentIds.isNotEmpty) {
-            context.read<SubmissionBloc>().add(
-              GetReviewCountEvent(allAssignmentIds),
-            );
-          }
-        }
-
-        return IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildSummaryCard(
-                icon: Icons.class_,
-                number: activeClassCount,
-                label: 'Active Class',
-                color: const Color(0xFF81B4C6),
-              ),
-              _buildDivider(),
-              _buildSummaryCard(
-                icon: MingCuteIcons.mgc_task_2_fill,
-                number: totalAssignments,
-                label: 'Task',
-                color: const Color(0xFF82903C),
-              ),
-              _buildDivider(),
-              BlocBuilder<SubmissionBloc, SubmissionState>(
-                builder: (context, subState) {
-                  String reviewCount = '0';
-                  if (subState is SubmissionReviewCountLoaded) {
-                    reviewCount = subState.count.toString();
-                  }
-                  return _buildSummaryCard(
-                    icon: Symbols.inbox,
-                    number: reviewCount,
-                    label: 'Review',
-                    color: const Color(0xFF507877),
+            return IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildSummaryCard(
+                      icon: Icons.bookmark, 
+                      number: activeClass.toString(), 
+                      label: 'Active Class', 
+                      color: const Color(0xFF6FA9BB)),
+                  _buildDivider(),
+                  _buildSummaryCard(
+                      icon: Icons.assignment_rounded, 
+                      number: totalAssignments.toString(), 
+                      label: 'Task', 
+                      color: const Color(0xFF687D31)),
+                  _buildDivider(),
+                  _buildSummaryCard(
+                    icon: Icons.checklist_rounded,
+                    number: completedTasks.toString(),
+                    label: 'Completed',
+                    color: const Color(0xFF406768),
                     fill: 1.0,
-                  );
-                },
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
@@ -430,18 +394,8 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
         child: Column(
           children: [
             Icon(icon, color: Colors.white, size: 20, fill: fill),
-            Text(
-              number,
-              style: GoogleFonts.nunito(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              label,
-              style: GoogleFonts.nunito(color: Colors.white, fontSize: 10),
-            ),
+            Text(number, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+            Text(label, style: const TextStyle(color: Colors.white, fontSize: 10)),
           ],
         ),
       ),

@@ -139,7 +139,13 @@ class HiveService {
   }
 
   Future<void> logout() async {
+    // Hapus session user
     await Hive.box(authBox).delete('currentUser');
+    // Bersihkan cache kelas, submission, dan assignment agar
+    // user berikutnya tidak melihat data user sebelumnya
+    await Hive.box<KelasModel>(kelasBox).clear();
+    await Hive.box<SubmissionModel>(submissionBox).clear();
+    await Hive.box<AssignmentModel>(assignmentBox).clear();
   }
 
   // Assignment Methods 
