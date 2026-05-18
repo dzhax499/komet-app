@@ -96,13 +96,24 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       onPressed: state is AuthLoading
                           ? null
                           : () {
-                              if (_emailController.text.isEmpty) {
+                              if (_emailController.text.trim().isEmpty) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(content: Text('Email tidak boleh kosong'), backgroundColor: AppColors.error),
                                 );
                                 return;
                               }
-                              context.read<AuthBloc>().add(AuthForgotPasswordRequested(email: _emailController.text));
+                              final email = _emailController.text.trim();
+                              final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                              if (!emailRegex.hasMatch(email)) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Format email tidak valid'),
+                                    backgroundColor: AppColors.error,
+                                  ),
+                                );
+                                return;
+                              }
+                              context.read<AuthBloc>().add(AuthForgotPasswordRequested(email: email));
                             },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.secondary,

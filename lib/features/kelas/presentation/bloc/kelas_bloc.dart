@@ -144,6 +144,7 @@ class KelasBloc extends Bloc<KelasEvent, KelasState> {
     required this.deleteKelasUseCase,
     required this.getKelasByIdUseCase,
     required this.getSiswaInKelasUseCase,
+    required this.leaveKelasUseCase,
   }) : super(KelasInitial()) {
     on<KelasFetchGuruRequested>(_onFetchGuru);
     on<KelasFetchSiswaRequested>(_onFetchSiswa);
@@ -158,6 +159,7 @@ class KelasBloc extends Bloc<KelasEvent, KelasState> {
 
   final GetKelasByIdUseCase getKelasByIdUseCase;
   final GetSiswaInKelasUseCase getSiswaInKelasUseCase;
+  final LeaveKelasUseCase leaveKelasUseCase;
 
   Future<void> _onFetchGuru(KelasFetchGuruRequested event, Emitter<KelasState> emit) async {
     emit(KelasLoading());

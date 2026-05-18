@@ -145,9 +145,32 @@ class _RegisterSiswaPageState extends State<RegisterSiswaPage> {
                                   onPressed: state is AuthLoading
                                       ? null
                                       : () {
+                                          final email = _emailController.text.trim();
+                                          final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                                          
+                                          if (_namaController.text.trim().isEmpty || email.isEmpty || _passwordController.text.isEmpty) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(
+                                                content: Text('Semua field wajib diisi'),
+                                                backgroundColor: AppColors.error,
+                                              ),
+                                            );
+                                            return;
+                                          }
+
+                                          if (!emailRegex.hasMatch(email)) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(
+                                                content: Text('Format email tidak valid'),
+                                                backgroundColor: AppColors.error,
+                                              ),
+                                            );
+                                            return;
+                                          }
+
                                           context.read<AuthBloc>().add(AuthRegisterSiswaRequested(
                                                 nama: _namaController.text,
-                                                email: _emailController.text,
+                                                email: email,
                                                 password: _passwordController.text,
                                                 kodeKelas: _kodeKelasController.text.toUpperCase(),
                                               ));

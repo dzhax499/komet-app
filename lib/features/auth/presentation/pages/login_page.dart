@@ -137,8 +137,18 @@ class _LoginPageState extends State<LoginPage> {
                                   onPressed: state is AuthLoading
                                       ? null
                                       : () {
+                                          final email = _emailController.text.trim();
+                                          if (email.isEmpty || _passwordController.text.isEmpty) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(
+                                                content: Text('Email dan Password wajib diisi'),
+                                                backgroundColor: AppColors.error,
+                                              ),
+                                            );
+                                            return;
+                                          }
                                           context.read<AuthBloc>().add(AuthLoginRequested(
-                                                email: _emailController.text,
+                                                email: email,
                                                 password: _passwordController.text,
                                               ));
                                         },
