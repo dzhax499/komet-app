@@ -161,7 +161,7 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
           child: const Text('Edit Profile'),
         ),
         const SizedBox(height: 40),
-        _buildStatsSection(),
+        _buildStatsSection(user),
       ],
     );
   }
@@ -313,7 +313,7 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
     );
   }
 
-  Widget _buildStatsSection() {
+  Widget _buildStatsSection(UserModel user) {
     return BlocBuilder<KelasBloc, KelasState>(
       builder: (context, kelasState) {
         return BlocBuilder<SubmissionBloc, SubmissionState>(
@@ -324,15 +324,24 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
 
             if (submissionState is SubmissionSuccess) {
               completedTasks = submissionState.submissions
-                  .where((s) => s.status == SubmissionStatus.submitted || s.status == SubmissionStatus.reviewed || s.status == SubmissionStatus.needsRevision)
+                  .where((s) =>
+                      s.status == SubmissionStatus.submitted ||
+                      s.status == SubmissionStatus.reviewed ||
+                      s.status == SubmissionStatus.needsRevision)
                   .length;
             }
-            
+
             if (kelasState is KelasLoaded) {
-              activeClass = kelasState.kelasList.length;
-              for (var k in kelasState.kelasList) {
+              // Filter hanya kelas yang benar-benar diikuti siswa ini
+              final myClasses = kelasState.kelasList
+                  .where((k) => k.siswaIds.contains(user.id))
+                  .toList();
+
+              activeClass = myClasses.length;
+              for (var k in myClasses) {
                 totalAssignments += k.assignmentIds.length;
               }
+              // Kurangi yang sudah selesai untuk mendapat sisa tugas
               totalAssignments -= completedTasks;
               if (totalAssignments < 0) totalAssignments = 0;
             }
@@ -342,15 +351,15 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _buildSummaryCard(
-                      icon: Icons.bookmark, 
-                      number: activeClass.toString(), 
-                      label: 'Active Class', 
+                      icon: Icons.bookmark,
+                      number: activeClass.toString(),
+                      label: 'Active Class',
                       color: const Color(0xFF6FA9BB)),
                   _buildDivider(),
                   _buildSummaryCard(
-                      icon: Icons.assignment_rounded, 
-                      number: totalAssignments.toString(), 
-                      label: 'Task', 
+                      icon: Icons.assignment_rounded,
+                      number: totalAssignments.toString(),
+                      label: 'Task',
                       color: const Color(0xFF687D31)),
                   _buildDivider(),
                   _buildSummaryCard(
