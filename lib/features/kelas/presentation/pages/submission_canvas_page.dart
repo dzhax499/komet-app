@@ -594,7 +594,7 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
         if (objs != null && objs.isNotEmpty) {
           _objects = objs.map((o) => SceneObject(
             name: o['name'],
-            icon: IconData(o['icon'], fontFamily: 'MaterialIcons'),
+            icon: _getIconFromCodePoint(o['icon']),
             baseColor: Color(o['baseColor']),
             spawnX: (o['spawnX'] as num).toDouble(),
             spawnY: (o['spawnY'] as num).toDouble(),
@@ -610,6 +610,23 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
     } catch (e) {
       debugPrint("Gagal load state: $e");
     }
+  }
+
+  IconData _getIconFromCodePoint(int codePoint) {
+    const icons = [
+      Icons.person,
+      Icons.school,
+      Icons.pets,
+      Icons.smart_toy,
+      Icons.star,
+      Icons.sports_soccer,
+      Icons.local_florist,
+      Icons.directions_car,
+    ];
+    for (final icon in icons) {
+      if (icon.codePoint == codePoint) return icon;
+    }
+    return Icons.person;
   }
 
   void _injectWorkspaceXml(String xml) {

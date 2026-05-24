@@ -27,6 +27,11 @@ class _ManageKelasPageState extends State<ManageKelasPage> {
   late KelasBloc _kelasBloc;
   KelasModel? _kelas;
   List<UserModel>? _students;
+  
+  final TextEditingController _searchStudentController = TextEditingController();
+  String _searchStudentQuery = '';
+  int _currentStudentPage = 1;
+  final int _studentsPerPage = 5;
 
   @override
   void initState() {
@@ -39,6 +44,7 @@ class _ManageKelasPageState extends State<ManageKelasPage> {
   @override
   void dispose() {
     _kelasBloc.close();
+    _searchStudentController.dispose();
     super.dispose();
   }
 
@@ -409,109 +415,180 @@ class _ManageKelasPageState extends State<ManageKelasPage> {
       );
     }
     final students = _students!;
-    if (students.isEmpty) {
-      return const SliverToBoxAdapter(child: SizedBox.shrink());
-    }
 
-    return SliverPadding(
-      padding: EdgeInsets.symmetric(horizontal: isSmall ? 16 : 24),
-      sliver: SliverList(
-        delegate: SliverChildBuilderDelegate((context, index) {
-          final student = students[index];
-          return Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFF507877),
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.15),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+    // Filter and paginate
+    final filteredStudents = students.where((s) {
+      return s.nama.toLowerCase().contains(_searchStudentQuery.toLowerCase());
+    }).toList();
+
+    int totalPages = (filteredStudents.length / _studentsPerPage).ceil();
+    if (totalPages == 0) totalPages = 1;
+    if (_currentStudentPage > totalPages) _currentStudentPage = totalPages;
+
+    int startIndex = (_currentStudentPage - 1) * _studentsPerPage;
+    int endIndex = startIndex + _studentsPerPage;
+    if (endIndex > filteredStudents.length) endIndex = filteredStudents.length;
+
+    final paginatedStudents = filteredStudents.sublist(startIndex, endIndex);
+
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: isSmall ? 16 : 24),
+        child: Column(
+          children: [
+            if (students.isNotEmpty)
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
                 ),
-              ],
-            ),
-            child: Row(
-              children: [
-                _buildProfileAvatar(student, size: isSmall ? 40 : 56),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    student.nama,
-                    style: GoogleFonts.nunito(
-                      color: Colors.white,
-                      fontSize: isSmall ? 16 : 18,
-                      fontWeight: FontWeight.w500,
-                    ),
+                child: TextField(
+                  controller: _searchStudentController,
+                  style: GoogleFonts.nunito(color: Colors.white, fontSize: 14),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    hintText: 'Search....',
+                    hintStyle: GoogleFonts.nunito(color: Colors.white, fontSize: 14),
+                    border: InputBorder.none,
+                    suffixIcon: const Icon(Icons.search, color: Colors.white, size: 20),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   ),
+                  onChanged: (value) {
+                    setState(() {
+                      _searchStudentQuery = value;
+                      _currentStudentPage = 1;
+                    });
+                  },
                 ),
-                // Detail button
-                ElevatedButton(
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => BlocProvider.value(
-                        value: context.read<KelasBloc>(),
-                        child: StudentDetailPage(
-                          student: student,
-                          kelasId: widget.kelasId,
+              ),
+            if (filteredStudents.isEmpty && students.isNotEmpty)
+              Center(
+                child: Text(
+                  "No student found",
+                  style: GoogleFonts.nunito(color: Colors.white70, fontSize: 16),
+                ),
+              )
+            else
+              ...paginatedStudents.map((student) => Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF507877),
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.15),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    _buildProfileAvatar(student, size: isSmall ? 40 : 56),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        student.nama,
+                        style: GoogleFonts.nunito(
+                          color: Colors.white,
+                          fontSize: isSmall ? 16 : 18,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black87,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
+                    ElevatedButton(
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BlocProvider.value(
+                            value: context.read<KelasBloc>(),
+                            child: StudentDetailPage(
+                              student: student,
+                              kelasId: widget.kelasId,
+                            ),
+                          ),
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black87,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isSmall ? 10 : 16,
+                          vertical: 6,
+                        ),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Text(
+                        'Detail',
+                        style: GoogleFonts.nunito(
+                          fontWeight: FontWeight.w600,
+                          fontSize: isSmall ? 11 : 13,
+                        ),
+                      ),
                     ),
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isSmall ? 10 : 16,
-                      vertical: 6,
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () => _showRemoveStudentDialog(context, student),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black87,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isSmall ? 10 : 16,
+                          vertical: 6,
+                        ),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Text(
+                        'Remove',
+                        style: GoogleFonts.nunito(
+                          fontWeight: FontWeight.w600,
+                          fontSize: isSmall ? 11 : 13,
+                        ),
+                      ),
                     ),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: Text(
-                    'Detail',
-                    style: GoogleFonts.nunito(
-                      fontWeight: FontWeight.w600,
-                      fontSize: isSmall ? 11 : 13,
-                    ),
-                  ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                // Remove button
-                ElevatedButton(
-                  onPressed: () => _showRemoveStudentDialog(context, student),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black87,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
+              )),
+            if (totalPages > 1)
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.chevron_left, color: Colors.white),
+                      onPressed: _currentStudentPage > 1
+                          ? () => setState(() => _currentStudentPage--)
+                          : null,
                     ),
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isSmall ? 10 : 16,
-                      vertical: 6,
+                    Text(
+                      'Page $_currentStudentPage of $totalPages',
+                      style: GoogleFonts.nunito(color: Colors.white),
                     ),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: Text(
-                    'Remove',
-                    style: GoogleFonts.nunito(
-                      fontWeight: FontWeight.w600,
-                      fontSize: isSmall ? 11 : 13,
+                    IconButton(
+                      icon: const Icon(Icons.chevron_right, color: Colors.white),
+                      onPressed: _currentStudentPage < totalPages
+                          ? () => setState(() => _currentStudentPage++)
+                          : null,
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
-          );
-        }, childCount: students.length),
+              ),
+          ],
+        ),
       ),
     );
   }
