@@ -402,16 +402,16 @@ class _DashboardGuruPageState extends State<DashboardGuruPage> {
                     Container(
                       margin: const EdgeInsets.only(bottom: 16),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.1),
+                        color: Colors.transparent,
                         borderRadius: BorderRadius.circular(30),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
+                        border: Border.all(color: Colors.white),
                       ),
                       child: TextField(
                         controller: _searchController,
                         style: GoogleFonts.nunito(color: Colors.white, fontSize: 14),
                         decoration: InputDecoration(
                           isDense: true,
-                          hintText: 'Search....',
+                          hintText: 'Search ..',
                           hintStyle: GoogleFonts.nunito(color: Colors.white, fontSize: 14),
                           border: InputBorder.none,
                           suffixIcon: _searchQuery.isNotEmpty
