@@ -414,7 +414,18 @@ class _DashboardGuruPageState extends State<DashboardGuruPage> {
                           hintText: 'Search....',
                           hintStyle: GoogleFonts.nunito(color: Colors.white, fontSize: 14),
                           border: InputBorder.none,
-                          suffixIcon: const Icon(Icons.search, color: Colors.white, size: 20),
+                          suffixIcon: _searchQuery.isNotEmpty
+                               ? GestureDetector(
+                                   onTap: () {
+                                     _searchController.clear();
+                                     setState(() {
+                                       _searchQuery = '';
+                                       _currentPage = 1;
+                                     });
+                                   },
+                                   child: const Icon(Icons.close, color: Colors.white, size: 20),
+                                 )
+                               : null,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                         ),
                         onChanged: (value) {
