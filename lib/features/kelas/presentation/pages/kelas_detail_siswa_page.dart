@@ -49,6 +49,8 @@ class _KelasDetailSiswaPageState extends State<KelasDetailSiswaPage> {
 
     return Scaffold(
       body: Container(
+        height: double.infinity,
+        width: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -56,35 +58,45 @@ class _KelasDetailSiswaPageState extends State<KelasDetailSiswaPage> {
             colors: [Color(0xFF86B3C0), Color(0xFFE3E2E0)],
           ),
         ),
-        child: Column(
-          children: [
-            _buildCustomHeader(context),
-            Expanded(
-              child: BlocListener<SubmissionBloc, SubmissionState>(
-                listener: (context, state) {
-                  if (state is SubmissionSaved) {
-                    _submissionBloc.add(GetSubmissionsByClassEvent(widget.kelasId));
-                  }
-                },
-                child: BlocBuilder<SubmissionBloc, SubmissionState>(
-                  builder: (context, submissionState) {
-                    var submittedAssignmentIds = <String>{};
-                    if (submissionState is SubmissionSuccess) {
-                      final userSubmissions = submissionState.submissions.where((s) => s.siswaId == userId);
-                      submittedAssignmentIds = userSubmissions
-                          .where((s) => s.status == SubmissionStatus.submitted || s.status == SubmissionStatus.reviewed || s.status == SubmissionStatus.needsRevision)
-                          .map((s) => s.assignmentId)
-                          .toSet();
+        child: RefreshIndicator(
+          onRefresh: () async {
+            _assignmentBloc.add(GetAssignmentsByClassEvent(widget.kelasId));
+            _submissionBloc.add(GetSubmissionsByClassEvent(widget.kelasId));
+            _kelasBloc.add(KelasFetchDetailRequested(widget.kelasId));
+            await Future.delayed(const Duration(seconds: 1));
+          },
+          color: const Color(0xFF6FA9BB),
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              children: [
+                _buildCustomHeader(context),
+                BlocListener<SubmissionBloc, SubmissionState>(
+                  listener: (context, state) {
+                    if (state is SubmissionSaved) {
+                      _submissionBloc.add(GetSubmissionsByClassEvent(widget.kelasId));
                     }
-
-                    return _selectedTabIndex == 0
-                        ? _buildAssignmentList(submittedAssignmentIds)
-                        : _buildSubmissionList(submissionState, userId);
                   },
+                  child: BlocBuilder<SubmissionBloc, SubmissionState>(
+                    builder: (context, submissionState) {
+                      var submittedAssignmentIds = <String>{};
+                      if (submissionState is SubmissionSuccess) {
+                        final userSubmissions = submissionState.submissions.where((s) => s.siswaId == userId);
+                        submittedAssignmentIds = userSubmissions
+                            .where((s) => s.status == SubmissionStatus.submitted || s.status == SubmissionStatus.reviewed || s.status == SubmissionStatus.needsRevision)
+                            .map((s) => s.assignmentId)
+                            .toSet();
+                      }
+
+                      return _selectedTabIndex == 0
+                          ? _buildAssignmentList(submittedAssignmentIds)
+                          : _buildSubmissionList(submissionState, userId);
+                    },
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -98,9 +110,17 @@ class _KelasDetailSiswaPageState extends State<KelasDetailSiswaPage> {
           final List<AssignmentModel> displayAssignments = 
               state.assignments.where((a) => !submittedAssignmentIds.contains(a.id)).toList();
 
-          if (displayAssignments.isEmpty) return const Center(child: Text("Belum ada task di kelas ini."));
+          if (displayAssignments.isEmpty) {
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.5,
+              alignment: Alignment.center,
+              child: const Text("Belum ada task di kelas ini.", style: TextStyle(color: Colors.black54)),
+            );
+          }
           
           return ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
             padding: const EdgeInsets.only(top: 20, bottom: 100),
             itemCount: displayAssignments.length,
             itemBuilder: (context, index) {
@@ -147,9 +167,17 @@ class _KelasDetailSiswaPageState extends State<KelasDetailSiswaPage> {
                s.status == SubmissionStatus.reviewed || 
                s.status == SubmissionStatus.needsRevision)).toList();
 
-      if (displaySubmissions.isEmpty) return const Center(child: Text("Belum ada pengumpulan tugas."));
+      if (displaySubmissions.isEmpty) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.5,
+          alignment: Alignment.center,
+          child: const Text("Belum ada pengumpulan tugas.", style: TextStyle(color: Colors.black54)),
+        );
+      }
       
       return ListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
         padding: const EdgeInsets.only(top: 20, bottom: 100),
         itemCount: displaySubmissions.length,
         itemBuilder: (context, index) {
@@ -227,12 +255,24 @@ class _KelasDetailSiswaPageState extends State<KelasDetailSiswaPage> {
                   ),
                   const SizedBox(width: 8),
                   Text('Student Hub', style: GoogleFonts.nunito(color: Colors.white, fontSize: 16)),
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: const Icon(Icons.exit_to_app_rounded, color: Colors.white, size: 28),
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Text(className, style: GoogleFonts.nunito(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                  Expanded(
+                    child: Text(
+                      className,
+                      style: GoogleFonts.nunito(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                   const SizedBox(width: 16),
                   _buildStudentStats(),
                 ],
