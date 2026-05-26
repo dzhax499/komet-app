@@ -12,8 +12,6 @@ import '../../../submission/presentation/bloc/submission_state.dart';
 import 'dart:ui';
 import '../../../../core/theme/app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:xml/xml.dart' as xml;
 
 // ─────────────────────────────────────────────────────────────
 // Custom Block Definitions (JavaScript)
@@ -443,33 +441,27 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
     );
 
     // Konfigurasi WebView secara manual
-    if (kIsWeb) {
-      (_editor as dynamic).htmlRender(
-        script: _kCustomBlocksScript,
-        onPageFinished: () {
-          (_editor as dynamic).init();
-        }
+    _editor.blocklyController
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageFinished: (url) {
+            _editor.init();
+          },
+        ),
+      )
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..addJavaScriptChannel(
+        'FlutterWebView',
+        onMessageReceived: _editor.onMessage,
       );
-    } else {
-      final controller = (_editor as dynamic).blocklyController;
-      controller
-        ..setNavigationDelegate(
-          NavigationDelegate(
-            onPageFinished: (url) {
-              _editor.init();
-            },
-          ),
-        )
-        ..setJavaScriptMode(JavaScriptMode.unrestricted)
-        ..addJavaScriptChannel(
-          'FlutterWebView',
-          onMessageReceived: _editor.onMessage,
-        );
 
-      (_editor as dynamic).htmlRender(script: _kCustomBlocksScript).then((htmlString) {
-        controller.loadHtmlString(htmlString);
-      });
-    }
+    _editor
+        .htmlRender(
+      script: _kCustomBlocksScript,
+    )
+        .then((htmlString) {
+      _editor.blocklyController.loadHtmlString(htmlString);
+    });
   }
 
   @override
@@ -528,10 +520,7 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
                   Expanded(
                   child: Stack(
                     children: [
-                      if (kIsWeb)
-                        const HtmlElementView(viewType: 'blocklyEditor')
-                      else
-                        WebViewWidget(controller: (_editor as dynamic).blocklyController),
+                      WebViewWidget(controller: _editor.blocklyController),
                       if (!_isPlaying)
                         Positioned(
                           bottom: 10, left: 10,
@@ -605,7 +594,7 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
         if (objs != null && objs.isNotEmpty) {
           _objects = objs.map((o) => SceneObject(
             name: o['name'],
-            icon: IconData(o['icon'], fontFamily: 'MaterialIcons'),
+            icon: _getIconFromCodePoint(o['icon']),
             baseColor: Color(o['baseColor']),
             spawnX: (o['spawnX'] as num).toDouble(),
             spawnY: (o['spawnY'] as num).toDouble(),
@@ -623,29 +612,40 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
     }
   }
 
-  void _injectWorkspaceXml(String xmlStr) {
-    if (xmlStr.isEmpty) return;
-    final nx = xmlStr.replaceAll("'", "\\'");
-    final code = '(function(){var w=Blockly.getMainWorkspace();if(!w)return"err";w.clear();Blockly.Xml.domToWorkspace(Blockly.utils.xml.textToDom(\'$nx\'),w);return"ok";})();';
-    if (kIsWeb) {
-      (_editor as dynamic).runJS(code);
-    } else {
-      (_editor as dynamic).blocklyController.runJavaScriptReturningResult(code);
+  IconData _getIconFromCodePoint(int codePoint) {
+    const icons = [
+      Icons.person,
+      Icons.school,
+      Icons.pets,
+      Icons.smart_toy,
+      Icons.star,
+      Icons.sports_soccer,
+      Icons.local_florist,
+      Icons.directions_car,
+    ];
+    for (final icon in icons) {
+      if (icon.codePoint == codePoint) return icon;
     }
+    return Icons.person;
+  }
+
+  void _injectWorkspaceXml(String xml) {
+    if (xml.isEmpty) return;
+    final nx = xml.replaceAll("'", "\\'");
+    _editor.blocklyController.runJavaScriptReturningResult(
+      '(function(){var w=Blockly.getMainWorkspace();if(!w)return"err";w.clear();Blockly.Xml.domToWorkspace(Blockly.utils.xml.textToDom(\'$nx\'),w);return"ok";})();'
+    );
   }
 
   Future<void> _triggerSaveWorkspace() async {
-    if (kIsWeb) {
-      _sel.workspaceXml = _editor.state().xml ?? _sel.workspaceXml;
-    } else {
-      try {
-        final r = await (_editor as dynamic).blocklyController.runJavaScriptReturningResult(
-            '(function(){return Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(Blockly.getMainWorkspace()));})();');
-        String x = r.toString();
-        if (x.startsWith('"') && x.endsWith('"')) x = jsonDecode(x) as String;
-        _sel.workspaceXml = x.replaceAll('\\"', '"').replaceAll('\\n', '');
-      } catch (_) {}
-    }
+    // Save current workspace to object before serializing
+    try {
+      final r = await _editor.blocklyController.runJavaScriptReturningResult(
+          '(function(){return Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(Blockly.getMainWorkspace()));})();');
+      String x = r.toString();
+      if (x.startsWith('"') && x.endsWith('"')) x = jsonDecode(x) as String;
+      _sel.workspaceXml = x.replaceAll('\\"', '"').replaceAll('\\n', '');
+    } catch (_) {}
   }
 
   Future<void> _performSave(SubmissionStatus status) async {
@@ -756,111 +756,27 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
     overlay.insert(entry);
   }
 
-  List<dynamic> _parseActions(String xmlString) {
-    if (xmlString.isEmpty) return [];
-    try {
-      final document = xml.XmlDocument.parse(xmlString);
-      final tops = document.findAllElements('block').where((b) {
-        final p = b.parent;
-        return p is xml.XmlDocument || (p is xml.XmlElement && p.name.local == 'xml');
-      });
-
-      List<Map<String, dynamic>> script = [];
-      for (final startBlock in tops) {
-        if (startBlock.getAttribute('type') == 'story_when_start') {
-          final nextElement = startBlock.findElements('next').firstOrNull;
-          if (nextElement != null) {
-             final firstActionBlock = nextElement.findElements('block').firstOrNull;
-             if (firstActionBlock != null) {
-               script.addAll(_extractBlock(firstActionBlock));
-             }
-          }
-        }
-      }
-      return script;
-    } catch (e) {
-      debugPrint("Dart XML parse error: $e");
-      return [];
-    }
-  }
-
-  List<Map<String, dynamic>> _extractBlock(xml.XmlElement? blockElement) {
-    List<Map<String, dynamic>> list = [];
-    var current = blockElement;
-    while (current != null) {
-      final t = current.getAttribute('type');
-      if (t == null) break;
-      Map<String, dynamic> o = {'type': t};
-
-      String getFieldValue(String name) {
-        final fields = current!.findElements('field');
-        for (final f in fields) {
-          if (f.getAttribute('name') == name) return f.innerText;
-        }
-        return '';
-      }
-
-      xml.XmlElement? getInputTargetBlock(String name) {
-        final statements = current!.findElements('statement');
-        for (final s in statements) {
-          if (s.getAttribute('name') == name) {
-            return s.findElements('block').firstOrNull;
-          }
-        }
-        return null;
-      }
-
-      if (t == 'story_say' || t == 'story_think') {
-        o['text'] = getFieldValue('TEXT');
-      } else if (t == 'story_move') {
-        o['dir'] = getFieldValue('DIR');
-        o['steps'] = getFieldValue('STEPS');
-      } else if (t == 'story_glide') {
-        o['x'] = getFieldValue('X');
-        o['y'] = getFieldValue('Y');
-        o['sec'] = getFieldValue('SEC');
-      } else if (t == 'story_go_to') {
-        o['x'] = getFieldValue('X');
-        o['y'] = getFieldValue('Y');
-      } else if (t == 'story_rotate') {
-        o['deg'] = getFieldValue('DEG');
-      } else if (t == 'story_wait') {
-        o['sec'] = getFieldValue('SECONDS');
-      } else if (t == 'story_repeat') {
-        o['times'] = getFieldValue('TIMES');
-        o['body'] = _extractBlock(getInputTargetBlock('DO'));
-      } else if (t == 'story_forever') {
-        o['body'] = _extractBlock(getInputTargetBlock('DO'));
-      } else if (t == 'story_if') {
-        o['cond'] = getFieldValue('COND');
-        o['body'] = _extractBlock(getInputTargetBlock('THEN'));
-      } else if (t == 'story_resize') {
-        o['size'] = getFieldValue('SIZE');
-      } else if (t == 'story_set_color') {
-        o['color'] = getFieldValue('COLOR');
-      } else if (t == 'story_set_opacity') {
-        o['opacity'] = getFieldValue('OPACITY');
-      } else if (t == 'story_play_sound') {
-        o['sound'] = getFieldValue('SOUND');
-      }
-
-      list.add(o);
-
-      final nextElement = current.findElements('next').firstOrNull;
-      if (nextElement != null) {
-        current = nextElement.findElements('block').firstOrNull;
-      } else {
-        current = null;
-      }
-    }
-    return list;
-  }
-
   void _onPlay() async {
     if (_isPlaying) return;
 
     if (!widget.isReviewMode) {
-      await _triggerSaveWorkspace();
+      // Save current XML to current object before playing
+      final saveJs = '''
+        (function() {
+          var xml = Blockly.Xml.workspaceToDom(Blockly.getMainWorkspace());
+          return Blockly.Xml.domToText(xml);
+        })();
+      ''';
+      try {
+        final result = await _editor.blocklyController.runJavaScriptReturningResult(saveJs);
+        String xmlStr = result.toString();
+        if (xmlStr.startsWith('"') && xmlStr.endsWith('"')) {
+          xmlStr = jsonDecode(xmlStr) as String;
+        }
+        _sel.workspaceXml = xmlStr.replaceAll('\\"', '"').replaceAll('\\n', '');
+      } catch (e) {
+        debugPrint("Save XML error: $e");
+      }
     }
 
     setState(() {
@@ -870,11 +786,72 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
       }
     });
 
+    // Create JS payload with all XMLs
+    final allXmls = _objects.map((o) => o.workspaceXml.replaceAll("'", "\\'")).toList();
+    
+    // JS that parses each XML in a headless workspace and extracts actions
+    final String extractorJS = '''
+      (function() {
+        function extract(block) {
+          var list = [];
+          while (block) {
+            var t = block.type;
+            var o = { type: t };
+            if (t === 'story_say') o.text = block.getFieldValue('TEXT');
+            else if (t === 'story_think') o.text = block.getFieldValue('TEXT');
+            else if (t === 'story_move') { o.dir = block.getFieldValue('DIR'); o.steps = block.getFieldValue('STEPS'); }
+            else if (t === 'story_glide') { o.x = block.getFieldValue('X'); o.y = block.getFieldValue('Y'); o.sec = block.getFieldValue('SEC'); }
+            else if (t === 'story_go_to') { o.x = block.getFieldValue('X'); o.y = block.getFieldValue('Y'); }
+            else if (t === 'story_rotate') o.deg = block.getFieldValue('DEG');
+            else if (t === 'story_wait') o.sec = block.getFieldValue('SECONDS');
+            else if (t === 'story_repeat') { o.times = block.getFieldValue('TIMES'); o.body = extract(block.getInputTargetBlock('DO')); }
+            else if (t === 'story_forever') { o.body = extract(block.getInputTargetBlock('DO')); }
+            else if (t === 'story_if') { o.cond = block.getFieldValue('COND'); o.body = extract(block.getInputTargetBlock('THEN')); }
+            else if (t === 'story_resize') o.size = block.getFieldValue('SIZE');
+            else if (t === 'story_set_color') o.color = block.getFieldValue('COLOR');
+            else if (t === 'story_set_opacity') o.opacity = block.getFieldValue('OPACITY');
+            else if (t === 'story_play_sound') o.sound = block.getFieldValue('SOUND');
+            list.push(o);
+            block = block.getNextBlock();
+          }
+          return list;
+        }
+
+        var xmls = ${jsonEncode(allXmls)};
+        var allActions = [];
+        var headless = new Blockly.Workspace();
+
+        for (var i = 0; i < xmls.length; i++) {
+          headless.clear();
+          try {
+            var dom = Blockly.utils.xml.textToDom(xmls[i]);
+            Blockly.Xml.domToWorkspace(dom, headless);
+            var tops = headless.getTopBlocks(true);
+            var script = [];
+            for (var j = 0; j < tops.length; j++) {
+              if (tops[j].type === 'story_when_start') {
+                script = script.concat(extract(tops[j].getNextBlock()));
+              }
+            }
+            allActions.push(script);
+          } catch(e) {
+            allActions.push([]);
+          }
+        }
+        headless.dispose();
+        return JSON.stringify(allActions);
+      })();
+    ''';
+
     List<List<dynamic>> allActions = [];
     try {
-      for (var obj in _objects) {
-        allActions.add(_parseActions(obj.workspaceXml));
+      final Object result = await _editor.blocklyController.runJavaScriptReturningResult(extractorJS);
+      String rawJson = result.toString();
+      if (rawJson.startsWith('"') && rawJson.endsWith('"')) {
+        rawJson = jsonDecode(rawJson) as String;
       }
+      final parsed = jsonDecode(rawJson) as List<dynamic>;
+      allActions = parsed.map((e) => e as List<dynamic>).toList();
     } catch (e) {
       debugPrint("Extract error: $e");
       allActions = List.generate(_objects.length, (_) => []);
@@ -1015,14 +992,45 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
     if (_selectedObjectIndex == newIndex || _isPlaying) return;
     
     // Save current XML
-    await _triggerSaveWorkspace();
+    final saveJs = '''
+      (function() {
+        var xml = Blockly.Xml.workspaceToDom(Blockly.getMainWorkspace());
+        return Blockly.Xml.domToText(xml);
+      })();
+    ''';
+    try {
+      final result = await _editor.blocklyController.runJavaScriptReturningResult(saveJs);
+      String xmlStr = result.toString();
+      if (xmlStr.startsWith('"') && xmlStr.endsWith('"')) {
+        xmlStr = jsonDecode(xmlStr) as String;
+      }
+      // Bersihkan string dari escape backslash JSON jika ada
+      xmlStr = xmlStr.replaceAll('\\"', '"').replaceAll('\\n', '');
+      _sel.workspaceXml = xmlStr;
+    } catch (e) {
+      debugPrint("Save XML error: $e");
+    }
 
     // Ubah selection
     setState(() => _selectedObjectIndex = newIndex);
 
     // Load new XML
     if (!widget.isReviewMode) {
-      _injectWorkspaceXml(_sel.workspaceXml);
+      final newXml = _sel.workspaceXml.replaceAll("'", "\\'");
+      final loadJs = '''
+        (function() {
+          var ws = Blockly.getMainWorkspace();
+          ws.clear();
+          var dom = Blockly.utils.xml.textToDom('$newXml');
+          Blockly.Xml.domToWorkspace(dom, ws);
+          return "ok";
+        })();
+      ''';
+      try {
+        await _editor.blocklyController.runJavaScriptReturningResult(loadJs);
+      } catch (e) {
+        debugPrint("Load XML error: $e");
+      }
     }
   }
 
@@ -1083,12 +1091,17 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
                               onTap: () async {
                                 Navigator.pop(ctx);
                                 // Save current workspace
-                                await _triggerSaveWorkspace();
+                                try {
+                                  final r = await _editor.blocklyController.runJavaScriptReturningResult('(function(){return Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(Blockly.getMainWorkspace()));})();');
+                                  String x = r.toString(); if (x.startsWith('"')&&x.endsWith('"')) x = jsonDecode(x) as String;
+                                  _sel.workspaceXml = x.replaceAll('\\"','"').replaceAll('\\n','');
+                                } catch (_) {}
                                 // Add new object
                                 final newObj = SceneObject(name: '${c['name']} ${_objects.length+1}', icon: c['icon'] as IconData, baseColor: clr, spawnX: 20.0*_objects.length, spawnY: 20.0*_objects.length);
                                 setState(() { _objects.add(newObj); _selectedObjectIndex = _objects.length - 1; });
                                 // Load empty workspace
-                                _injectWorkspaceXml(newObj.workspaceXml);
+                                final nx = newObj.workspaceXml.replaceAll("'", "\\'");
+                                try { await _editor.blocklyController.runJavaScriptReturningResult('(function(){var w=Blockly.getMainWorkspace();w.clear();Blockly.Xml.domToWorkspace(Blockly.utils.xml.textToDom(\'$nx\'),w);return"ok";})();'); } catch (_) {}
                                 if (mounted) _showToast("${c['name']} added", Icons.person_add_alt_1_rounded, clr);
                               },
                               child: Container(
@@ -1299,7 +1312,8 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
     if (_objects.length <= 1) return;
     if (i == _selectedObjectIndex) {
       setState(() { _objects.removeAt(i); if (_selectedObjectIndex >= _objects.length) _selectedObjectIndex = _objects.length - 1; });
-      _injectWorkspaceXml(_sel.workspaceXml);
+      final nx = _sel.workspaceXml.replaceAll("'", "\\'");
+      try { await _editor.blocklyController.runJavaScriptReturningResult('(function(){var w=Blockly.getMainWorkspace();w.clear();Blockly.Xml.domToWorkspace(Blockly.utils.xml.textToDom(\'$nx\'),w);return"ok";})();'); } catch (_) {}
     } else {
       setState(() { _objects.removeAt(i); if (_selectedObjectIndex > i) _selectedObjectIndex--; });
     }
