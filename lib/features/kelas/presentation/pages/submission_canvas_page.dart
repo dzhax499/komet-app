@@ -12,6 +12,11 @@ import '../../../submission/presentation/bloc/submission_state.dart';
 import 'dart:ui';
 import '../../../../core/theme/app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'dart:io';
+import 'package:go_router/go_router.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import '../../../../core/utils/constants.dart';
+import '../../../editor_engine/presentation/pages/buat_karakter_page.dart';
 
 // ─────────────────────────────────────────────────────────────
 // Custom Block Definitions (JavaScript)
@@ -250,6 +255,7 @@ class SceneObject {
   String name;
   IconData icon;
   Color baseColor;
+  String? imagePath;
   double spawnX, spawnY;
   double x, y;
   String speech;
@@ -262,6 +268,7 @@ class SceneObject {
     required this.name,
     required this.icon,
     required this.baseColor,
+    this.imagePath,
     this.spawnX = 0, this.spawnY = 0,
     this.workspaceXml = '<xml xmlns="https://developers.google.com/blockly/xml"><block type="story_when_start" x="50" y="50"></block></xml>',
   })  : x = spawnX, y = spawnY, speech = '',
@@ -293,6 +300,9 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
   bool _isPlaying = false;
   bool _isEditorReady = false;
   
+  // Custom characters added from camera
+  List<String> _customCharacters = [];
+  
   // Scene camera
   double _sceneOffsetX = 0;
   double _sceneOffsetY = 0;
@@ -322,6 +332,15 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
       DeviceOrientation.landscapeRight,
     ]);
     
+    // Load existing custom characters from Hive
+    try {
+      final box = Hive.box(KometBoxNames.settings);
+      final savedChars = box.get('custom_characters') as List<dynamic>?;
+      if (savedChars != null) {
+        _customCharacters = savedChars.map((e) => e.toString()).toList();
+      }
+    } catch (_) {}
+
     // Load existing submission if any
     if (widget.initialSubmission != null) {
       _existingSubmission = widget.initialSubmission;
@@ -577,10 +596,12 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
         'name': o.name,
         'icon': o.icon.codePoint, // save codepoint
         'baseColor': o.baseColor.value,
+        'imagePath': o.imagePath,
         'spawnX': o.spawnX,
         'spawnY': o.spawnY,
         'workspaceXml': o.workspaceXml,
       }).toList(),
+      'customCharacters': _customCharacters,
     };
     return jsonEncode(state);
   }
@@ -590,12 +611,18 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
       final Map<String, dynamic> state = jsonDecode(jsonString);
       setState(() {
         _bgIndex = state['bgIndex'] ?? 0;
+        final localCustom = (state['customCharacters'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
+        for (var c in localCustom) {
+           if (!_customCharacters.contains(c)) _customCharacters.add(c);
+        }
+        try { Hive.box(KometBoxNames.settings).put('custom_characters', _customCharacters); } catch (_) {}
         final objs = state['objects'] as List<dynamic>?;
         if (objs != null && objs.isNotEmpty) {
           _objects = objs.map((o) => SceneObject(
             name: o['name'],
-            icon: _getIconFromCodePoint(o['icon']),
+            icon: IconData(o['icon'], fontFamily: 'MaterialIcons'),
             baseColor: Color(o['baseColor']),
+            imagePath: o['imagePath'],
             spawnX: (o['spawnX'] as num).toDouble(),
             spawnY: (o['spawnY'] as num).toDouble(),
             workspaceXml: o['workspaceXml'],
@@ -610,23 +637,6 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
     } catch (e) {
       debugPrint("Gagal load state: $e");
     }
-  }
-
-  IconData _getIconFromCodePoint(int codePoint) {
-    const icons = [
-      Icons.person,
-      Icons.school,
-      Icons.pets,
-      Icons.smart_toy,
-      Icons.star,
-      Icons.sports_soccer,
-      Icons.local_florist,
-      Icons.directions_car,
-    ];
-    for (final icon in icons) {
-      if (icon.codePoint == codePoint) return icon;
-    }
-    return Icons.person;
   }
 
   void _injectWorkspaceXml(String xml) {
@@ -1035,7 +1045,7 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
   }
 
   void _onAddObject() {
-    final chars = [
+    final defaultChars = [
       {'name': 'Kid', 'icon': Icons.person, 'color': 0xFF86AAC3},
       {'name': 'Teacher', 'icon': Icons.school, 'color': 0xFFE8A317},
       {'name': 'Animal', 'icon': Icons.pets, 'color': 0xFF8BC34A},
@@ -1045,6 +1055,16 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
       {'name': 'Flower', 'icon': Icons.local_florist, 'color': 0xFFE91E63},
       {'name': 'Car', 'icon': Icons.directions_car, 'color': 0xFF2196F3},
     ];
+
+    final chars = List<Map<String, dynamic>>.from(defaultChars);
+    for (int i = 0; i < _customCharacters.length; i++) {
+      chars.add({
+        'name': 'Gambar ${i + 1}',
+        'icon': Icons.person,
+        'color': 0xFF359B8B, // AppColors.kometTeal
+        'imagePath': _customCharacters[i],
+      });
+    }
 
     showModalBottomSheet(
       context: context,
@@ -1084,10 +1104,37 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
                         itemBuilder: (_, i) {
                           final c = chars[i];
                           final clr = Color(c['color'] as int);
+                          final isCustom = c.containsKey('imagePath') && c['imagePath'] != null;
                           return Material(
                             color: Colors.transparent,
                             child: InkWell(
                               borderRadius: BorderRadius.circular(16),
+                              onLongPress: () {
+                                if (isCustom) {
+                                  showDialog(
+                                    context: context,
+                                    builder: (ctx2) => AlertDialog(
+                                      title: const Text('Hapus Karakter?'),
+                                      content: const Text('Karakter ini akan dihapus permanen dari daftar pilihan.'),
+                                      actions: [
+                                        TextButton(onPressed: () => Navigator.pop(ctx2), child: const Text('Batal')),
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.pop(ctx2);
+                                            setState(() {
+                                              _customCharacters.remove(c['imagePath']);
+                                              try { Hive.box(KometBoxNames.settings).put('custom_characters', _customCharacters); } catch (_) {}
+                                            });
+                                            Navigator.pop(ctx);
+                                            _onAddObject(); // Refresh modal
+                                          },
+                                          child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }
+                              },
                               onTap: () async {
                                 Navigator.pop(ctx);
                                 // Save current workspace
@@ -1097,7 +1144,14 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
                                   _sel.workspaceXml = x.replaceAll('\\"','"').replaceAll('\\n','');
                                 } catch (_) {}
                                 // Add new object
-                                final newObj = SceneObject(name: '${c['name']} ${_objects.length+1}', icon: c['icon'] as IconData, baseColor: clr, spawnX: 20.0*_objects.length, spawnY: 20.0*_objects.length);
+                                final newObj = SceneObject(
+                                  name: isCustom ? (c['name'] as String) : '${c['name']} ${_objects.length+1}', 
+                                  icon: c['icon'] as IconData, 
+                                  baseColor: clr, 
+                                  imagePath: c['imagePath'] as String?,
+                                  spawnX: 20.0*_objects.length, 
+                                  spawnY: 20.0*_objects.length
+                                );
                                 setState(() { _objects.add(newObj); _selectedObjectIndex = _objects.length - 1; });
                                 // Load empty workspace
                                 final nx = newObj.workspaceXml.replaceAll("'", "\\'");
@@ -1107,7 +1161,13 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
                               child: Container(
                                 decoration: BoxDecoration(color: clr.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(16), border: Border.all(color: clr.withValues(alpha: 0.3))),
                                 child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                                  Container(width: 46, height: 46, decoration: BoxDecoration(shape: BoxShape.circle, color: clr, boxShadow: [BoxShadow(color: clr.withValues(alpha: 0.4), blurRadius: 8, offset: const Offset(0, 4))]), child: Icon(c['icon'] as IconData, color: Colors.white, size: 24)),
+                                  Container(
+                                    width: 46, height: 46, 
+                                    decoration: BoxDecoration(shape: BoxShape.circle, color: clr, boxShadow: [BoxShadow(color: clr.withValues(alpha: 0.4), blurRadius: 8, offset: const Offset(0, 4))]), 
+                                    child: isCustom
+                                      ? Padding(padding: const EdgeInsets.all(10.0), child: Image.file(File(c['imagePath'] as String), fit: BoxFit.contain))
+                                      : Icon(c['icon'] as IconData, color: Colors.white, size: 24)
+                                  ),
                                   const SizedBox(height: 10),
                                   Text(c['name'] as String, style: GoogleFonts.nunito(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
                                 ]),
@@ -1116,16 +1176,107 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
                           );
                         },
                       ),
-                    )
+                    ),
                   ),
-                ],
+                  
+                  // Tombol Magic Scanner (Tugas Besar)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16.0),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          // Buka Scanner Kertas Asli (Fitur Hapus Background)
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => BuatKarakterPage(submissionId: widget.assignmentId)),
+                          );
+                          if (result != null && result is Map<String, dynamic> && mounted) {
+                            try {
+                              final r = await _editor.blocklyController.runJavaScriptReturningResult('(function(){return Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(Blockly.getMainWorkspace()));})();');
+                              String x = r.toString(); if (x.startsWith('"')&&x.endsWith('"')) x = jsonDecode(x) as String;
+                              _objects[_selectedObjectIndex].workspaceXml = x.replaceAll('\\"','"').replaceAll('\\n','');
+                            } catch (_) {}
+                            
+                            final newObj = SceneObject(
+                              name: result['label'], 
+                              icon: Icons.document_scanner, 
+                              baseColor: AppColors.kometTeal, 
+                              imagePath: result['path'],
+                              spawnX: 20.0 * _objects.length, 
+                              spawnY: 20.0 * _objects.length
+                            );
+                            
+                            setState(() { _objects.add(newObj); _selectedObjectIndex = _objects.length - 1; });
+                            
+                            final nx = newObj.workspaceXml.replaceAll("'", "\\'");
+                            try { await _editor.blocklyController.runJavaScriptReturningResult('(function(){var w=Blockly.getMainWorkspace();w.clear();Blockly.Xml.domToWorkspace(Blockly.utils.xml.textToDom(\'$nx\'),w);return"ok";})();'); } catch (_) {}
+                            
+                            if (mounted) _showToast("Benda nyata ditambahkan!", Icons.check_circle, AppColors.kometTeal);
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.kometOlive,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          icon: const Icon(Icons.document_scanner, color: Colors.white),
+                          label: Text(
+                            'Buat Karakter Baru',
+                            style: GoogleFonts.nunito(color: Colors.white, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
         ),
-      ),
-    );
+      );
   }
+
+  void _onOpenCharacterCreator() async {
+    final pathKarakter = await context.pushNamed(
+      'createCharacter', 
+      pathParameters: {'submissionId': widget.assignmentId}
+    );
+
+    if (pathKarakter != null && pathKarakter is String) {
+        setState(() {
+          if (!_customCharacters.contains(pathKarakter)) {
+            _customCharacters.add(pathKarakter);
+            try { Hive.box(KometBoxNames.settings).put('custom_characters', _customCharacters); } catch (_) {}
+          }
+        });
+
+        // Save current workspace
+        try {
+          final r = await _editor.blocklyController.runJavaScriptReturningResult('(function(){return Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(Blockly.getMainWorkspace()));})();');
+          String x = r.toString(); if (x.startsWith('"')&&x.endsWith('"')) x = jsonDecode(x) as String;
+          _sel.workspaceXml = x.replaceAll('\\"','"').replaceAll('\\n','');
+        } catch (_) {}
+        // Cari index karakter ini di koleksi custom_characters
+        final charIndex = _customCharacters.indexOf(pathKarakter) + 1;
+        
+        final newObj = SceneObject(
+            name: 'Gambar $charIndex', 
+            icon: Icons.person, 
+            baseColor: AppColors.kometTeal, 
+            imagePath: pathKarakter,
+            spawnX: 20.0*_objects.length, 
+            spawnY: 20.0*_objects.length
+        );
+        setState(() { _objects.add(newObj); _selectedObjectIndex = _objects.length - 1; });
+        
+        final nx = newObj.workspaceXml.replaceAll("'", "\\'");
+        try { await _editor.blocklyController.runJavaScriptReturningResult('(function(){var w=Blockly.getMainWorkspace();w.clear();Blockly.Xml.domToWorkspace(Blockly.utils.xml.textToDom(\'$nx\'),w);return"ok";})();'); } catch (_) {}
+        if (mounted) _showToast("Karakter berhasil ditambahkan!", Icons.check_circle, AppColors.kometTeal);
+    }
+  }
+
   Widget _buildTopBar() {
     return ClipRRect(
       child: BackdropFilter(
@@ -1221,16 +1372,31 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
                 Text("Scene", style: GoogleFonts.nunito(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
                 const Spacer(),
                 if (!widget.isReviewMode)
-                  Material(color: AppColors.kometOlive.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(16),
-                    child: InkWell(onTap: _onAddObject, borderRadius: BorderRadius.circular(16),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.kometOlive.withValues(alpha: 0.8)),
-                        ),
-                        child: Text("+ Object", style: GoogleFonts.nunito(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
-                      ))),
+                  Row(
+                    children: [
+                      Material(color: AppColors.kometBlue.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(16),
+                        child: InkWell(onTap: _onOpenCharacterCreator, borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: AppColors.kometBlue.withValues(alpha: 0.8)),
+                            ),
+                            child: const Icon(Icons.camera_alt, color: Colors.white, size: 14),
+                          ))),
+                      const SizedBox(width: 8),
+                      Material(color: AppColors.kometOlive.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(16),
+                        child: InkWell(onTap: _onAddObject, borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: AppColors.kometOlive.withValues(alpha: 0.8)),
+                            ),
+                            child: Text("+ Object", style: GoogleFonts.nunito(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+                          ))),
+                    ],
+                  ),
               ]),
             ),
             Divider(height: 1, color: Colors.white.withValues(alpha: 0.1)),
@@ -1321,6 +1487,8 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
 
   Widget _buildObj(int index) {
     final obj = _objects[index]; final sel = index == _selectedObjectIndex;
+    final bool isCustom = obj.imagePath != null;
+
     return AnimatedPositioned(
       duration: _isPlaying ? const Duration(milliseconds: 500) : Duration.zero, curve: Curves.easeInOut,
       left: 80 + obj.x + _sceneOffsetX, top: 60 + obj.y + _sceneOffsetY,
@@ -1335,11 +1503,21 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
                 margin: const EdgeInsets.only(bottom: 8), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.95), borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 8, offset: const Offset(0, 4))]),
                 child: Text(obj.speech, style: GoogleFonts.nunito(color: AppColors.kometDarkGreen, fontSize: 12, fontWeight: FontWeight.w700))),
-              Container(width: 56, height: 56,
-                decoration: BoxDecoration(shape: BoxShape.circle, color: obj.color,
-                  boxShadow: sel ? [BoxShadow(color: obj.color.withValues(alpha: 0.5), blurRadius: 12, spreadRadius: 2)] : [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4, offset: const Offset(0, 2))],
-                  border: Border.all(color: sel ? Colors.white : Colors.white.withValues(alpha: 0.5), width: sel ? 3.0 : 1.5)),
-                child: Icon(obj.icon, size: 28, color: Colors.white)),
+              
+              isCustom 
+                ? Container(
+                    width: sel ? 64 : 56, height: sel ? 64 : 56,
+                    decoration: BoxDecoration(
+                      boxShadow: sel ? [BoxShadow(color: obj.color.withValues(alpha: 0.8), blurRadius: 16, spreadRadius: 2)] : [],
+                    ),
+                    child: Image.file(File(obj.imagePath!), fit: BoxFit.contain),
+                  )
+                : Container(width: 56, height: 56,
+                    decoration: BoxDecoration(shape: BoxShape.circle, color: obj.color,
+                      boxShadow: sel ? [BoxShadow(color: obj.color.withValues(alpha: 0.5), blurRadius: 12, spreadRadius: 2)] : [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4, offset: const Offset(0, 2))],
+                      border: Border.all(color: sel ? Colors.white : Colors.white.withValues(alpha: 0.5), width: sel ? 3.0 : 1.5)),
+                    child: Icon(obj.icon, size: 28, color: Colors.white)),
+              
               if (sel && !_isPlaying) Padding(padding: const EdgeInsets.only(top: 6),
                 child: Text(obj.name, style: GoogleFonts.nunito(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800, shadows: [const Shadow(color: Colors.black54, blurRadius: 2)]))),
             ]))))),
