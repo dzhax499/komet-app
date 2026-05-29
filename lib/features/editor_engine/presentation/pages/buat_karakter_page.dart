@@ -19,7 +19,6 @@ class BuatKarakterPage extends StatefulWidget {
 class _BuatKarakterPageState extends State<BuatKarakterPage> {
   File? _karakterTanpaBackground;
   bool _sedangMemproses = false;
-  bool _isBlackAndWhite = false;
   final Uuid _uuid = const Uuid();
 
   @override
@@ -56,11 +55,9 @@ class _BuatKarakterPageState extends State<BuatKarakterPage> {
     final namaFile = 'karakter_${_uuid.v4()}.png'; 
     final pathOutput = '${direktori.path}/$namaFile';
 
-    // 3. Proses hapus background kertas (PCD Algoritma)
     final hasilPath = await ImageProcessing.removeWhiteBackground(
       pathFoto, 
       pathOutput, 
-      blackAndWhite: _isBlackAndWhite,
     );
 
     // 4. Perbarui UI
@@ -139,22 +136,6 @@ class _BuatKarakterPageState extends State<BuatKarakterPage> {
                 onPressed: _sedangMemproses ? null : _prosesFotoKarakter,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                ),
-              ),
-              const SizedBox(height: 16),
-              
-              // Opsi Filter
-              SizedBox(
-                width: 300,
-                child: SwitchListTile(
-                  title: const Text('Filter Hitam Putih'),
-                  subtitle: const Text('Ubah warna coretan menjadi tinta hitam pekat', style: TextStyle(fontSize: 12)),
-                  value: _isBlackAndWhite,
-                  onChanged: (val) {
-                    setState(() {
-                      _isBlackAndWhite = val;
-                    });
-                  },
                 ),
               ),
               const SizedBox(height: 16),

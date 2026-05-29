@@ -5,7 +5,7 @@ import 'dart:math' as math;
 import 'tflite_helper.dart';
 
 class ImageProcessing {
-  static Future<String?> removeWhiteBackground(String inputPath, String outputPath, {bool blackAndWhite = false}) async {
+  static Future<String?> removeWhiteBackground(String inputPath, String outputPath) async {
     try {
       final file = File(inputPath);
       final bytes = file.readAsBytesSync();
@@ -48,7 +48,6 @@ class ImageProcessing {
         'width': finalImage.width,
         'height': finalImage.height,
         'imageBytes': finalImage.getBytes(order: img.ChannelOrder.rgba),
-        'blackAndWhite': blackAndWhite,
         'outputPath': outputPath,
       });
 
@@ -64,7 +63,6 @@ class ImageProcessing {
       final width = args['width'] as int;
       final height = args['height'] as int;
       final imageBytes = args['imageBytes'] as Uint8List;
-      final isBlackAndWhite = args['blackAndWhite'] as bool;
       final outputPath = args['outputPath'] as String;
 
       var image = img.Image.fromBytes(
@@ -144,20 +142,6 @@ class ImageProcessing {
                 visited[idx] = true;
                 queue.add(n);
               }
-            }
-          }
-        }
-      }
-
-      // Filter Hitam Putih (opsional)
-      if (isBlackAndWhite) {
-        for (final pixel in image) {
-          if (pixel.a > 0) { // Hanya ubah pixel yang tidak transparan
-            final lum = pixel.luminance;
-            if (lum < 150) {
-              pixel.r = 0; pixel.g = 0; pixel.b = 0;
-            } else {
-              pixel.r = 255; pixel.g = 255; pixel.b = 255;
             }
           }
         }
