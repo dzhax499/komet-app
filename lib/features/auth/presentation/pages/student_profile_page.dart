@@ -116,6 +116,11 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
               fontWeight: FontWeight.w400,
             ),
           ),
+          const Spacer(),
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: const Icon(Icons.exit_to_app_rounded, color: Colors.white, size: 28),
+          ),
         ],
       ),
     );
