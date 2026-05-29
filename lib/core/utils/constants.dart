@@ -52,6 +52,7 @@ class KometRoutes {
   static const String editorCanvas = '/editor/:submissionId';
   static const String editorPreview = '/editor/:submissionId/preview';
   static const String storyMap = '/editor/:submissionId/map';
+  static const String createCharacter = '/editor/:submissionId/character';
 
   // Submission — PIC B & C
   static const String submissionList = '/submission';
