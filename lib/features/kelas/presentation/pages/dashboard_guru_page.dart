@@ -25,6 +25,16 @@ class DashboardGuruPage extends StatefulWidget {
 
 class _DashboardGuruPageState extends State<DashboardGuruPage> {
   bool _isProfileMenuOpen = false;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  int _currentPage = 1;
+  final int _itemsPerPage = 5;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -369,9 +379,72 @@ class _DashboardGuruPageState extends State<DashboardGuruPage> {
                     ),
                   );
                 }
+
+                // Filter and Paginate
+                final filteredList = state.kelasList.where((k) {
+                  return k.nama.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+                         k.kodeKelas.toLowerCase().contains(_searchQuery.toLowerCase());
+                }).toList();
+
+                int totalPages = (filteredList.length / _itemsPerPage).ceil();
+                if (totalPages == 0) totalPages = 1;
+                if (_currentPage > totalPages) _currentPage = totalPages;
+
+                int startIndex = (_currentPage - 1) * _itemsPerPage;
+                int endIndex = startIndex + _itemsPerPage;
+                if (endIndex > filteredList.length) endIndex = filteredList.length;
+
+                final paginatedList = filteredList.sublist(startIndex, endIndex);
+
                 return Column(
-                  children: state.kelasList
-                      .map(
+                  children: [
+                    // Search Bar
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(color: Colors.white),
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        style: GoogleFonts.nunito(color: Colors.white, fontSize: 14),
+                        decoration: InputDecoration(
+                          isDense: true,
+                          hintText: 'Search ..',
+                          hintStyle: GoogleFonts.nunito(color: Colors.white, fontSize: 14),
+                          border: InputBorder.none,
+                          suffixIcon: _searchQuery.isNotEmpty
+                               ? GestureDetector(
+                                   onTap: () {
+                                     _searchController.clear();
+                                     setState(() {
+                                       _searchQuery = '';
+                                       _currentPage = 1;
+                                     });
+                                   },
+                                   child: const Icon(Icons.close, color: Colors.white, size: 20),
+                                 )
+                               : null,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        ),
+                        onChanged: (value) {
+                          setState(() {
+                            _searchQuery = value;
+                            _currentPage = 1; // reset to first page on search
+                          });
+                        },
+                      ),
+                    ),
+                    if (filteredList.isEmpty)
+                      Center(
+                        child: Text(
+                          "No class found",
+                          style: GoogleFonts.nunito(color: Colors.white70, fontSize: 16),
+                        ),
+                      )
+                    else ...[
+                      ...paginatedList.map(
                         (kelas) => KelasCard(
                           kelas: kelas,
                           onTap: () {
@@ -394,8 +467,38 @@ class _DashboardGuruPageState extends State<DashboardGuruPage> {
                             }
                           },
                         ),
-                      )
-                      .toList(),
+                      ),
+                      // Pagination Controls
+                      if (totalPages > 1)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 16),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.chevron_left, color: Colors.white),
+                                onPressed: _currentPage > 1
+                                    ? () => setState(() => _currentPage--)
+                                    : null,
+                              ),
+                              Text(
+                                'Page $_currentPage of $totalPages',
+                                style: GoogleFonts.nunito(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.chevron_right, color: Colors.white),
+                                onPressed: _currentPage < totalPages
+                                    ? () => setState(() => _currentPage++)
+                                    : null,
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ],
                 );
               }
 

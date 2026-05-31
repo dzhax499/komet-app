@@ -169,25 +169,18 @@ class _KelasDetailGuruPageState extends State<KelasDetailGuruPage> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Colors.white.withValues(alpha: 0.25),
-                  Colors.white.withValues(alpha: 0.05),
+                  Colors.white.withValues(alpha: 0.4),
+                  Colors.white.withValues(alpha: 0.1),
                 ],
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 40,
-                  spreadRadius: 5,
-                ),
-              ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -197,21 +190,21 @@ class _KelasDetailGuruPageState extends State<KelasDetailGuruPage> {
                   'Edit Task',
                   style: GoogleFonts.nunito(
                     color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 24),
                 _buildGlassInput(
                   controller: titleController,
-                  hint: 'Task Name',
-                  icon: Icons.title,
+                  hint: 'Task ...',
+                  icon: Icons.assignment_outlined,
                 ),
                 const SizedBox(height: 16),
                 _buildGlassInput(
                   controller: dateController,
                   hint: 'Deadline ...',
-                  icon: Icons.event_note_rounded,
+                  icon: Icons.calendar_today_outlined,
                   onTap: () async {
                     final date = await showDatePicker(
                       context: context,
@@ -225,7 +218,7 @@ class _KelasDetailGuruPageState extends State<KelasDetailGuruPage> {
                     }
                   },
                 ),
-                const SizedBox(height: 36),
+                const SizedBox(height: 32),
                 _buildGlassButton(
                   label: 'Save',
                   onTap: () {
@@ -319,26 +312,25 @@ class _KelasDetailGuruPageState extends State<KelasDetailGuruPage> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.8),
-          width: 1.2,
-        ),
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.8)),
       ),
       child: TextField(
         controller: controller,
         onTap: onTap,
         readOnly: onTap != null,
-        style: GoogleFonts.nunito(color: Colors.white, fontSize: 16),
+        style: GoogleFonts.nunito(color: Colors.white),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(color: Colors.white60),
-          prefixIcon: Icon(icon, color: Colors.white, size: 24),
+          hintStyle: GoogleFonts.nunito(color: Colors.white70),
+          prefixIcon: Icon(icon, color: Colors.white, size: 20),
           border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 20,
-            vertical: 14,
+            vertical: 12,
           ),
         ),
       ),
@@ -355,7 +347,7 @@ class _KelasDetailGuruPageState extends State<KelasDetailGuruPage> {
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
           color: color,
           gradient: color == null
@@ -367,12 +359,12 @@ class _KelasDetailGuruPageState extends State<KelasDetailGuruPage> {
                       [const Color(0xFFFDFBEE), const Color(0xFF7AB3C4)],
                 )
               : null,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(30),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.25),
-              blurRadius: 15,
-              offset: const Offset(0, 8),
+              color: Colors.black.withValues(alpha: 0.2),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
             ),
           ],
         ),
@@ -381,7 +373,7 @@ class _KelasDetailGuruPageState extends State<KelasDetailGuruPage> {
             label,
             style: GoogleFonts.nunito(
               color: Colors.black,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.bold,
               fontSize: 18,
             ),
           ),
