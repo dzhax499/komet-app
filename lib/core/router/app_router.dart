@@ -29,7 +29,7 @@ import '../../features/submission/presentation/bloc/submission_bloc.dart';
 import '../di/service_locator.dart';
 import '../../features/kelas/presentation/pages/review_submission_page.dart';
 import '../models/submission_model.dart';
-
+import '../../features/editor_engine/presentation/pages/buat_karakter_page.dart';
 import '../../features/project/presentation/pages/dashboard_guest_page.dart';
 import '../../features/kelas/presentation/pages/submission_canvas_page.dart';
 
