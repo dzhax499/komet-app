@@ -59,19 +59,26 @@ class _SplashPageState extends State<SplashPage> {
       }
     } else {
       // Returning user - check auth status
-      final authState = context.read<AuthBloc>().state;
-      if (mounted) {
-        if (authState is AuthAuthenticated) {
-          // User already logged in
-          if (authState.user.role == 'guru') {
-            context.go(KometRoutes.dashboardGuru);
-          } else {
-            context.go(KometRoutes.dashboardSiswa);
-          }
+      final authBloc = context.read<AuthBloc>();
+      
+      // Tunggu state settle jika masih loading/initial
+      if (authBloc.state is AuthInitial || authBloc.state is AuthLoading) {
+        await authBloc.stream.firstWhere((state) => state is! AuthInitial && state is! AuthLoading);
+      }
+
+      if (!mounted) return;
+      final authState = authBloc.state;
+
+      if (authState is AuthAuthenticated) {
+        // User already logged in
+        if (authState.user.role == 'guru') {
+          context.go(KometRoutes.dashboardGuru);
         } else {
-          // User not logged in - go to login
-          context.go(KometRoutes.login);
+          context.go(KometRoutes.dashboardSiswa);
         }
+      } else {
+        // User not logged in - go to login
+        context.go(KometRoutes.login);
       }
     }
   }
