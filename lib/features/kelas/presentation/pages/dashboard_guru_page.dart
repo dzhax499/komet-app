@@ -483,7 +483,10 @@ class _DashboardGuruPageState extends State<DashboardGuruPage> {
                               ),
                               Text(
                                 'Page $_currentPage of $totalPages',
-                                style: GoogleFonts.nunito(color: Colors.white),
+                                style: GoogleFonts.nunito(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                               IconButton(
                                 icon: const Icon(Icons.chevron_right, color: Colors.white),
