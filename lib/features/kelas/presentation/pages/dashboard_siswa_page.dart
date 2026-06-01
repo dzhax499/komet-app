@@ -43,8 +43,10 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
     super.initState();
     final authState = context.read<AuthBloc>().state;
     if (authState is AuthAuthenticated) {
-      _kelasBloc = sl<KelasBloc>()..add(KelasFetchSiswaRequested(authState.user.id));
-      _submissionBloc = sl<SubmissionBloc>()..add(GetSubmissionsByStudentEvent(authState.user.id));
+      _kelasBloc = sl<KelasBloc>()
+        ..add(KelasFetchSiswaRequested(authState.user.id));
+      _submissionBloc = sl<SubmissionBloc>()
+        ..add(GetSubmissionsByStudentEvent(authState.user.id));
     } else {
       _kelasBloc = sl<KelasBloc>();
       _submissionBloc = sl<SubmissionBloc>();
@@ -98,438 +100,569 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
                       children: [
                         const SizedBox(height: 12),
                         // Header
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Image.asset(
-                              'assets/images/logo.png',
-                              height: 18,
-                              width: 18,
-                              fit: BoxFit.contain,
+                            Row(
+                              children: [
+                                Image.asset(
+                                  'assets/images/logo.png',
+                                  height: 18,
+                                  width: 18,
+                                  fit: BoxFit.contain,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Student Hub',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w400,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 8),
+                            Row(
+                              children: [
+                                if (_isProfileMenuOpen)
+                                  Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      _buildPillButton(
+                                        label: 'Profile',
+                                        color: const Color(0xFF82903C),
+                                        onTap: () =>
+                                            context.pushNamed('profileSiswa'),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      _buildPillButton(
+                                        label: 'Logout',
+                                        color: const Color(0xFF650002),
+                                        onTap: () {
+                                          context.read<AuthBloc>().add(
+                                            AuthLogoutRequested(),
+                                          );
+                                          context.go('/login');
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                const SizedBox(width: 12),
+                                GestureDetector(
+                                  onTap: () => setState(
+                                    () => _isProfileMenuOpen =
+                                        !_isProfileMenuOpen,
+                                  ),
+                                  child: _buildProfileAvatar(user, size: 48),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Welcome back,',
+                          style: GoogleFonts.outfit(
+                            fontSize: 15,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Text(
+                          user.nama,
+                          style: GoogleFonts.outfit(
+                            fontSize: 20,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Stat Cards — diambil dari data BLoC
+                        BlocBuilder<KelasBloc, KelasState>(
+                          builder: (context, kelasState) {
+                            return BlocBuilder<SubmissionBloc, SubmissionState>(
+                              builder: (context, submissionState) {
+                                int activeClass = 0;
+                                int totalAssignments = 0;
+                                int completedTasks = 0;
+
+                                if (submissionState is SubmissionSuccess) {
+                                  completedTasks = submissionState.submissions
+                                      .where(
+                                        (s) =>
+                                            s.status ==
+                                                SubmissionStatus.submitted ||
+                                            s.status ==
+                                                SubmissionStatus.reviewed ||
+                                            s.status ==
+                                                SubmissionStatus.needsRevision,
+                                      )
+                                      .length;
+                                }
+
+                                if (kelasState is KelasLoaded) {
+                                  // Filter kelas yang benar-benar diikuti oleh siswa ini
+                                  final myClasses = kelasState.kelasList
+                                      .where(
+                                        (k) => k.siswaIds.contains(user.id),
+                                      )
+                                      .toList();
+
+                                  activeClass = myClasses.length;
+                                  for (var k in myClasses) {
+                                    totalAssignments += k.assignmentIds.length;
+                                  }
+                                  // Subtract completed to get 'Remaining Tasks'
+                                  totalAssignments -= completedTasks;
+                                  if (totalAssignments < 0)
+                                    totalAssignments = 0;
+                                }
+
+                                return IntrinsicHeight(
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      _buildStatCard(
+                                        _moonstoneBlue,
+                                        Icons.bookmark,
+                                        '$activeClass',
+                                        'Active Class',
+                                      ),
+                                      const VerticalDivider(
+                                        color: Colors.white,
+                                        thickness: 1.2,
+                                        width: 2,
+                                      ),
+                                      _buildStatCard(
+                                        _mustardGreen,
+                                        Icons.assignment_rounded,
+                                        '$totalAssignments',
+                                        'Task',
+                                      ),
+                                      const VerticalDivider(
+                                        color: Colors.white,
+                                        thickness: 1.2,
+                                        width: 2,
+                                      ),
+                                      _buildStatCard(
+                                        _deepSpaceSparkle,
+                                        Icons.checklist_rounded,
+                                        '$completedTasks',
+                                        'Completed',
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Section My Class & Tombol Join Class
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
                             Text(
-                              'Student Hub',
+                              'My Class',
                               style: GoogleFonts.outfit(
-                                fontSize: 16,
+                                fontSize: 18,
                                 fontWeight: FontWeight.w400,
                                 color: Colors.white,
                               ),
                             ),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            if (_isProfileMenuOpen)
-                              Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  _buildPillButton(
-                                    label: 'Profile',
-                                    color: const Color(0xFF82903C),
-                                    onTap: () => context.pushNamed('profileSiswa'),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  _buildPillButton(
-                                    label: 'Logout',
-                                    color: const Color(0xFF650002),
-                                    onTap: () {
-                                      context.read<AuthBloc>().add(AuthLogoutRequested());
-                                      context.go('/login');
-                                    },
-                                  ),
-                                ],
-                              ),
-                            const SizedBox(width: 12),
-                            GestureDetector(
-                              onTap: () => setState(() => _isProfileMenuOpen = !_isProfileMenuOpen),
-                              child: _buildProfileAvatar(user, size: 48),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Text('Welcome back,',
-                        style: GoogleFonts.outfit(
-                            fontSize: 15, color: Colors.white)),
-                    Text(
-                      user.nama,
-                      style: GoogleFonts.outfit(
-                          fontSize: 20,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Stat Cards — diambil dari data BLoC
-                    BlocBuilder<KelasBloc, KelasState>(
-                      builder: (context, kelasState) {
-                        return BlocBuilder<SubmissionBloc, SubmissionState>(
-                          builder: (context, submissionState) {
-                            int activeClass = 0;
-                            int totalAssignments = 0;
-                            int completedTasks = 0;
-
-                            if (submissionState is SubmissionSuccess) {
-                              completedTasks = submissionState.submissions
-                                  .where((s) => s.status == SubmissionStatus.submitted || s.status == SubmissionStatus.reviewed || s.status == SubmissionStatus.needsRevision)
-                                  .length;
-                            }
-                            
-                            if (kelasState is KelasLoaded) {
-                              // Filter kelas yang benar-benar diikuti oleh siswa ini
-                              final myClasses = kelasState.kelasList.where((k) => k.siswaIds.contains(user.id)).toList();
-                              
-                              activeClass = myClasses.length;
-                              for (var k in myClasses) {
-                                totalAssignments += k.assignmentIds.length;
-                              }
-                              // Subtract completed to get 'Remaining Tasks'
-                              totalAssignments -= completedTasks;
-                              if (totalAssignments < 0) totalAssignments = 0;
-                            }
-
-                            return IntrinsicHeight(
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  _buildStatCard(_moonstoneBlue, Icons.bookmark,
-                                      '$activeClass', 'Active Class'),
-                                  const VerticalDivider(
-                                      color: Colors.white,
-                                      thickness: 1.2,
-                                      width: 2),
-                                  _buildStatCard(_mustardGreen,
-                                      Icons.assignment_rounded, '$totalAssignments', 'Task'),
-                                  const VerticalDivider(
-                                      color: Colors.white,
-                                      thickness: 1.2,
-                                      width: 2),
-                                  _buildStatCard(_deepSpaceSparkle,
-                                      Icons.checklist_rounded, '$completedTasks', 'Completed'),
-                                ],
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Section My Class & Tombol Join Class
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'My Class',
-                          style: GoogleFonts.outfit(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w400,
-                              color: Colors.white),
-                        ),
-                        Builder(
-                          builder: (innerContext) => GestureDetector(
-                            onTap: () {
-                              showDialog(
-                                context: innerContext,
-                                builder: (dialogContext) => JoinKelasDialog(
-                                  onJoin: (kode) {
-                                    innerContext.read<KelasBloc>().add(
+                            Builder(
+                              builder: (innerContext) => GestureDetector(
+                                onTap: () {
+                                  showDialog(
+                                    context: innerContext,
+                                    builder: (dialogContext) => JoinKelasDialog(
+                                      onJoin: (kode) {
+                                        innerContext.read<KelasBloc>().add(
                                           KelasJoinRequested(
                                             kodeKelas: kode,
                                             siswaId: user.id,
                                           ),
                                         );
-                                  },
+                                      },
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Text(
+                                    'Join Class',
+                                    style: GoogleFonts.outfit(
+                                      color: Colors.black,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
                                 ),
-                              );
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 5),
-                              decoration: BoxDecoration(
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Search Bar
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(30),
+                            border: Border.all(color: Colors.white),
+                          ),
+                          child: TextField(
+                            controller: _searchController,
+                            style: GoogleFonts.outfit(
+                              color: Colors.white,
+                              fontSize: 14,
+                            ),
+                            decoration: InputDecoration(
+                              isDense: true,
+                              hintText: 'Search ..',
+                              hintStyle: GoogleFonts.outfit(
                                 color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
+                                fontSize: 14,
                               ),
-                              child: Text(
-                                'Join Class',
-                                style: GoogleFonts.outfit(
-                                  color: Colors.black,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                              border: InputBorder.none,
+                              suffixIcon: _searchController.text.isNotEmpty
+                                  ? GestureDetector(
+                                      onTap: () {
+                                        _searchController.clear();
+                                        setState(() {
+                                          _currentPage = 1;
+                                        });
+                                      },
+                                      child: const Icon(
+                                        Icons.close,
+                                        color: Colors.white,
+                                        size: 20,
+                                      ),
+                                    )
+                                  : null,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 10,
                               ),
                             ),
+                            onChanged: (value) {
+                              setState(() {
+                                _currentPage = 1;
+                              });
+                            },
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
+                        const SizedBox(height: 16),
 
-                    // Search Bar (Glassmorphism)
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(30),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(30),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(30),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.4),
-                                width: 1.2,
-                              ),
-                            ),
-                            child: TextField(
-                              controller: _searchController,
-                              onChanged: (value) {
-                                setState(() {
-                                  _currentPage = 1;
-                                });
-                              },
-                              style: GoogleFonts.outfit(color: Colors.white),
-                              decoration: InputDecoration(
-                                hintText: 'Search....',
-                                hintStyle: GoogleFonts.outfit(color: Colors.white70, fontWeight: FontWeight.w500),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                                isDense: true,
-                                border: InputBorder.none,
-                                suffixIcon: _searchController.text.isNotEmpty
-                                    ? Padding(
-                                        padding: const EdgeInsets.only(right: 16.0),
-                                        child: GestureDetector(
-                                          onTap: () {
-                                            setState(() {
-                                              _searchController.clear();
-                                              _currentPage = 1;
-                                            });
-                                          },
-                                          child: const Icon(Icons.close, color: Colors.white70, size: 20),
-                                        ),
-                                      )
-                                    : null,
-                                suffixIconConstraints: const BoxConstraints(minWidth: 48),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Daftar Kelas dari BLoC
-                    BlocConsumer<KelasBloc, KelasState>(
-                      listener: (context, state) {
-                        if (state is KelasActionSuccess) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(state.message)),
-                          );
-                        } else if (state is KelasError) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(state.message)),
-                          );
-                        }
-                      },
-                      builder: (context, state) {
-                        if (state is KelasLoading) {
-                          return const Center(
-                            child: Padding(
-                              padding: EdgeInsets.only(top: 40.0),
-                              child: CircularProgressIndicator(color: Colors.white),
-                            ),
-                          );
-                        } else if (state is KelasLoaded) {
-                          var myClasses = state.kelasList.where((k) => k.siswaIds.contains(user.id)).toList();
-
-                          if (_searchController.text.isNotEmpty) {
-                            myClasses = myClasses.where((k) =>
-                              k.nama.toLowerCase().contains(_searchController.text.toLowerCase())
-                            ).toList();
-                          }
-
-                          if (myClasses.isEmpty) {
-                            if (_searchController.text.isNotEmpty) {
-                              return Center(
+                        // Daftar Kelas dari BLoC
+                        BlocConsumer<KelasBloc, KelasState>(
+                          listener: (context, state) {
+                            if (state is KelasActionSuccess) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(state.message)),
+                              );
+                            } else if (state is KelasError) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(state.message)),
+                              );
+                            }
+                          },
+                          builder: (context, state) {
+                            if (state is KelasLoading) {
+                              return const Center(
                                 child: Padding(
                                   padding: EdgeInsets.only(top: 40.0),
-                                  child: Text('Kelas tidak ditemukan', 
-                                    style: GoogleFonts.outfit(color: Colors.white70, fontSize: 16)
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
                                   ),
                                 ),
                               );
-                            }
-                            return Padding(
-                              padding: const EdgeInsets.only(top: 40.0),
-                              child: _buildEmptyState(),
-                            );
-                          }
+                            } else if (state is KelasLoaded) {
+                              var myClasses = state.kelasList
+                                  .where((k) => k.siswaIds.contains(user.id))
+                                  .toList();
 
-                          int totalPages = (myClasses.length / _itemsPerPage).ceil();
-                          if (totalPages == 0) totalPages = 1;
+                              if (_searchController.text.isNotEmpty) {
+                                myClasses = myClasses
+                                    .where(
+                                      (k) => k.nama.toLowerCase().contains(
+                                        _searchController.text.toLowerCase(),
+                                      ),
+                                    )
+                                    .toList();
+                              }
 
-                          if (_currentPage > totalPages) {
-                            _currentPage = totalPages;
-                          }
+                              if (myClasses.isEmpty) {
+                                if (_searchController.text.isNotEmpty) {
+                                  return Center(
+                                    child: Padding(
+                                      padding: EdgeInsets.only(top: 40.0),
+                                      child: Text(
+                                        'Kelas tidak ditemukan',
+                                        style: GoogleFonts.outfit(
+                                          color: Colors.white70,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 40.0),
+                                  child: _buildEmptyState(),
+                                );
+                              }
 
-                          final int startIndex = (_currentPage - 1) * _itemsPerPage;
-                          int endIndex = startIndex + _itemsPerPage;
-                          if (endIndex > myClasses.length) {
-                            endIndex = myClasses.length;
-                          }
-                          final displayClasses = myClasses.sublist(startIndex, endIndex);
+                              int totalPages =
+                                  (myClasses.length / _itemsPerPage).ceil();
+                              if (totalPages == 0) totalPages = 1;
 
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 100.0),
-                            child: ListView.separated(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: displayClasses.length + 1,
-                              separatorBuilder: (_, __) => const SizedBox(height: 12),
-                              itemBuilder: (context, index) {
-                                  if (index == displayClasses.length) {
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 16.0),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                              if (_currentPage > totalPages) {
+                                _currentPage = totalPages;
+                              }
+
+                              final int startIndex =
+                                  (_currentPage - 1) * _itemsPerPage;
+                              int endIndex = startIndex + _itemsPerPage;
+                              if (endIndex > myClasses.length) {
+                                endIndex = myClasses.length;
+                              }
+                              final displayClasses = myClasses.sublist(
+                                startIndex,
+                                endIndex,
+                              );
+
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 100.0),
+                                child: ListView.separated(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  itemCount: displayClasses.length + 1,
+                                  separatorBuilder: (_, __) =>
+                                      const SizedBox(height: 12),
+                                  itemBuilder: (context, index) {
+                                    if (index == displayClasses.length) {
+                                      return Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 16.0,
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            GestureDetector(
+                                              onTap: _currentPage > 1
+                                                  ? () => setState(
+                                                      () => _currentPage--,
+                                                    )
+                                                  : null,
+                                              child: Padding(
+                                                padding: const EdgeInsets.all(
+                                                  8.0,
+                                                ),
+                                                child: Text(
+                                                  '<',
+                                                  style: GoogleFonts.outfit(
+                                                    color: _currentPage > 1
+                                                        ? Colors.white
+                                                        : Colors.white38,
+                                                    fontSize: 20,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 16.0,
+                                                  ),
+                                              child: Text(
+                                                'Page $_currentPage of $totalPages',
+                                                style: GoogleFonts.outfit(
+                                                  color: Colors.white,
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ),
+                                            GestureDetector(
+                                              onTap: _currentPage < totalPages
+                                                  ? () => setState(
+                                                      () => _currentPage++,
+                                                    )
+                                                  : null,
+                                              child: Padding(
+                                                padding: const EdgeInsets.all(
+                                                  8.0,
+                                                ),
+                                                child: Text(
+                                                  '>',
+                                                  style: GoogleFonts.outfit(
+                                                    color:
+                                                        _currentPage <
+                                                            totalPages
+                                                        ? Colors.white
+                                                        : Colors.white38,
+                                                    fontSize: 20,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    }
+                                    final kelas = displayClasses[index];
+                                    return SizedBox(
+                                      height: 108,
+                                      child: Stack(
                                         children: [
-                                          GestureDetector(
-                                            onTap: _currentPage > 1 ? () => setState(() => _currentPage--) : null,
-                                            child: Padding(
-                                              padding: const EdgeInsets.all(8.0),
-                                              child: Text('<', style: GoogleFonts.outfit(color: _currentPage > 1 ? Colors.white : Colors.white38, fontSize: 20, fontWeight: FontWeight.bold)),
+                                          // Background putih (panel action) - tetap di belakang
+                                          Positioned.fill(
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius:
+                                                    BorderRadius.circular(28),
+                                              ),
+                                              alignment: Alignment.centerRight,
+                                              child: const Padding(
+                                                padding: EdgeInsets.only(
+                                                  right: 24,
+                                                ),
+                                                child: Icon(
+                                                  Icons.logout_rounded,
+                                                  color: Colors.red,
+                                                  size: 32,
+                                                ),
+                                              ),
                                             ),
                                           ),
-                                          Padding(
-                                            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                                            child: Text(
-                                              'Page $_currentPage of $totalPages',
-                                              style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
+                                          Slidable(
+                                            key: ValueKey(kelas.id),
+                                            closeOnScroll: true,
+                                            endActionPane: ActionPane(
+                                              motion: const DrawerMotion(),
+                                              extentRatio:
+                                                  0.28, // lebar panel putih (sesuai referensi)
+                                              children: [
+                                                CustomSlidableAction(
+                                                  onPressed: (context) {
+                                                    _showLeaveConfirmation(
+                                                      context,
+                                                      kelas,
+                                                      user.id,
+                                                    );
+                                                  },
+                                                  backgroundColor:
+                                                      Colors.transparent,
+                                                  foregroundColor:
+                                                      Colors.transparent,
+                                                  child:
+                                                      const SizedBox.shrink(),
+                                                ),
+                                              ],
                                             ),
-                                          ),
-                                          GestureDetector(
-                                            onTap: _currentPage < totalPages ? () => setState(() => _currentPage++) : null,
-                                            child: Padding(
-                                              padding: const EdgeInsets.all(8.0),
-                                              child: Text('>', style: GoogleFonts.outfit(color: _currentPage < totalPages ? Colors.white : Colors.white38, fontSize: 20, fontWeight: FontWeight.bold)),
+                                            child: BlocBuilder<SubmissionBloc, SubmissionState>(
+                                              builder: (context, submissionState) {
+                                                int classTasks =
+                                                    kelas.assignmentIds.length;
+                                                int classCompleted = 0;
+                                                if (submissionState
+                                                    is SubmissionSuccess) {
+                                                  classCompleted = submissionState
+                                                      .submissions
+                                                      .where(
+                                                        (s) =>
+                                                            (s.status ==
+                                                                    SubmissionStatus
+                                                                        .submitted ||
+                                                                s.status ==
+                                                                    SubmissionStatus
+                                                                        .reviewed ||
+                                                                s.status ==
+                                                                    SubmissionStatus
+                                                                        .needsRevision) &&
+                                                            kelas.assignmentIds
+                                                                .contains(
+                                                                  s.assignmentId,
+                                                                ),
+                                                      )
+                                                      .length;
+                                                }
+                                                classTasks -= classCompleted;
+                                                if (classTasks < 0)
+                                                  classTasks = 0;
+                                                return GestureDetector(
+                                                  onTap: () {
+                                                    context
+                                                        .pushNamed(
+                                                          'kelasDetail',
+                                                          pathParameters: {
+                                                            'kelasId': kelas.id,
+                                                          },
+                                                        )
+                                                        .then((_) {
+                                                          context
+                                                              .read<
+                                                                SubmissionBloc
+                                                              >()
+                                                              .add(
+                                                                GetSubmissionsByStudentEvent(
+                                                                  user.id,
+                                                                ),
+                                                              );
+                                                        });
+                                                  },
+                                                  child:
+                                                      _buildUltraSlimClassCard(
+                                                        _phthaloGreen,
+                                                        _mustardGreen,
+                                                        kelas.nama,
+                                                        kelas.kodeKelas,
+                                                        classTasks,
+                                                        classCompleted,
+                                                      ),
+                                                );
+                                              },
                                             ),
                                           ),
                                         ],
                                       ),
                                     );
-                                  }
-                                  final kelas = displayClasses[index];
-                                  return SizedBox(
-                                    height: 108,
-                                    child: Stack(
-                                      children: [
-                                        // Background putih (panel action) - tetap di belakang
-                                        Positioned.fill(
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius: BorderRadius.circular(28),
-                                            ),
-                                            alignment: Alignment.centerRight,
-                                            child: const Padding(
-                                              padding: EdgeInsets.only(right: 24),
-                                              child: Icon(
-                                                Icons.logout_rounded,
-                                                color: Colors.red,
-                                                size: 32,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        Slidable(
-                                          key: ValueKey(kelas.id),
-                                          closeOnScroll: true,
-                                          endActionPane: ActionPane(
-                                            motion: const DrawerMotion(),
-                                            extentRatio: 0.28, // lebar panel putih (sesuai referensi)
-                                            children: [
-                                              CustomSlidableAction(
-                                                onPressed: (context) {
-                                                  _showLeaveConfirmation(context, kelas, user.id);
-                                                },
-                                                backgroundColor: Colors.transparent,
-                                                foregroundColor: Colors.transparent,
-                                                child: const SizedBox.shrink(),
-                                              ),
-                                            ],
-                                          ),
-                                          child: BlocBuilder<SubmissionBloc, SubmissionState>(
-                                            builder: (context, submissionState) {
-                                              int classTasks = kelas.assignmentIds.length;
-                                              int classCompleted = 0;
-                                              if (submissionState is SubmissionSuccess) {
-                                                classCompleted = submissionState.submissions
-                                                    .where((s) => (s.status == SubmissionStatus.submitted ||
-                                                        s.status == SubmissionStatus.reviewed ||
-                                                        s.status == SubmissionStatus.needsRevision) &&
-                                                        kelas.assignmentIds.contains(s.assignmentId))
-                                                    .length;
-                                              }
-                                              classTasks -= classCompleted;
-                                              if (classTasks < 0) classTasks = 0;
-                                              return GestureDetector(
-                                                onTap: () {
-                                                  context.pushNamed(
-                                                    'kelasDetail',
-                                                    pathParameters: {'kelasId': kelas.id}
-                                                  ).then((_) {
-                                                    context.read<SubmissionBloc>().add(
-                                                        GetSubmissionsByStudentEvent(user.id),
-                                                    );
-                                                  });
-                                                },
-                                                child: _buildUltraSlimClassCard(
-                                                  _phthaloGreen,
-                                                  _mustardGreen,
-                                                  kelas.nama,
-                                                  kelas.kodeKelas,
-                                                  classTasks,
-                                                  classCompleted,
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-                            );
-                          } else if (state is KelasError) {
-                            return Center(
-                              child: Text(state.message,
-                                  style: const TextStyle(color: Colors.white)),
-                            );
-                          }
-                          return _buildEmptyState();
-                        },
-                      ),
-                  ],
+                                  },
+                                ),
+                              );
+                            } else if (state is KelasError) {
+                              return Center(
+                                child: Text(
+                                  state.message,
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                              );
+                            }
+                            return _buildEmptyState();
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-        ),
           ],
         ),
       ),
@@ -546,9 +679,10 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
           Text(
             'Belum ada kelas',
             style: GoogleFonts.outfit(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white70),
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.white70,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -562,7 +696,11 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
   }
 
   Widget _buildStatCard(
-      Color color, IconData icon, String value, String label) {
+    Color color,
+    IconData icon,
+    String value,
+    String label,
+  ) {
     return Container(
       width: 90,
       padding: const EdgeInsets.symmetric(vertical: 14),
@@ -584,16 +722,18 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
           Text(
             value,
             style: GoogleFonts.outfit(
-                fontSize: 24,
-                fontWeight: FontWeight.w500,
-                color: Colors.white),
+              fontSize: 24,
+              fontWeight: FontWeight.w500,
+              color: Colors.white,
+            ),
           ),
           Text(
             label,
             style: GoogleFonts.outfit(
-                fontSize: 11,
-                color: Colors.white,
-                fontWeight: FontWeight.w400),
+              fontSize: 11,
+              color: Colors.white,
+              fontWeight: FontWeight.w400,
+            ),
           ),
         ],
       ),
@@ -636,9 +776,10 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
                   ? className.substring(0, 2).toUpperCase()
                   : className.toUpperCase(),
               style: GoogleFonts.outfit(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w400,
-                  color: Colors.black),
+                fontSize: 28,
+                fontWeight: FontWeight.w400,
+                color: Colors.black,
+              ),
             ),
           ),
           const SizedBox(width: 16),
@@ -660,7 +801,10 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildCompactBadge(Icons.checklist_rounded, '$completed Completed'),
+                    _buildCompactBadge(
+                      Icons.checklist_rounded,
+                      '$completed Completed',
+                    ),
                     const Icon(Icons.circle, size: 12, color: Colors.white),
                   ],
                 ),
@@ -687,9 +831,10 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
           Text(
             text,
             style: GoogleFonts.inter(
-                color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.w400),
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w400,
+            ),
           ),
         ],
       ),
@@ -747,7 +892,11 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
     );
   }
 
-  void _showLeaveConfirmation(BuildContext context, KelasModel kelas, String siswaId) {
+  void _showLeaveConfirmation(
+    BuildContext context,
+    KelasModel kelas,
+    String siswaId,
+  ) {
     showDialog(
       context: context,
       barrierColor: Colors.black.withValues(alpha: 0.4),
@@ -804,7 +953,7 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
                           color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
-                     ),
+                        ),
                       ],
                     ),
                     alignment: Alignment.center,
@@ -862,4 +1011,3 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
     );
   }
 }
-
