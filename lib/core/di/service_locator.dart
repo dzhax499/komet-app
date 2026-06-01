@@ -40,6 +40,7 @@ import '../../features/project/data/datasources/project_remote_data_source.dart'
 import '../../features/kelas/domain/usecases/get_kelas_by_id_use_case.dart';
 import '../../features/project/data/repositories/project_repository_impl.dart';
 import '../../features/project/domain/repositories/project_repository.dart';
+import '../../features/project/presentation/bloc/project_bloc.dart';
 import '../../features/kelas/domain/usecases/update_kelas_use_case.dart';
 import '../../features/kelas/domain/usecases/remove_student_use_case.dart';
 
@@ -266,6 +267,12 @@ Future<void> setupServiceLocator() async {
       localDataSource: sl(),
       remoteDataSource: sl(),
       uuid: sl(),
+    ),
+  );
+
+  sl.registerFactory(
+    () => ProjectBloc(
+      repository: sl(),
     ),
   );
 

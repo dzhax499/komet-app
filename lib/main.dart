@@ -9,18 +9,29 @@ import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/kelas/presentation/bloc/kelas_bloc.dart';
 
 void main() async {
-  // WAJIB: harus dipanggil sebelum apapun yang async/plugin
-  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
 
-  // Inisialisasi Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
 
-  // Inisialisasi semua dependency: Hive, GetIt, dll
-  await setupServiceLocator();
+    await setupServiceLocator();
 
-  runApp(const MyApp());
+    runApp(const MyApp());
+  } catch (e, stackTrace) {
+    debugPrint('Error during initialization: $e');
+    debugPrint('Stack trace: $stackTrace');
+    runApp(MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: SingleChildScrollView(
+            child: Text('Gagal inisialisasi aplikasi:\n$e\n$stackTrace', style: const TextStyle(color: Colors.red)),
+          ),
+        ),
+      ),
+    ));
+  }
 }
 
 class MyApp extends StatelessWidget {

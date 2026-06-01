@@ -15,25 +15,24 @@ import '../../features/auth/presentation/pages/register_guru_page.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/pages/get_started_page.dart';
 import '../../features/auth/presentation/pages/teacher_profile_page.dart';
-import '../../features/auth/presentation/pages/student_profile_page.dart';
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/auth/presentation/pages/forgot_password_otp_page.dart';
 import '../../features/auth/presentation/pages/forgot_password_reset_page.dart';
 import '../../features/kelas/presentation/pages/dashboard_guru_page.dart';
 import '../../features/kelas/presentation/pages/dashboard_siswa_page.dart';
-import '../../features/kelas/presentation/pages/kelas_detail_guru_page.dart';
-import '../../features/kelas/presentation/pages/kelas_detail_siswa_page.dart';
+import '../../features/kelas/presentation/pages/kelas_detail_page.dart';
 import '../../features/kelas/presentation/pages/manage_kelas_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/kelas/presentation/bloc/kelas_bloc.dart';
-import '../../features/assignment/presentation/bloc/assignment_bloc.dart';
 import '../../features/submission/presentation/bloc/submission_bloc.dart';
-import '../../features/submission/presentation/bloc/submission_event.dart';
 import '../di/service_locator.dart';
 import '../../features/kelas/presentation/pages/review_submission_page.dart';
 import '../models/submission_model.dart';
-import '../../features/editor_engine/presentation/pages/buat_karakter_page.dart';
+
+import '../../features/project/presentation/pages/dashboard_guest_page.dart';
+import '../../features/kelas/presentation/pages/submission_canvas_page.dart';
+
 class _PlaceholderScreen extends StatelessWidget {
   final String title;
   final String pic;
@@ -62,7 +61,7 @@ class _PlaceholderScreen extends StatelessWidget {
 
 // ── Router Instance ──────────────────────────────────────────────────────────
 
-/// Instance GoRouter singleton. Gunakan via GetIt: `sl<GoRouter>()`
+/// Instance GoRouter singleton. Gunakan via GetIt: sl<GoRouter>()
 /// atau langsung di MaterialApp.router sebagai routerConfig.
 final GoRouter appRouter = GoRouter(
   initialLocation: KometRoutes.splash,
@@ -149,22 +148,9 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const DashboardSiswaPage(), // PIC C (Nike)
     ),
     GoRoute(
-      path: KometRoutes.profileSiswa,
-      name: 'profileSiswa',
-      builder: (context, state) {
-        final user = (context.read<AuthBloc>().state as AuthAuthenticated).user;
-        return MultiBlocProvider(
-          providers: [
-            BlocProvider<KelasBloc>(
-              create: (context) => sl<KelasBloc>()..add(KelasFetchSiswaRequested(user.id)),
-            ),
-            BlocProvider<SubmissionBloc>(
-              create: (context) => sl<SubmissionBloc>()..add(GetSubmissionsByStudentEvent(user.id)),
-            ),
-          ],
-          child: const StudentProfilePage(),
-        );
-      },
+      path: KometRoutes.dashboardGuest,
+      name: 'dashboardGuest',
+      builder: (context, state) => const DashboardGuestPage(), // Guest Module
     ),
 
     // ── Kelas (PIC B - Helga) ─────────────────────────────────────
@@ -173,19 +159,7 @@ final GoRouter appRouter = GoRouter(
       name: 'kelasDetail',
       builder: (context, state) {
         final kelasId = state.pathParameters['kelasId']!;
-        final authState = context.read<AuthBloc>().state;
-        final bool isGuru = authState is AuthAuthenticated && authState.user.role == 'guru';
-
-        return MultiBlocProvider(
-          providers: [
-            BlocProvider<KelasBloc>(create: (_) => sl<KelasBloc>()),
-            BlocProvider<AssignmentBloc>(create: (_) => sl<AssignmentBloc>()),
-            BlocProvider<SubmissionBloc>(create: (_) => sl<SubmissionBloc>()),
-          ],
-          child: isGuru 
-              ? KelasDetailGuruPage(kelasId: kelasId) 
-              : KelasDetailSiswaPage(kelasId: kelasId),
-        );
+        return KelasDetailPage(kelasId: kelasId);
       },
     ),
     GoRoute(
@@ -233,6 +207,24 @@ final GoRouter appRouter = GoRouter(
         );
       },
     ),
+
+    // ── Canvas Workspace ──────────────────────────────────────────────────────
+    GoRoute(
+      path: KometRoutes.canvasWorkspace,
+      name: 'canvasWorkspace',
+      builder: (context, state) {
+        final projectId = state.pathParameters['projectId']!;
+        return BlocProvider<SubmissionBloc>(
+          create: (context) => sl<SubmissionBloc>(),
+          child: SubmissionCanvasPage(
+            assignmentId: projectId,
+            assignmentTitle: 'Project $projectId',
+            deadline: DateTime.now().add(const Duration(days: 365)).toIso8601String(),
+            studentId: 'guest',
+          ),
+        );
+      },
+    ),
     GoRoute(
       path: KometRoutes.storyMap,
       name: 'storyMap',
@@ -240,14 +232,6 @@ final GoRouter appRouter = GoRouter(
         title: 'Peta Alur Cerita',
         pic: 'PIC D (Dzakir)',
       ),
-    ),
-    GoRoute(
-      path: KometRoutes.createCharacter,
-      name: 'createCharacter',
-      builder: (context, state) {
-        final submissionId = state.pathParameters['submissionId']!;
-        return BuatKarakterPage(submissionId: submissionId);
-      },
     ),
 
     // ── Submission (PIC B & C) ────────────────────────────────────
