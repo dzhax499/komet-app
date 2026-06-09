@@ -29,15 +29,13 @@ import '../../features/project/presentation/pages/guest_dashboard_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/kelas/presentation/bloc/kelas_bloc.dart';
+import '../../features/assignment/presentation/bloc/assignment_bloc.dart';
 import '../../features/submission/presentation/bloc/submission_bloc.dart';
 import '../../features/submission/presentation/bloc/submission_event.dart';
 import '../di/service_locator.dart';
 import '../../features/kelas/presentation/pages/review_submission_page.dart';
 import '../models/submission_model.dart';
 import '../../features/editor_engine/presentation/pages/buat_karakter_page.dart';
-import '../../features/project/presentation/pages/dashboard_guest_page.dart';
-import '../../features/kelas/presentation/pages/submission_canvas_page.dart';
-import '../../features/assignment/presentation/bloc/assignment_bloc.dart';
 
 class _PlaceholderScreen extends StatelessWidget {
   final String title;
@@ -67,7 +65,7 @@ class _PlaceholderScreen extends StatelessWidget {
 
 // ── Router Instance ──────────────────────────────────────────────────────────
 
-/// Instance GoRouter singleton. Gunakan via GetIt: sl<GoRouter>()
+/// Instance GoRouter singleton. Gunakan via GetIt: `sl<GoRouter>()`
 /// atau langsung di MaterialApp.router sebagai routerConfig.
 final GoRouter appRouter = GoRouter(
   initialLocation: KometRoutes.splash,
@@ -146,6 +144,18 @@ final GoRouter appRouter = GoRouter(
         );
       },
     ),
+
+    // ── Dashboard ─────────────────────────────────────────────────
+    GoRoute(
+      path: KometRoutes.dashboardGuru,
+      name: 'dashboardGuru',
+      builder: (context, state) => const DashboardGuruPage(), // PIC B (Helga)
+    ),
+    GoRoute(
+      path: KometRoutes.dashboardSiswa,
+      name: 'dashboardSiswa',
+      builder: (context, state) => const DashboardSiswaPage(), // PIC C (Nike)
+    ),
     GoRoute(
       path: KometRoutes.profileSiswa,
       name: 'profileSiswa',
@@ -165,42 +175,24 @@ final GoRouter appRouter = GoRouter(
       },
     ),
 
-    // ── Dashboard ─────────────────────────────────────────────────
-    GoRoute(
-      path: KometRoutes.dashboardGuru,
-      name: 'dashboardGuru',
-      builder: (context, state) => const DashboardGuruPage(), // PIC B (Helga)
-    ),
-    GoRoute(
-      path: KometRoutes.dashboardSiswa,
-      name: 'dashboardSiswa',
-      builder: (context, state) => const DashboardSiswaPage(), // PIC C (Nike)
-    ),
-    GoRoute(
-      path: KometRoutes.dashboardGuest,
-      name: 'dashboardGuest',
-      builder: (context, state) => const DashboardGuestPage(), // Guest Module
-    ),
-
     // ── Kelas (PIC B - Helga) ─────────────────────────────────────
     GoRoute(
       path: KometRoutes.kelasDetail,
       name: 'kelasDetail',
       builder: (context, state) {
         final kelasId = state.pathParameters['kelasId']!;
+        final authState = context.read<AuthBloc>().state;
+        final bool isGuru = authState is AuthAuthenticated && authState.user.role == 'guru';
+
         return MultiBlocProvider(
           providers: [
-            BlocProvider<AssignmentBloc>(
-              create: (context) => sl<AssignmentBloc>(),
-            ),
-            BlocProvider<KelasBloc>(
-              create: (context) => sl<KelasBloc>(),
-            ),
-            BlocProvider<SubmissionBloc>(
-              create: (context) => sl<SubmissionBloc>(),
-            ),
+            BlocProvider<KelasBloc>(create: (_) => sl<KelasBloc>()),
+            BlocProvider<AssignmentBloc>(create: (_) => sl<AssignmentBloc>()),
+            BlocProvider<SubmissionBloc>(create: (_) => sl<SubmissionBloc>()),
           ],
-          child: KelasDetailGuruPage(kelasId: kelasId),
+          child: isGuru 
+              ? KelasDetailGuruPage(kelasId: kelasId) 
+              : KelasDetailSiswaPage(kelasId: kelasId),
         );
       },
     ),
@@ -210,27 +202,6 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) {
         final kelasId = state.pathParameters['kelasId']!;
         return ManageKelasPage(kelasId: kelasId);
-      },
-    ),
-    GoRoute(
-      path: KometRoutes.kelasSiswa,
-      name: 'kelasSiswa',
-      builder: (context, state) {
-        final kelasId = state.pathParameters['kelasId']!;
-        return MultiBlocProvider(
-          providers: [
-            BlocProvider<AssignmentBloc>(
-              create: (context) => sl<AssignmentBloc>(),
-            ),
-            BlocProvider<KelasBloc>(
-              create: (context) => sl<KelasBloc>(),
-            ),
-            BlocProvider<SubmissionBloc>(
-              create: (context) => sl<SubmissionBloc>(),
-            ),
-          ],
-          child: KelasDetailSiswaPage(kelasId: kelasId),
-        );
       },
     ),
     // ── Review Submission (PIC B - Helga) ──────────────────────────
@@ -270,24 +241,6 @@ final GoRouter appRouter = GoRouter(
         );
       },
     ),
-
-    // ── Canvas Workspace ──────────────────────────────────────────────────────
-    GoRoute(
-      path: KometRoutes.canvasWorkspace,
-      name: 'canvasWorkspace',
-      builder: (context, state) {
-        final projectId = state.pathParameters['projectId']!;
-        return BlocProvider<SubmissionBloc>(
-          create: (context) => sl<SubmissionBloc>(),
-          child: SubmissionCanvasPage(
-            assignmentId: projectId,
-            assignmentTitle: 'Project $projectId',
-            deadline: DateTime.now().add(const Duration(days: 365)).toIso8601String(),
-            studentId: 'guest',
-          ),
-        );
-      },
-    ),
     GoRoute(
       path: KometRoutes.storyMap,
       name: 'storyMap',
@@ -295,6 +248,14 @@ final GoRouter appRouter = GoRouter(
         title: 'Peta Alur Cerita',
         pic: 'PIC D (Dzakir)',
       ),
+    ),
+    GoRoute(
+      path: KometRoutes.buatKarakter,
+      name: 'buatKarakter',
+      builder: (context, state) {
+        final submissionId = state.pathParameters['submissionId'] ?? 'guest';
+        return BuatKarakterPage(submissionId: submissionId);
+      },
     ),
 
     // ── Submission (PIC B & C) ────────────────────────────────────

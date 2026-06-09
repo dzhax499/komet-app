@@ -15,6 +15,9 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/local_storage/hive_service.dart';
 import '../../../../core/di/service_locator.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'dart:io';
+import 'package:go_router/go_router.dart';
+import '../../../../core/utils/constants.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:xml/xml.dart' as xml;
 
@@ -255,6 +258,7 @@ class SceneObject {
   String name;
   IconData icon;
   Color baseColor;
+  String? imagePath;
   double spawnX, spawnY;
   double x, y;
   String speech;
@@ -267,6 +271,7 @@ class SceneObject {
     required this.name,
     required this.icon,
     required this.baseColor,
+    this.imagePath,
     this.spawnX = 0, this.spawnY = 0,
     this.workspaceXml = '<xml xmlns="https://developers.google.com/blockly/xml"><block type="story_when_start" x="50" y="50"></block></xml>',
   })  : x = spawnX, y = spawnY, speech = '',
@@ -636,6 +641,7 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
         'baseColor': o.baseColor.value,
         'spawnX': o.spawnX,
         'spawnY': o.spawnY,
+        'imagePath': o.imagePath,
         'workspaceXml': o.workspaceXml,
       }).toList(),
     };
@@ -655,6 +661,7 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
             baseColor: Color(o['baseColor']),
             spawnX: (o['spawnX'] as num).toDouble(),
             spawnY: (o['spawnY'] as num).toDouble(),
+            imagePath: o['imagePath'],
             workspaceXml: o['workspaceXml'],
           )).toList();
           _selectedObjectIndex = 0;
@@ -1126,6 +1133,23 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
                     Text("${_objects.length} active", style: GoogleFonts.nunito(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600)),
                   ]),
                   const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.kometBlue,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                      ),
+                      icon: const Icon(Icons.camera_alt, color: Colors.white),
+                      label: Text("Buat dengan Kamera (AI)", style: GoogleFonts.nunito(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        _processCameraCharacter();
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   Flexible(
                     child: SingleChildScrollView(
                       child: GridView.builder(
@@ -1266,7 +1290,18 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
               child: Row(children: [
                 Text("Scene", style: GoogleFonts.nunito(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
                 const Spacer(),
-                if (!widget.isReviewMode)
+                if (!widget.isReviewMode) ...[
+                  Material(color: AppColors.kometBlue.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(16),
+                    child: InkWell(onTap: _processCameraCharacter, borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.kometBlue.withValues(alpha: 0.8)),
+                        ),
+                        child: const Icon(Icons.camera_alt, color: Colors.white, size: 16),
+                      ))),
+                  const SizedBox(width: 8),
                   Material(color: AppColors.kometOlive.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(16),
                     child: InkWell(onTap: _onAddObject, borderRadius: BorderRadius.circular(16),
                       child: Container(
@@ -1277,6 +1312,7 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
                         ),
                         child: Text("+ Object", style: GoogleFonts.nunito(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
                       ))),
+                ]
               ]),
             ),
             Divider(height: 1, color: Colors.white.withValues(alpha: 0.1)),
@@ -1361,6 +1397,65 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
     }
   }
 
+  Future<void> _processCameraCharacter() async {
+    final path = await context.push<String>(
+      KometRoutes.buatKarakter.replaceFirst(':submissionId', widget.assignmentId),
+    );
+    if (path != null && path.isNotEmpty) {
+      if (!mounted) return;
+      
+      final TextEditingController nameController = TextEditingController();
+      final String? name = await showDialog<String>(
+        context: context,
+        builder: (ctx) {
+          return AlertDialog(
+            scrollable: true,
+            backgroundColor: AppColors.kometDarkGreen,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Text("Beri Nama Karakter", style: GoogleFonts.nunito(color: Colors.white, fontWeight: FontWeight.w700)),
+            content: TextField(
+              controller: nameController,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: "Misal: Monster Kucing",
+                hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
+                enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.white54)),
+                focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+              ),
+              autofocus: true,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, null),
+                child: const Text("Batal", style: TextStyle(color: Colors.white54)),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: AppColors.kometOlive),
+                onPressed: () => Navigator.pop(ctx, nameController.text),
+                child: const Text("Simpan", style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          );
+        }
+      );
+
+      if (name != null && name.trim().isNotEmpty) {
+        await _triggerSaveWorkspace();
+        final newObj = SceneObject(
+          name: name.trim(),
+          icon: Icons.person_pin,
+          baseColor: Colors.white,
+          imagePath: path,
+          spawnX: 20.0 * _objects.length,
+          spawnY: 20.0 * _objects.length,
+        );
+        setState(() { _objects.add(newObj); _selectedObjectIndex = _objects.length - 1; });
+        _injectWorkspaceXml(newObj.workspaceXml);
+        if (mounted) _showToast("${name.trim()} berhasil ditambahkan!", Icons.check_circle, AppColors.kometOlive);
+      }
+    }
+  }
+
   Widget _buildObj(int index) {
     final obj = _objects[index]; final sel = index == _selectedObjectIndex;
     return AnimatedPositioned(
@@ -1377,11 +1472,23 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
                 margin: const EdgeInsets.only(bottom: 8), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.95), borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 8, offset: const Offset(0, 4))]),
                 child: Text(obj.speech, style: GoogleFonts.nunito(color: AppColors.kometDarkGreen, fontSize: 12, fontWeight: FontWeight.w700))),
-              Container(width: 56, height: 56,
-                decoration: BoxDecoration(shape: BoxShape.circle, color: obj.color,
-                  boxShadow: sel ? [BoxShadow(color: obj.color.withValues(alpha: 0.5), blurRadius: 12, spreadRadius: 2)] : [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4, offset: const Offset(0, 2))],
-                  border: Border.all(color: sel ? Colors.white : Colors.white.withValues(alpha: 0.5), width: sel ? 3.0 : 1.5)),
-                child: Icon(obj.icon, size: 28, color: Colors.white)),
+              
+              obj.imagePath != null
+                  ? Container(
+                      width: 80, height: 80,
+                      decoration: sel ? BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [BoxShadow(color: Colors.white.withValues(alpha: 0.6), blurRadius: 20, spreadRadius: 4)]
+                      ) : null,
+                      child: Image.file(File(obj.imagePath!), fit: BoxFit.contain),
+                    )
+                  : Container(
+                      width: 56, height: 56,
+                      decoration: BoxDecoration(shape: BoxShape.circle, color: obj.color,
+                        boxShadow: sel ? [BoxShadow(color: obj.color.withValues(alpha: 0.5), blurRadius: 12, spreadRadius: 2)] : [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4, offset: const Offset(0, 2))],
+                        border: Border.all(color: sel ? Colors.white : Colors.white.withValues(alpha: 0.5), width: sel ? 3.0 : 1.5)),
+                      child: Icon(obj.icon, size: 28, color: Colors.white)),
+                      
               if (sel && !_isPlaying) Padding(padding: const EdgeInsets.only(top: 6),
                 child: Text(obj.name, style: GoogleFonts.nunito(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800, shadows: [const Shadow(color: Colors.black54, blurRadius: 2)]))),
             ]))))),
