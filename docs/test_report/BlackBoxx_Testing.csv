@@ -1,0 +1,108 @@
+BlackBox Testing,,,,,,,,,
+Komet App,,,,,,,,,
+Kelompok 2,Test by,Dzakir Tsabit,241511071,,,,,,
+No,ID Test,Nama Fitur / Modul,Fungsi yang Diuji,Jenis Uji,Prekondisi,Data Input,Expected Output,Actual Output,Status
+1,BB-01,Auth · Login,"AuthLocalDataSourceImpl
+ .login()",Positive,Akun dzakir@test.com sudah terdaftar di Hive Box,"email: dzakir@test.com
+ password: 123","Mengembalikan UserModel dengan role='guru';
+ navigasi ke DashboardGuruPage",UserModel berhasil dikembalikan; navigasi ke /dashboard/guru,PASS
+2,BB-02,Auth · Login,"AuthLocalDataSourceImpl
+ .login()",Negative,Aplikasi terbuka di halaman Login,"email: dzakir@test.com
+ password: wrongPassword","Melempar Exception('Email atau password salah');
+ SnackBar merah muncul",Exception dilempar; AuthError di-emit; SnackBar merah tampil,PASS
+3,BB-03,Auth · Login,"AuthLocalDataSourceImpl
+ .login()",Negative,Aplikasi terbuka di halaman Login,"email: tidakada@komet.dev
+ password: apapun","getUserByEmail mengembalikan null;
+ Exception('Email atau password salah')",Fungsi getUserByEmail return null; Exception dilempar,PASS
+4,BB-04,Auth · Register Guru,"AuthRepositoryImpl
+ .registerGuru()",Positive,Halaman Register Guru terbuka,"nama: Ibu Sari
+ email: sari@komet.dev
+ password: Sari1234","UserModel baru dibuat dengan role='guru';
+ tersimpan di Hive Box 'komet_users';
+ navigasi ke DashboardGuruPage",User baru tersimpan; navigasi ke /dashboard/guru,PASS
+5,BB-05,Auth · Register Siswa,"AuthRepositoryImpl
+ .registerSiswa()",Positive,Kode kelas 'ABC123' sudah terdaftar di Hive,"nama: Budi
+ email: budi@komet.dev
+ password: Budi1234
+ kodeKelas: ABC123","UserModel baru dengan kelasIds=[kelasId];
+ siswaIds pada KelasModel diperbarui;
+ navigasi ke DashboardSiswaPage",User tersimpan; kelas diperbarui; navigasi ke /dashboard/siswa,PASS
+6,BB-06,Auth · Register Siswa,"AuthLocalDataSourceImpl
+ .registerSiswa()",Negative,Tidak ada kelas dengan kode 'XXXXXX',kodeKelas: XXXXXX,"getKelasByKode mengembalikan null;
+ Exception('Kode kelas tidak ditemukan')",Exception dilempar; AuthError di-emit; pesan error tampil di SnackBar,PASS
+7,BB-07,Auth · Logout,"LogoutUseCase
+ → HiveService.logout()",Positive,User sudah login sebagai guru,Tap tombol logout,"Key 'currentUser' dihapus dari Hive Box;
+ AuthUnauthenticated di-emit;
+ navigasi ke LoginPage",Session dihapus; navigasi kembali ke /login,PASS
+8,BB-08,Kelas · Buat Kelas,"KelasRepositoryImpl
+ .createKelas()",Positive,User login sebagai guru dengan id 'guru-001',"nama: 'XII RPL 1'
+ guruId: 'guru-001'","KelasModel baru dengan kodeKelas 6 karakter acak;
+ tersimpan di Hive Box;
+ KelasActionSuccess di-emit",Kelas tersimpan; kode 6 karakter terbuat; ActionSuccess di-emit,PASS
+9,BB-09,Kelas · Gabung Kelas,"KelasLocalDataSourceImpl
+ .joinKelas()",Positive,"Kelas dengan kode 'XYZ789' ada di Hive;
+ Siswa 'siswa-001' belum bergabung","kodeKelas: XYZ789
+ SiswaId: siswa-001","siswa-001 ditambahkan ke siswaIds kelas;
+ kelasIds user diperbarui;
+ KelasActionSuccess di-emit",SiswaIds diperbarui; kelasIds user diperbarui; ActionSuccess,PASS
+10,BB-10,Kelas · Gabung Kelas,"KelasLocalDataSourceImpl
+ .joinKelas()",Edge Case,Siswa 'siswa-001' SUDAH ada di siswaIds kelas 'XYZ789',"kodeKelas: XYZ789
+ siswaId: siswa-001",Tidak ada duplikasi — fungsi langsung return kelas yang sama,Kelas dikembalikan tanpa menambah duplikat siswaId,PASS
+11,BB-11,Kelas · Gabung Kelas,"KelasLocalDataSourceImpl
+ .joinKelas()",Negative,Tidak ada kelas dengan kode 'XXXXXX',kodeKelas: XXXXXX,"getKelasByKode return null;
+ Exception('Kode kelas tidak ditemukan')",Exception dilempar; LocalStorageFailure di-emit,PASS
+12,BB-12,Kelas · Hapus Kelas,"KelasRepositoryImpl
+ .deleteKelas()",Positive,Kelas 'kelas-001' ada di Hive Box,kelasId: kelas-001,"Kelas dihapus dari Hive Box;
+ KelasActionSuccess('Kelas berhasil dihapus')",Kelas terhapus; daftar kelas direfresh,PASS
+13,BB-13,Kelas · List Guru,"KelasRepositoryImpl
+ .getKelasGuru()",Positive,3 kelas dengan guruId='guru-001' tersimpan di Hive,guruId: guru-001,"List berisi 3 KelasModel;
+ KelasLoaded di-emit",Tiga kelas tampil di DashboardGuruPage,PASS
+14,BB-14,Kelas · List Guru,"KelasRepositoryImpl
+ .getKelasGuru()",Edge Case,Tidak ada kelas yang dibuat oleh guru ini,guruId: guru-baru,"List kosong [];
+ KelasLoaded([]) di-emit;
+ Empty state ditampilkan",Empty state 'Belum ada kelas' tampil,PASS
+15,BB-15,Editor · Load,"EditorBloc
+ .EditorLoadRequested",Positive,User navigasi ke /editor/:submissionId,"submissionId: 'sub-001'
+ assignmentId: 'asgn-001'
+ namaPenulis: 'Budi'","StoryProjectData dibuat dengan 1 halaman pembuka;
+ EditorLoaded di-emit;
+ Halaman pembuka aktif",EditorLoaded di-emit; halaman pembuka terbuat,PASS
+16,BB-16,Editor · Tambah Halaman,"EditorBloc
+ .EditorPageAdded",Positive,EditorLoaded dengan 1 halaman,Dispatch EditorPageAdded,"Halaman baru ditambahkan ke project.pages;
+ ActivePageId berpindah ke halaman baru;
+ Judul: 'Halaman 2'",Pages bertambah jadi 2; activePageId diperbarui,PASS
+17,BB-17,Editor · Tambah Blok,"EditorBloc
+ .EditorBlockAdded",Positive,EditorLoaded dengan halaman 'p1' aktif,"pageId: p1
+ block: BlockData(tipe=tampilkanTeks, urutan=0)","Blok ditambahkan ke page.blocks;
+ EditorLoaded di-emit dengan data baru",Blok masuk ke halaman yang benar; state diperbarui,PASS
+18,BB-18,Editor · Tambah Blok,"EditorBloc
+ .EditorBlockAdded",Negative,State bukan EditorLoaded (masih EditorInitial),Dispatch EditorBlockAdded ke pageId yang mana saja,Event diabaikan; state tidak berubah,State tetap EditorInitial; tidak ada perubahan,PASS
+19,BB-19,Editor · Validasi,"StoryProjectData
+ .isValid",Positive,"Proyek: 1 pembuka → 1 ending, semua koneksi valid",Cerita linear: p1(pembuka) → p2(ending),isValid = true,isValid mengembalikan true,PASS
+20,BB-20,Editor · Validasi,"StoryProjectData
+ .isValid",Negative,Proyek tanpa halaman ending,Semua halaman bertipe normal,isValid = false,isValid mengembalikan false,PASS
+21,BB-21,Editor · Validasi,"StoryProjectData
+ .isValid",Negative,Ada halaman terisolasi (tidak ada koneksi masuk/keluar),"Halaman p2 terisolasi, tidak dihubungkan ke mana pun",isValid = false,isValid mengembalikan false,PASS
+22,BB-22,Editor · Validasi,"StoryProjectData
+ .isValid",Negative,nextPageId merujuk pageId yang tidak ada di pages,p1.nextPageId = 'pGhost' yang tidak ada,isValid = false,isValid mengembalikan false,PASS
+23,BB-23,Sync · Queue,"SyncQueueService
+ .enqueue()",Positive,ConnectivityService: status disconnected,SyncQueueItemModel untuk submission sub-001,"Item tersimpan di Hive Box 'komet_sync_queue';
+ syncAll() TIDAK dipanggil (offline)",Item tersimpan; sync tidak langsung berjalan,PASS
+24,BB-24,Sync · Auto,"SyncQueueService
+ .init() + statusStream",Positive,"Ada 2 item di sync queue;
+ Koneksi baru tersambung",ConnectivityStatus berubah ke connected,"syncAll() dipanggil otomatis;
+ Item diproses satu per satu",syncAll() terpanggil saat koneksi tersambung,PASS
+25,BB-25,Navigasi · Splash,"_SplashScreen
+ ._navigate()",Positive,AuthBloc emitting AuthAuthenticated dengan role='siswa',Splash screen dimuat,"Setelah 2 detik, navigasi ke /dashboard/siswa",Navigasi ke /dashboard/siswa setelah delay,PASS
+26,BB-26,Navigasi · Splash,"_SplashScreen
+ ._navigate()",Positive,AuthBloc emitting AuthUnauthenticated,Splash screen dimuat,"Setelah 2 detik, navigasi ke /login",Navigasi ke /login,PASS
+27,BB-27,Input Validation,"RegisterSiswaPage
+ kodeKelas field",Edge Case,Halaman Register Siswa terbuka,kodeKelas diisi kurang dari 6 karakter: 'AB',"Form tidak submit;
+ validator menampilkan 'Kode harus 6 karakter'",Validator mencegah submit; pesan error muncul,PASS
+28,BB-28,Input Validation,"RegisterSiswaPage
+ kodeKelas field",Edge Case,Halaman Register Siswa terbuka,kodeKelas dikosongkan lalu submit,Validator menampilkan 'Kode harus 6 karakter',Validator mencegah submit,PASS
+29,BB-29,Input Validation,"CreateKelasDialog
+ nama field",Negative,Dialog Buat Kelas terbuka,"Nama kelas dikosongkan, tap tombol Buat","Validator menampilkan 'Nama kelas tidak boleh kosong';
+ dialog tidak ditutup",Validator mencegah submit; pesan error tampil,PASS
+30,BB-30,Hive Storage,"HiveService
+ .getSyncQueue()",Positive,Hive Box 'komet_sync_queue' berisi 3 item dengan timestamp berbeda,Panggil getSyncQueue(),List 3 item diurutkan ascending berdasarkan dibuatPada,Item dikembalikan urut dari yang paling lama,PASS

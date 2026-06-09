@@ -58,7 +58,7 @@ class StoryProjectData extends Equatable {
     try {
       return pages.firstWhere((p) => p.id == halamanPembuka);
     } catch (_) {
-      return pages.isNotEmpty ? pages.first : null;
+      return null;
     }
   }
 

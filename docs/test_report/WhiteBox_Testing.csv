@@ -1,0 +1,108 @@
+WhiteBox Testing,,,,,,,,,,
+Komet App,,,,,,,,,,
+Kelompok 2,Test by,Dzakir Tsabit,241511071,,,,,,,
+No,ID Test,Modul/File Sumber,Fungsi yang Diuji,Jalur Kode yang Diuji,Jenis Uji,Kondisi / Branch,Input / State,Expected,Actual,Status
+1,WB-01,"block_data.dart
+ BlockData.kategoriOf()",kategoriOf(BlockType),"switch(tipe) → case tampilkanTeks
+ → return BlockKategori.konten",Positive,"Branch: tipe ∈ {tampilkanTeks, tampilkanGambarLatar, tampilkanKarakter}",tipe = tampilkanTeks,return BlockKategori.konten,konten,PASS
+2,WB-02,"block_data.dart
+ BlockData.kategoriOf()",kategoriOf(BlockType),"switch(tipe) → case pindahKeHalaman
+ → return BlockKategori.alur",Positive,"Branch: tipe ∈ {pindahKeHalaman, tambahkanPilihan, hubungkanPilihanKeHalaman, akhiriCerita}",tipe = pindahKeHalaman,return BlockKategori.alur,alur,PASS
+3,WB-03,"block_data.dart
+ BlockData.kategoriOf()",kategoriOf(BlockType),"switch(tipe) → case tambahNilaiKarakter
+ → return BlockKategori.variabel",Positive,"Branch: tipe ∈ {tambahNilaiKarakter, tampilkanKontenBersyarat}",tipe = tambahNilaiKarakter,return BlockKategori.variabel,variabel,PASS
+4,WB-04,"page_model.dart
+ PageModel.isEnding",isEnding (getter),"bool get isEnding => tipe == PageTipe.ending
+ → branch true",Positive,tipe == PageTipe.ending → true,PageModel(tipe: ending),TRUE,TRUE,PASS
+5,WB-05,"page_model.dart
+ PageModel.isEnding",isEnding (getter),"bool get isEnding => tipe == PageTipe.ending
+ → branch false",Negative,tipe != PageTipe.ending → false,PageModel(tipe: normal),FALSE,FALSE,PASS
+6,WB-06,"page_model.dart
+ PageModel.isIsolated",isIsolated (getter),"!isEnding && !hasPilihan && !hasNextPage
+ → semua kondisi true → return true",Positive,Semua 3 kondisi false → isIsolated = true,"tipe=normal, connections={}, nextPageId=null",TRUE,TRUE,PASS
+7,WB-07,"page_model.dart
+ PageModel.isIsolated",isIsolated (getter),"!isEnding && !hasPilihan && !hasNextPage
+ → hasNextPage = true → short-circuit → false",Negative,nextPageId != null → hasPilihan=false diabaikan,nextPageId='p2',FALSE,FALSE,PASS
+8,WB-08,"page_model.dart
+ PageModel.sortedBlocks",sortedBlocks (getter),"[...blocks]..sort((a,b) => a.urutan.compareTo(b.urutan))
+ → membuat salinan dan mengurutkan",Positive,3 blok urutan tidak berurut → sorted ascending,"[urutan=2, urutan=0, urutan=1]","[urutan=0,1,2]","[urutan=0,1,2]",PASS
+9,WB-09,"page_model.dart
+ PageModel.sortedBlocks",sortedBlocks (getter),"spread operator [...blocks] → list baru independen
+ → list asli tidak berubah",Edge Case,Mutasi list sorted tidak memengaruhi this.blocks,"2 blok urutan=[5,1]",blocks.first.id tetap id blok urutan=5,tetap id urutan=5,PASS
+10,WB-10,"story_project_data.dart
+ StoryProjectData.isValid",isValid (getter),"if(firstPage == null) return false
+ → branch: pembuka ada → lanjut",Positive,Cek #1: firstPage != null → pass,pembuka='p1' ada di pages,lanjut ke cek berikutnya,lanjut,PASS
+11,WB-11,"story_project_data.dart
+ StoryProjectData.isValid",isValid (getter),"if(firstPage == null) return false
+ → branch: pembuka tidak ada → early return",Negative,Cek #1: firstPage = null → return false,halamanPembuka='pGhost' tidak ada di pages,FALSE,FALSE,PASS
+12,WB-12,"story_project_data.dart
+ StoryProjectData.isValid",isValid (getter),"if(endingPages.isEmpty) return false
+ → branch: tidak ada ending → early return",Negative,Cek #2: endingPages kosong → return false,Semua halaman bertipe normal,FALSE,FALSE,PASS
+13,WB-13,"story_project_data.dart
+ StoryProjectData.isValid",isValid (getter),"if(isolatedPages.isNotEmpty) return false
+ → branch: ada isolated → early return",Negative,Cek #3: isolatedPages.isNotEmpty → return false,"p2 terisolasi (normal, no connections, no nextPageId)",FALSE,FALSE,PASS
+14,WB-14,"story_project_data.dart
+ StoryProjectData.isValid",isValid (getter),"for each page:
+  if page.nextPageId != null && !pageIds.contains
+  → return false",Negative,Cek #4 loop: nextPageId tidak ada di pageIds,p1.nextPageId='pGhost',FALSE,FALSE,PASS
+15,WB-15,"story_project_data.dart
+ StoryProjectData.isValid",isValid (getter),"for each page → for each connection.value:
+  if !pageIds.contains → return false",Negative,Cek #5 nested loop: connection target tidak ada di pageIds,p1.connections={'A':'pGhost'},FALSE,FALSE,PASS
+16,WB-16,"story_project_data.dart
+ StoryProjectData.isValid",isValid (getter),Semua branch lolos → return true,Positive,Semua 5 cek passed,p1(pembuka)→p2(ending); semua koneksi valid,TRUE,TRUE,PASS
+17,WB-17,"extensions.dart
+ KometDateTimeExtension",isDeadlinePassed (getter),"isBefore(DateTime.now())
+ → branch: past < now → true",Positive,Tanggal masa lalu → isBefore = true,DateTime.now() - 1 hari,TRUE,TRUE,PASS
+18,WB-18,"extensions.dart
+ KometDateTimeExtension",isDeadlinePassed (getter),"isBefore(DateTime.now())
+ → branch: future > now → false",Negative,Tanggal masa depan → isBefore = false,DateTime.now() + 10 hari,FALSE,FALSE,PASS
+19,WB-19,"extensions.dart
+ KometDateTimeExtension",isDeadlineNearBy (getter),"!isDeadlinePassed && daysUntilDeadline <= 1
+ → kedua kondisi true",Positive,Deadline +12 jam: not passed AND days<=1 → true,DateTime.now() + 12 jam,TRUE,TRUE,PASS
+20,WB-20,"extensions.dart
+ KometDateTimeExtension",isDeadlineNearBy (getter),"!isDeadlinePassed && daysUntilDeadline <= 1
+ → daysUntilDeadline > 1 → false",Negative,Deadline +5 hari: days > 1 → short-circuit false,DateTime.now() + 5 hari,FALSE,FALSE,PASS
+21,WB-21,"extensions.dart
+ KometDateTimeExtension",isDeadlineNearBy (getter),"!isDeadlinePassed → isDeadlinePassed = true
+ → short-circuit: return false",Edge Case,Deadline sudah lewat: isDeadlinePassed=true → !false=false,DateTime.now() - 1 hari,FALSE,FALSE,PASS
+22,WB-22,"extensions.dart
+ KometStringExtension",isNotBlank (getter),"trim().isNotEmpty
+ → '' → trim → '' → isEmpty=true → isNotEmpty=false",Negative,Input string kosong → false,',FALSE,FALSE,PASS
+23,WB-23,"extensions.dart
+ KometStringExtension",isNotBlank (getter),"trim().isNotEmpty
+ → ' ' → trim → '' → isNotEmpty=false",Edge Case,Input hanya spasi → trim hasilkan '' → false, ',FALSE,FALSE,PASS
+24,WB-24,"extensions.dart
+ KometStringExtension",isNotBlank (getter),"trim().isNotEmpty
+ → 'KOMET' → trim → 'KOMET' → isNotEmpty=true",Positive,Input string valid → true,KOMET',TRUE,TRUE,PASS
+25,WB-25,"sync_queue_service.dart
+ SyncQueueService",syncAll(),"if(_isSyncing || remoteDataSource == null) return
+ → branch: remoteDataSource=null → early return",Edge Case,remoteDataSource null → guard clause langsung return,"_isSyncing=false, remoteDataSource=null",return tanpa eksekusi loop,early return,PASS
+26,WB-26,"sync_queue_service.dart
+ SyncQueueService",syncAll(),"if(queue.isEmpty) return
+ → branch: queue kosong → early return",Edge Case,getSyncQueue() return [] → return lebih awal,queue kosong,return tanpa loop,early return,PASS
+27,WB-27,"sync_queue_service.dart
+ SyncQueueService",enqueue(),"await hiveService.addSyncItem(item)
+ then: if(await isConnected) syncAll()
+ → branch offline: tidak panggil syncAll",Negative,isConnected=false → syncAll tidak dipanggil,"status offline, item masuk antrian",item tersimpan; syncAll tidak jalan,tersimpan saja,PASS
+28,WB-28,"auth_repository_impl.dart
+ AuthRepositoryImpl",login(),"try:
+  localDataSource.login() → success
+  return kometSuccess(user)
+ branch: try path",Positive,Kredensial valid → try berhasil → kometSuccess,email & password benar,kometSuccess(UserModel),kometSuccess,PASS
+29,WB-29,"auth_repository_impl.dart
+ AuthRepositoryImpl",login(),"catch(e):
+  return kometFailure(AuthFailure(e.toString()))
+ branch: catch path",Negative,Kredensial salah → Exception → catch → kometFailure,password salah,kometFailure(AuthFailure),kometFailure,PASS
+30,WB-30,"kelas_repository_impl.dart
+ KelasRepositoryImpl",_generateKodeKelas(),"List.generate(6, ...).join()
+ → iterasi 6 kali; setiap iterasi: Random().nextInt(36)",Positive,Loop 6 iterasi; setiap iterasi index chars[0..35],Panggil _generateKodeKelas(),String panjang 6 karakter [A-Z0-9],panjang=6,PASS
+31,WB-31,"kelas_repository_impl.dart
+ KelasRepositoryImpl",_generateKodeKelas(),"Setiap char: chars[Random().nextInt(36)]
+ → chars='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+ → index 0..35",Positive,Output hanya berisi karakter dari alfanumerik uppercase,Panggil 1000x; cek semua char ∈ [A-Z0-9],semua karakter valid,semua valid,PASS
+32,WB-32,"connectivity_service.dart
+ ConnectivityServiceImpl",_resultsToStatus(),"if results.isEmpty || contains(none)
+ → branch true → return disconnected",Negative,results = [ConnectivityResult.none] → disconnected,[ConnectivityResult.none],ConnectivityStatus.disconnected,disconnected,PASS
+33,WB-33,"connectivity_service.dart
+ ConnectivityServiceImpl",_resultsToStatus(),"if results.isEmpty || contains(none)
+ → branch false → return connected",Positive,results = [wifi] → tidak contains none → connected,[ConnectivityResult.wifi],ConnectivityStatus.connected,connected,PASS
