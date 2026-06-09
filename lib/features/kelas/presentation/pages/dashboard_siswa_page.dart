@@ -523,7 +523,7 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
                                             return GestureDetector(
                                               onTap: () {
                                                 context.pushNamed(
-                                                  'kelasDetail',
+                                                  'kelasSiswa',
                                                   pathParameters: {'kelasId': kelas.id}
                                                 ).then((_) {
                                                   context.read<SubmissionBloc>().add(
