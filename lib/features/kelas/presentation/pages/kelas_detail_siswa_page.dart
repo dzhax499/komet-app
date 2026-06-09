@@ -15,6 +15,11 @@ import '../widgets/submission_card.dart';
 import '../widgets/assignment_card.dart';
 import 'submission_canvas_page.dart';
 
+import 'package:uuid/uuid.dart';
+import '../../../../core/local_storage/hive_service.dart';
+import '../../../../core/di/service_locator.dart';
+import 'dart:convert';
+
 class KelasDetailSiswaPage extends StatefulWidget {
   final String kelasId;
 
@@ -49,8 +54,6 @@ class _KelasDetailSiswaPageState extends State<KelasDetailSiswaPage> {
 
     return Scaffold(
       body: Container(
-        height: double.infinity,
-        width: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -58,45 +61,35 @@ class _KelasDetailSiswaPageState extends State<KelasDetailSiswaPage> {
             colors: [Color(0xFF86B3C0), Color(0xFFE3E2E0)],
           ),
         ),
-        child: RefreshIndicator(
-          onRefresh: () async {
-            _assignmentBloc.add(GetAssignmentsByClassEvent(widget.kelasId));
-            _submissionBloc.add(GetSubmissionsByClassEvent(widget.kelasId));
-            _kelasBloc.add(KelasFetchDetailRequested(widget.kelasId));
-            await Future.delayed(const Duration(seconds: 1));
-          },
-          color: const Color(0xFF6FA9BB),
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: Column(
-              children: [
-                _buildCustomHeader(context),
-                BlocListener<SubmissionBloc, SubmissionState>(
-                  listener: (context, state) {
-                    if (state is SubmissionSaved) {
-                      _submissionBloc.add(GetSubmissionsByClassEvent(widget.kelasId));
+        child: Column(
+          children: [
+            _buildCustomHeader(context),
+            Expanded(
+              child: BlocListener<SubmissionBloc, SubmissionState>(
+                listener: (context, state) {
+                  if (state is SubmissionSaved) {
+                    _submissionBloc.add(GetSubmissionsByClassEvent(widget.kelasId));
+                  }
+                },
+                child: BlocBuilder<SubmissionBloc, SubmissionState>(
+                  builder: (context, submissionState) {
+                    var submittedAssignmentIds = <String>{};
+                    if (submissionState is SubmissionSuccess) {
+                      final userSubmissions = submissionState.submissions.where((s) => s.siswaId == userId);
+                      submittedAssignmentIds = userSubmissions
+                          .where((s) => s.status == SubmissionStatus.submitted || s.status == SubmissionStatus.reviewed || s.status == SubmissionStatus.needsRevision)
+                          .map((s) => s.assignmentId)
+                          .toSet();
                     }
-                  },
-                  child: BlocBuilder<SubmissionBloc, SubmissionState>(
-                    builder: (context, submissionState) {
-                      var submittedAssignmentIds = <String>{};
-                      if (submissionState is SubmissionSuccess) {
-                        final userSubmissions = submissionState.submissions.where((s) => s.siswaId == userId);
-                        submittedAssignmentIds = userSubmissions
-                            .where((s) => s.status == SubmissionStatus.submitted || s.status == SubmissionStatus.reviewed || s.status == SubmissionStatus.needsRevision)
-                            .map((s) => s.assignmentId)
-                            .toSet();
-                      }
 
-                      return _selectedTabIndex == 0
-                          ? _buildAssignmentList(submittedAssignmentIds)
-                          : _buildSubmissionList(submissionState, userId);
-                    },
-                  ),
+                    return _selectedTabIndex == 0
+                        ? _buildAssignmentList(submittedAssignmentIds)
+                        : _buildSubmissionList(submissionState, userId);
+                  },
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -105,79 +98,202 @@ class _KelasDetailSiswaPageState extends State<KelasDetailSiswaPage> {
   Widget _buildAssignmentList(Set<String> submittedAssignmentIds) {
     return BlocBuilder<AssignmentBloc, AssignmentState>(
       builder: (context, state) {
-        if (state is AssignmentLoading) return const Center(child: CircularProgressIndicator());
+        List<AssignmentModel> displayAssignments = [];
         if (state is AssignmentSuccess) {
-          final List<AssignmentModel> displayAssignments = 
-              state.assignments.where((a) => !submittedAssignmentIds.contains(a.id)).toList();
-
-          if (displayAssignments.isEmpty) {
-            return Container(
-              height: MediaQuery.of(context).size.height * 0.5,
-              alignment: Alignment.center,
-              child: const Text("Belum ada task di kelas ini.", style: TextStyle(color: Colors.black54)),
-            );
-          }
-          
-          return ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            padding: const EdgeInsets.only(top: 20, bottom: 100),
-            itemCount: displayAssignments.length,
-            itemBuilder: (context, index) {
-              final assignment = displayAssignments[index];
-              return AssignmentCard(
-                title: assignment.judul,
-                deadline: assignment.deadline.toString().split(' ')[0],
-                isStudent: true,
-                onTap: () {
-                  final authState = context.read<AuthBloc>().state;
-                  final studentId = authState is AuthAuthenticated ? authState.user.id : '';
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => BlocProvider.value(
-                        value: _submissionBloc,
-                        child: SubmissionCanvasPage(
-                          assignmentId: assignment.id,
-                          assignmentTitle: assignment.judul,
-                          deadline: assignment.deadline.toString().split(' ')[0],
-                          studentId: studentId,
-                        ),
-                      ),
-                    ),
-                  ).then((_) {
-                    _submissionBloc.add(GetSubmissionsByClassEvent(widget.kelasId));
-                  });
-                },
-              );
-            },
-          );
+          displayAssignments = state.assignments.where((a) => !submittedAssignmentIds.contains(a.id)).toList();
+        } else {
+          // Fallback to local data while loading
+          final localAssignments = sl<HiveService>().assignmentBoxInstance.values.where((a) => a.kelasId == widget.kelasId).toList();
+          displayAssignments = localAssignments.where((a) => !submittedAssignmentIds.contains(a.id)).toList();
         }
-        return const SizedBox.shrink();
+
+        if (displayAssignments.isEmpty && state is AssignmentLoading) {
+           return const Center(child: CircularProgressIndicator());
+        }
+        if (displayAssignments.isEmpty) return const Center(child: Text("No tasks yet in this class."));
+        
+        return ListView.builder(
+          padding: const EdgeInsets.only(top: 20, bottom: 100),
+          itemCount: displayAssignments.length,
+          itemBuilder: (context, index) {
+            final assignment = displayAssignments[index];
+            return AssignmentCard(
+              title: assignment.judul,
+              deadline: assignment.deadline.toString().split(' ')[0],
+              isStudent: true,
+              onTap: () {
+                final authState = context.read<AuthBloc>().state;
+                final studentId = authState is AuthAuthenticated ? authState.user.id : '';
+                _showWorkOptionsDialog(context, assignment, studentId);
+              },
+            );
+          },
+        );
       },
     );
   }
 
-  Widget _buildSubmissionList(SubmissionState submissionState, String userId) {
-    if (submissionState is SubmissionLoading) return const Center(child: CircularProgressIndicator());
+  void _showWorkOptionsDialog(BuildContext context, AssignmentModel assignment, String studentId) {
+    final submissionState = context.read<SubmissionBloc>().state;
+    String? existingId;
     if (submissionState is SubmissionSuccess) {
-      final List<SubmissionModel> displaySubmissions = submissionState.submissions
+      try {
+        final existing = submissionState.submissions.firstWhere(
+          (s) => s.assignmentId == assignment.id && s.siswaId == studentId
+        );
+        existingId = existing.id;
+      } catch (_) {}
+    }
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Pilih Metode Pengerjaan', style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 20),
+              ListTile(
+                leading: const Icon(Icons.add_circle_outline, color: Colors.blue),
+                title: Text('Kerjakan dari Awal', style: GoogleFonts.nunito(fontWeight: FontWeight.bold)),
+                subtitle: Text('Buat cerita kosong baru', style: GoogleFonts.nunito(fontSize: 12)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _openEditor(assignment, studentId);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.cloud_download_outlined, color: Colors.green),
+                title: Text('Gunakan Draf Guest (Offline)', style: GoogleFonts.nunito(fontWeight: FontWeight.bold)),
+                subtitle: Text('Pilih dari karya yang dibuat tanpa login', style: GoogleFonts.nunito(fontSize: 12)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showGuestDraftsDialog(context, assignment, studentId, existingId);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showGuestDraftsDialog(BuildContext context, AssignmentModel assignment, String studentId, String? existingId) {
+    final allSubs = sl<HiveService>().submissionBoxInstance.values.toList();
+    final guestSubs = allSubs.where((p) => p.siswaId == 'guest').toList();
+    guestSubs.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Pilih Draf Guest', style: GoogleFonts.nunito(fontWeight: FontWeight.bold)),
+          content: SizedBox(
+            width: double.maxFinite,
+            height: 300,
+            child: guestSubs.isEmpty
+                ? Center(child: Text('Tidak ada draf guest.', style: GoogleFonts.nunito()))
+                : ListView.builder(
+                    itemCount: guestSubs.length,
+                    itemBuilder: (context, index) {
+                      final draft = guestSubs[index];
+                      String draftTitle = 'Karya Guest';
+                      try {
+                        if (draft.storyDataJson.isNotEmpty) {
+                          final data = jsonDecode(draft.storyDataJson);
+                          if (data['title'] != null && data['title'].toString().isNotEmpty) {
+                            draftTitle = data['title'];
+                          }
+                        }
+                      } catch (_) {}
+
+                      return Card(
+                        child: ListTile(
+                          title: Text(draftTitle, style: GoogleFonts.nunito(fontWeight: FontWeight.bold)),
+                          subtitle: Text('Diubah: ${draft.updatedAt.day}/${draft.updatedAt.month}/${draft.updatedAt.year}', style: GoogleFonts.nunito(fontSize: 12)),
+                          onTap: () {
+                            Navigator.pop(context);
+                            _claimGuestDraft(draft, assignment, studentId, existingId);
+                          },
+                        ),
+                      );
+                    },
+                  ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Batal'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _claimGuestDraft(SubmissionModel guestDraft, AssignmentModel assignment, String studentId, String? existingId) {
+    // Clone draft and change assignmentId and siswaId, use existingId if available
+    final claimedSub = guestDraft.copyWith(
+      id: existingId ?? const Uuid().v4(),
+      assignmentId: assignment.id,
+      siswaId: studentId,
+      status: SubmissionStatus.draft,
+      updatedAt: DateTime.now(),
+    );
+    
+    // Langsung sinkronisasikan/save secara online menggunakan BLoC
+    _submissionBloc.add(SubmitTaskEvent(claimedSub));
+    
+    // Langsung buka editor dan kirimkan data guest yang sudah diklaim
+    _openEditor(assignment, studentId, initialSubmission: claimedSub);
+  }
+
+  void _openEditor(AssignmentModel assignment, String studentId, {SubmissionModel? initialSubmission}) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BlocProvider.value(
+          value: _submissionBloc,
+          child: SubmissionCanvasPage(
+            assignmentId: assignment.id,
+            assignmentTitle: assignment.judul,
+            deadline: assignment.deadline.toString().split(' ')[0],
+            studentId: studentId,
+            initialSubmission: initialSubmission,
+          ),
+        ),
+      ),
+    ).then((_) {
+      _submissionBloc.add(GetSubmissionsByClassEvent(widget.kelasId));
+    });
+  }
+
+  Widget _buildSubmissionList(SubmissionState submissionState, String userId) {
+    List<SubmissionModel> displaySubmissions = [];
+    if (submissionState is SubmissionSuccess) {
+      displaySubmissions = submissionState.submissions
           .where((s) => s.siswaId == userId && 
               (s.status == SubmissionStatus.submitted || 
                s.status == SubmissionStatus.reviewed || 
                s.status == SubmissionStatus.needsRevision)).toList();
+    } else {
+      final localSubs = sl<HiveService>().submissionBoxInstance.values.toList();
+      displaySubmissions = localSubs
+          .where((s) => s.siswaId == userId && 
+              (s.status == SubmissionStatus.submitted || 
+               s.status == SubmissionStatus.reviewed || 
+               s.status == SubmissionStatus.needsRevision)).toList();
+    }
 
-      if (displaySubmissions.isEmpty) {
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.5,
-          alignment: Alignment.center,
-          child: const Text("Belum ada pengumpulan tugas.", style: TextStyle(color: Colors.black54)),
-        );
-      }
+    if (displaySubmissions.isEmpty && submissionState is SubmissionLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+      if (displaySubmissions.isEmpty) return const Center(child: Text("No submissions yet."));
       
       return ListView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
         padding: const EdgeInsets.only(top: 20, bottom: 100),
         itemCount: displaySubmissions.length,
         itemBuilder: (context, index) {
@@ -190,9 +306,14 @@ class _KelasDetailSiswaPageState extends State<KelasDetailSiswaPage> {
             } catch (_) {}
           }
 
+          final authState2 = context.read<AuthBloc>().state;
+          final studentName = authState2 is AuthAuthenticated ? authState2.user.nama : 'Student';
+          final studentPhotoUrl = authState2 is AuthAuthenticated ? authState2.user.photoUrl : null;
+
           return SubmissionCard(
             submission: sub,
-            studentName: "Student ${sub.siswaId.substring(0, 4)}",
+            studentName: studentName,
+            studentPhotoUrl: studentPhotoUrl,
             assignmentTitle: taskTitle,
             onTap: () {
               Navigator.push(
@@ -205,7 +326,8 @@ class _KelasDetailSiswaPageState extends State<KelasDetailSiswaPage> {
                       assignmentTitle: taskTitle,
                       deadline: "",
                       studentId: userId,
-                      isReviewMode: sub.status == SubmissionStatus.reviewed,
+                      initialSubmission: sub,
+                      isReviewMode: sub.status == SubmissionStatus.reviewed || sub.status == SubmissionStatus.submitted,
                     ),
                   ),
                 ),
@@ -220,8 +342,6 @@ class _KelasDetailSiswaPageState extends State<KelasDetailSiswaPage> {
           );
         },
       );
-    }
-    return const SizedBox.shrink();
   }
 
   Widget _buildCustomHeader(BuildContext context) {
@@ -255,24 +375,12 @@ class _KelasDetailSiswaPageState extends State<KelasDetailSiswaPage> {
                   ),
                   const SizedBox(width: 8),
                   Text('Student Hub', style: GoogleFonts.nunito(color: Colors.white, fontSize: 16)),
-                  const Spacer(),
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: const Icon(Icons.exit_to_app_rounded, color: Colors.white, size: 28),
-                  ),
                 ],
               ),
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Expanded(
-                    child: Text(
-                      className,
-                      style: GoogleFonts.nunito(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
+                  Text(className, style: GoogleFonts.nunito(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
                   const SizedBox(width: 16),
                   _buildStudentStats(),
                 ],

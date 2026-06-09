@@ -6,6 +6,8 @@ import '../../../../core/models/submission_model.dart';
 import '../../../submission/presentation/bloc/submission_bloc.dart';
 import '../../../submission/presentation/bloc/submission_event.dart';
 import '../../../submission/presentation/bloc/submission_state.dart';
+import '../../../../core/local_storage/hive_service.dart';
+import '../../../../core/models/user_model.dart';
 import 'submission_canvas_page.dart';
 
 class ReviewSubmissionPage extends StatefulWidget {
@@ -25,6 +27,7 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
   double _assessmentValue = 0;
   final TextEditingController _feedbackController = TextEditingController();
   late SubmissionBloc _submissionBloc;
+  UserModel? _studentUser;
 
   @override
   void initState() {
@@ -32,6 +35,7 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
     _submissionBloc = sl<SubmissionBloc>();
     _assessmentValue = (widget.submission.nilai ?? 0).toDouble();
     _feedbackController.text = widget.submission.komentarUmum ?? '';
+    _studentUser = sl<HiveService>().userBoxInstance.get(widget.submission.siswaId);
   }
 
   @override
@@ -206,7 +210,14 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
                 CircleAvatar(
                   radius: 28,
                   backgroundColor: Colors.blue[100],
-                  child: Icon(Icons.person, color: Colors.blueGrey, size: 36),
+                  backgroundImage: _studentUser?.photoUrl != null
+                      ? (_studentUser!.photoUrl!.startsWith('http')
+                          ? NetworkImage(_studentUser!.photoUrl!) as ImageProvider
+                          : null)
+                      : null,
+                  child: _studentUser?.photoUrl == null || !_studentUser!.photoUrl!.startsWith('http')
+                      ? Icon(Icons.person, color: Colors.blueGrey, size: 36)
+                      : null,
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -214,7 +225,7 @@ class _ReviewSubmissionPageState extends State<ReviewSubmissionPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Student ID: ${widget.submission.siswaId.substring(0, 8)}',
+                        _studentUser?.nama ?? 'Student ${widget.submission.siswaId.substring(0, 8)}',
                         style: GoogleFonts.nunito(
                           color: Colors.white,
                           fontSize: 16,

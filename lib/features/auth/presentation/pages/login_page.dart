@@ -280,7 +280,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                           TextButton(
-                            onPressed: () => context.go(KometRoutes.dashboardGuest),
+                            onPressed: () => context.go(KometRoutes.guestDashboard),
                             child: Text(
                               'Masuk sebagai Guest →',
                               style: GoogleFonts.nunito(
@@ -456,7 +456,7 @@ class _LoginPageState extends State<LoginPage> {
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);
-                  context.go(KometRoutes.dashboardGuest);
+                  context.go(KometRoutes.guestDashboard);
                 },
                 child: Text(
                   'Masuk sebagai Guest →',

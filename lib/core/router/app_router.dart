@@ -6,6 +6,7 @@
 // PIC lain: JANGAN mendefinisikan route baru di sini sendiri.
 // Koordinasi dengan PIC D untuk menambahkan route baru.
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../utils/constants.dart';
@@ -24,6 +25,7 @@ import '../../features/kelas/presentation/pages/dashboard_siswa_page.dart';
 import '../../features/kelas/presentation/pages/kelas_detail_guru_page.dart';
 import '../../features/kelas/presentation/pages/kelas_detail_siswa_page.dart';
 import '../../features/kelas/presentation/pages/manage_kelas_page.dart';
+import '../../features/project/presentation/pages/guest_dashboard_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/kelas/presentation/bloc/kelas_bloc.dart';
@@ -69,7 +71,7 @@ class _PlaceholderScreen extends StatelessWidget {
 /// atau langsung di MaterialApp.router sebagai routerConfig.
 final GoRouter appRouter = GoRouter(
   initialLocation: KometRoutes.splash,
-  debugLogDiagnostics: true, // Matikan saat release
+  debugLogDiagnostics: kDebugMode,
   routes: [
     // ── Splash / Initial ──────────────────────────────────────────
     GoRoute(
@@ -81,6 +83,11 @@ final GoRouter appRouter = GoRouter(
       path: KometRoutes.getStarted,
       name: 'getStarted',
       builder: (context, state) => const GetStartedPage(),
+    ),
+    GoRoute(
+      path: KometRoutes.guestDashboard,
+      name: 'guestDashboard',
+      builder: (context, state) => const GuestDashboardPage(),
     ),
 
     // ── Auth (PIC A) ──────────────────────────────────────────────

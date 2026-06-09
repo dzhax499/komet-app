@@ -134,10 +134,13 @@ class SubmissionBloc extends Bloc<SubmissionEvent, SubmissionState> {
     } else {
       final submissions = result.data ?? [];
       try {
-        final existing = submissions.firstWhere(
+        final existingSubs = submissions.where(
           (s) => s.assignmentId == event.assignmentId,
-        );
-        emit(ExistingSubmissionLoaded(existing));
+        ).toList();
+        if (existingSubs.isNotEmpty) {
+          existingSubs.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+          emit(ExistingSubmissionLoaded(existingSubs.first));
+        }
       } catch (_) {
         // Not found, do nothing, just empty canvas
       }

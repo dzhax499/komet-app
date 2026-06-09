@@ -141,11 +141,21 @@ class HiveService {
   Future<void> logout() async {
     // Hapus session user
     await Hive.box(authBox).delete('currentUser');
-    // Bersihkan cache kelas, submission, dan assignment agar
+    // Bersihkan cache kelas dan assignment agar
     // user berikutnya tidak melihat data user sebelumnya
     await Hive.box<KelasModel>(kelasBox).clear();
-    await Hive.box<SubmissionModel>(submissionBox).clear();
     await Hive.box<AssignmentModel>(assignmentBox).clear();
+    
+    // Untuk submissions: hapus hanya milik user yang login,
+    // JANGAN hapus guest drafts (siswaId == 'guest')
+    final subBox = Hive.box<SubmissionModel>(submissionBox);
+    final keysToDelete = <dynamic>[];
+    for (final entry in subBox.toMap().entries) {
+      if (entry.value.siswaId != 'guest') {
+        keysToDelete.add(entry.key);
+      }
+    }
+    await subBox.deleteAll(keysToDelete);
   }
 
   // Assignment Methods 
