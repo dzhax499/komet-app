@@ -38,7 +38,6 @@ class KometRoutes {
   // Dashboard — PIC A
   static const String dashboardGuru = '/dashboard/guru';
   static const String dashboardSiswa = '/dashboard/siswa';
-  static const String dashboardGuest = '/dashboard/guest';
 
   // Kelas — PIC A
   static const String kelasDetail = '/kelas/:kelasId';
@@ -50,14 +49,11 @@ class KometRoutes {
   static const String assignmentDetail = '/assignment/:assignmentId';
   static const String assignmentCreate = '/kelas/:kelasId/assignment/create';
 
-  // Workspace
-  static const String canvasWorkspace = '/canvas-workspace/:projectId';
-
   // Editor — PIC D
   static const String editorCanvas = '/editor/:submissionId';
   static const String editorPreview = '/editor/:submissionId/preview';
   static const String storyMap = '/editor/:submissionId/map';
-  static const String createCharacter = '/editor/:submissionId/character';
+  static const String buatKarakter = '/editor/:submissionId/buat-karakter';
 
   // Submission — PIC B & C
   static const String submissionList = '/submission';
