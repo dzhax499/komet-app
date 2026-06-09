@@ -35,6 +35,7 @@ import '../../features/submission/presentation/bloc/submission_event.dart';
 import '../di/service_locator.dart';
 import '../../features/kelas/presentation/pages/review_submission_page.dart';
 import '../models/submission_model.dart';
+import '../../features/editor_engine/presentation/pages/buat_karakter_page.dart';
 
 class _PlaceholderScreen extends StatelessWidget {
   final String title;
@@ -247,6 +248,14 @@ final GoRouter appRouter = GoRouter(
         title: 'Peta Alur Cerita',
         pic: 'PIC D (Dzakir)',
       ),
+    ),
+    GoRoute(
+      path: KometRoutes.buatKarakter,
+      name: 'buatKarakter',
+      builder: (context, state) {
+        final submissionId = state.pathParameters['submissionId'] ?? 'guest';
+        return BuatKarakterPage(submissionId: submissionId);
+      },
     ),
 
     // ── Submission (PIC B & C) ────────────────────────────────────
