@@ -610,7 +610,7 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
                                                   onTap: () {
                                                     context
                                                         .pushNamed(
-                                                          'kelasDetail',
+                                                          'kelasSiswa',
                                                           pathParameters: {
                                                             'kelasId': kelas.id,
                                                           },

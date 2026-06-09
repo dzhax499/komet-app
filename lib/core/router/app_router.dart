@@ -15,23 +15,27 @@ import '../../features/auth/presentation/pages/register_guru_page.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/pages/get_started_page.dart';
 import '../../features/auth/presentation/pages/teacher_profile_page.dart';
+import '../../features/auth/presentation/pages/student_profile_page.dart';
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/auth/presentation/pages/forgot_password_otp_page.dart';
 import '../../features/auth/presentation/pages/forgot_password_reset_page.dart';
 import '../../features/kelas/presentation/pages/dashboard_guru_page.dart';
 import '../../features/kelas/presentation/pages/dashboard_siswa_page.dart';
 import '../../features/kelas/presentation/pages/kelas_detail_guru_page.dart';
+import '../../features/kelas/presentation/pages/kelas_detail_siswa_page.dart';
 import '../../features/kelas/presentation/pages/manage_kelas_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/kelas/presentation/bloc/kelas_bloc.dart';
 import '../../features/submission/presentation/bloc/submission_bloc.dart';
+import '../../features/submission/presentation/bloc/submission_event.dart';
 import '../di/service_locator.dart';
 import '../../features/kelas/presentation/pages/review_submission_page.dart';
 import '../models/submission_model.dart';
 import '../../features/editor_engine/presentation/pages/buat_karakter_page.dart';
 import '../../features/project/presentation/pages/dashboard_guest_page.dart';
 import '../../features/kelas/presentation/pages/submission_canvas_page.dart';
+import '../../features/assignment/presentation/bloc/assignment_bloc.dart';
 
 class _PlaceholderScreen extends StatelessWidget {
   final String title;
@@ -135,6 +139,24 @@ final GoRouter appRouter = GoRouter(
         );
       },
     ),
+    GoRoute(
+      path: KometRoutes.profileSiswa,
+      name: 'profileSiswa',
+      builder: (context, state) {
+        final user = (context.read<AuthBloc>().state as AuthAuthenticated).user;
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider<KelasBloc>(
+              create: (context) => sl<KelasBloc>()..add(KelasFetchSiswaRequested(user.id)),
+            ),
+            BlocProvider<SubmissionBloc>(
+              create: (context) => sl<SubmissionBloc>()..add(GetSubmissionsByStudentEvent(user.id)),
+            ),
+          ],
+          child: const StudentProfilePage(),
+        );
+      },
+    ),
 
     // ── Dashboard ─────────────────────────────────────────────────
     GoRoute(
@@ -159,7 +181,20 @@ final GoRouter appRouter = GoRouter(
       name: 'kelasDetail',
       builder: (context, state) {
         final kelasId = state.pathParameters['kelasId']!;
-        return KelasDetailGuruPage(kelasId: kelasId);
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider<AssignmentBloc>(
+              create: (context) => sl<AssignmentBloc>(),
+            ),
+            BlocProvider<KelasBloc>(
+              create: (context) => sl<KelasBloc>(),
+            ),
+            BlocProvider<SubmissionBloc>(
+              create: (context) => sl<SubmissionBloc>(),
+            ),
+          ],
+          child: KelasDetailGuruPage(kelasId: kelasId),
+        );
       },
     ),
     GoRoute(
@@ -168,6 +203,27 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) {
         final kelasId = state.pathParameters['kelasId']!;
         return ManageKelasPage(kelasId: kelasId);
+      },
+    ),
+    GoRoute(
+      path: KometRoutes.kelasSiswa,
+      name: 'kelasSiswa',
+      builder: (context, state) {
+        final kelasId = state.pathParameters['kelasId']!;
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider<AssignmentBloc>(
+              create: (context) => sl<AssignmentBloc>(),
+            ),
+            BlocProvider<KelasBloc>(
+              create: (context) => sl<KelasBloc>(),
+            ),
+            BlocProvider<SubmissionBloc>(
+              create: (context) => sl<SubmissionBloc>(),
+            ),
+          ],
+          child: KelasDetailSiswaPage(kelasId: kelasId),
+        );
       },
     ),
     // ── Review Submission (PIC B - Helga) ──────────────────────────
