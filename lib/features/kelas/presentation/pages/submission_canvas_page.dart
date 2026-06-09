@@ -1409,6 +1409,7 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
         context: context,
         builder: (ctx) {
           return AlertDialog(
+            scrollable: true,
             backgroundColor: AppColors.kometDarkGreen,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             title: Text("Beri Nama Karakter", style: GoogleFonts.nunito(color: Colors.white, fontWeight: FontWeight.w700)),
