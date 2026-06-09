@@ -131,7 +131,7 @@ class GetStartedPage extends StatelessWidget {
               
               // Subtitle (Moved below button)
               Text(
-                'SPACE EXPLORATION & INNOVATION',
+                'Media Pembelajaran Kreativitas Digital',
                 style: GoogleFonts.nunito(
                   fontSize: 10,
                   color: Colors.white.withValues(alpha: 0.45),

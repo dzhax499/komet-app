@@ -36,50 +36,54 @@ class SplashPage extends StatefulWidget {
 }
 
 class _SplashPageState extends State<SplashPage> {
+  bool _minSplashTimeElapsed = false;
+
   @override
   void initState() {
     super.initState();
-    _navigate();
+    _startTimer();
   }
 
-  Future<void> _navigate() async {
-    // Wait untuk splash animation
+  Future<void> _startTimer() async {
     await Future.delayed(const Duration(seconds: 2));
-
     if (!mounted) return;
+    setState(() {
+      _minSplashTimeElapsed = true;
+    });
+    _checkNavigation();
+  }
 
-    // Check if user has seen Get Started before
+  Future<void> _checkNavigation() async {
+    if (!_minSplashTimeElapsed) return;
+
     final prefs = await SharedPreferences.getInstance();
     final hasSeenGetStarted = prefs.getBool('has_seen_get_started') ?? false;
 
     if (!hasSeenGetStarted) {
-      // First time user - show Get Started
-      if (mounted) {
-        context.go(KometRoutes.getStarted);
+      if (mounted) context.go(KometRoutes.getStarted);
+      return;
+    }
+
+    final authState = context.read<AuthBloc>().state;
+    if (authState is AuthAuthenticated) {
+      if (authState.user.role == 'guru') {
+        context.go(KometRoutes.dashboardGuru);
+      } else {
+        context.go(KometRoutes.dashboardSiswa);
       }
-    } else {
-      // Returning user - check auth status
-      final authState = context.read<AuthBloc>().state;
-      if (mounted) {
-        if (authState is AuthAuthenticated) {
-          // User already logged in
-          if (authState.user.role == 'guru') {
-            context.go(KometRoutes.dashboardGuru);
-          } else {
-            context.go(KometRoutes.dashboardSiswa);
-          }
-        } else {
-          // User not logged in - go to login
-          context.go(KometRoutes.login);
-        }
-      }
+    } else if (authState is AuthUnauthenticated || authState is AuthError) {
+      context.go(KometRoutes.login);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        _checkNavigation();
+      },
+      child: Scaffold(
+        body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -122,7 +126,7 @@ class _SplashPageState extends State<SplashPage> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'SPACE EXPLORATION & INNOVATION',
+                    'Media Pembelajaran Kreativitas Digital',
                     style: GoogleFonts.nunito(
                       fontSize: 10,
                       color: Colors.white.withValues(alpha: 0.45),
@@ -171,6 +175,7 @@ class _SplashPageState extends State<SplashPage> {
           ],
         ),
       ),
+    ),
     );
   }
 }

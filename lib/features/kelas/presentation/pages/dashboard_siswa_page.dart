@@ -27,6 +27,9 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
   bool _isProfileMenuOpen = false;
   late KelasBloc _kelasBloc;
   late SubmissionBloc _submissionBloc;
+  final TextEditingController _searchController = TextEditingController();
+  int _currentPage = 1;
+  static const int _itemsPerPage = 5;
 
   // Palet warna sesuai tema KOMET
   static const Color _moonstoneBlue = Color(0xFF6FA9BB);
@@ -50,6 +53,7 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
 
   @override
   void dispose() {
+    _searchController.dispose();
     // JANGAN memanggil .close() pada singleton Bloc dari Service Locator (sl)
     // karena akan membuat Bloc tersebut mati selamanya selama session ini.
     super.dispose();
@@ -99,7 +103,7 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
                             const SizedBox(width: 8),
                             Text(
                               'Student Hub',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.nunito(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w400,
                                 color: Colors.white,
@@ -141,11 +145,11 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
                     ),
                     const SizedBox(height: 16),
                     Text('Welcome back,',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.nunito(
                             fontSize: 15, color: Colors.white)),
                     Text(
                       user.nama,
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.nunito(
                           fontSize: 20,
                           color: Colors.white,
                           fontWeight: FontWeight.bold),
@@ -213,7 +217,7 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
                       children: [
                         Text(
                           'My Class',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.nunito(
                               fontSize: 18,
                               fontWeight: FontWeight.w400,
                               color: Colors.white),
@@ -244,7 +248,7 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
                               ),
                               child: Text(
                                 'Join Class',
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.nunito(
                                   color: Colors.black,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w500,
@@ -255,7 +259,58 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
+
+                    // Search Bar
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(color: Colors.white),
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        style: GoogleFonts.nunito(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
+                        decoration: InputDecoration(
+                          isDense: true,
+                          hintText: 'Search ..',
+                          hintStyle: GoogleFonts.nunito(
+                            color: Colors.white,
+                            fontSize: 14,
+                          ),
+                          border: InputBorder.none,
+                          suffixIcon: _searchController.text.isNotEmpty
+                              ? GestureDetector(
+                                  onTap: () {
+                                    _searchController.clear();
+                                    setState(() {
+                                      _currentPage = 1;
+                                    });
+                                  },
+                                  child: const Icon(
+                                    Icons.close,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                )
+                              : null,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                        ),
+                        onChanged: (value) {
+                          setState(() {
+                            _currentPage = 1;
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 16),
 
                     // Daftar Kelas dari BLoC
                     Expanded(
@@ -278,16 +333,140 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
                                   color: Colors.white),
                             );
                           } else if (state is KelasLoaded) {
-                            final myClasses = state.kelasList.where((k) => k.siswaIds.contains(user.id)).toList();
+                            var myClasses = state.kelasList
+                                .where((k) => k.siswaIds.contains(user.id))
+                                .toList();
+
+                            if (_searchController.text.isNotEmpty) {
+                              myClasses = myClasses
+                                  .where(
+                                    (k) => k.nama.toLowerCase().contains(
+                                      _searchController.text.toLowerCase(),
+                                    ),
+                                  )
+                                  .toList();
+                            }
 
                             if (myClasses.isEmpty) {
-                              return _buildEmptyState();
+                              if (_searchController.text.isNotEmpty) {
+                                return Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(top: 40.0),
+                                    child: Text(
+                                      'Kelas tidak ditemukan',
+                                      style: GoogleFonts.nunito(
+                                        color: Colors.white70,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 40.0),
+                                child: _buildEmptyState(),
+                              );
                             }
-                            return ListView.separated(
-                              itemCount: myClasses.length,
-                              separatorBuilder: (_, __) => const SizedBox(height: 12),
-                              itemBuilder: (context, index) {
-                                final kelas = myClasses[index];
+
+                            int totalPages =
+                                (myClasses.length / _itemsPerPage).ceil();
+                            if (totalPages == 0) totalPages = 1;
+
+                            if (_currentPage > totalPages) {
+                              _currentPage = totalPages;
+                            }
+
+                            final int startIndex =
+                                (_currentPage - 1) * _itemsPerPage;
+                            int endIndex = startIndex + _itemsPerPage;
+                            if (endIndex > myClasses.length) {
+                              endIndex = myClasses.length;
+                            }
+                            final displayClasses = myClasses.sublist(
+                              startIndex,
+                              endIndex,
+                            );
+
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 100.0),
+                              child: ListView.separated(
+                                itemCount: displayClasses.length + 1,
+                                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                                itemBuilder: (context, index) {
+                                  if (index == displayClasses.length) {
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 16.0,
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          GestureDetector(
+                                            onTap: _currentPage > 1
+                                                ? () => setState(
+                                                    () => _currentPage--,
+                                                  )
+                                                : null,
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(
+                                                8.0,
+                                              ),
+                                              child: Text(
+                                                '<',
+                                                style: GoogleFonts.nunito(
+                                                  color: _currentPage > 1
+                                                      ? Colors.white
+                                                      : Colors.white38,
+                                                  fontSize: 20,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding:
+                                                const EdgeInsets.symmetric(
+                                                  horizontal: 16.0,
+                                                ),
+                                            child: Text(
+                                              'Page $_currentPage of $totalPages',
+                                              style: GoogleFonts.nunito(
+                                                color: Colors.white,
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ),
+                                          GestureDetector(
+                                            onTap: _currentPage < totalPages
+                                                ? () => setState(
+                                                    () => _currentPage++,
+                                                  )
+                                                : null,
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(
+                                                8.0,
+                                              ),
+                                              child: Text(
+                                                '>',
+                                                style: GoogleFonts.nunito(
+                                                  color:
+                                                      _currentPage <
+                                                          totalPages
+                                                      ? Colors.white
+                                                      : Colors.white38,
+                                                  fontSize: 20,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }
+                                  final kelas = displayClasses[index];
                                 return SizedBox(
                                   height: 108,
                                   child: Stack(
@@ -368,7 +547,8 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
                                   ),
                                 );
                               },
-                            );
+                            ),
+                          );
                           } else if (state is KelasError) {
                             return Center(
                               child: Text(state.message,
@@ -398,7 +578,7 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
           const SizedBox(height: 16),
           Text(
             'Belum ada kelas',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.nunito(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: Colors.white70),
@@ -406,7 +586,7 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
           const SizedBox(height: 8),
           Text(
             'Tekan "Join Class" untuk bergabung\nmenggunakan kode dari gurumu.',
-            style: GoogleFonts.inter(color: Colors.white60, fontSize: 13),
+            style: GoogleFonts.nunito(color: Colors.white60, fontSize: 13),
             textAlign: TextAlign.center,
           ),
         ],
@@ -436,14 +616,14 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
           const SizedBox(height: 4),
           Text(
             value,
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.nunito(
                 fontSize: 24,
                 fontWeight: FontWeight.w500,
                 color: Colors.white),
           ),
           Text(
             label,
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.nunito(
                 fontSize: 11,
                 color: Colors.white,
                 fontWeight: FontWeight.w400),
@@ -488,7 +668,7 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
               className.length >= 2
                   ? className.substring(0, 2).toUpperCase()
                   : className.toUpperCase(),
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.nunito(
                   fontSize: 28,
                   fontWeight: FontWeight.w400,
                   color: Colors.black),
@@ -539,7 +719,7 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
           const SizedBox(width: 6),
           Text(
             text,
-            style: GoogleFonts.inter(
+            style: GoogleFonts.nunito(
                 color: Colors.white,
                 fontSize: 11,
                 fontWeight: FontWeight.w400),
@@ -624,7 +804,7 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
               children: [
                 Text(
                   'Leave',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.nunito(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -663,7 +843,7 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
                     alignment: Alignment.center,
                     child: Text(
                       'Leave',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.nunito(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
                         color: const Color(0xFF19350C),
@@ -699,7 +879,7 @@ class _DashboardSiswaPageState extends State<DashboardSiswaPage> {
                     alignment: Alignment.center,
                     child: Text(
                       'Cancel',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.nunito(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
                         color: const Color(0xFF19350C),

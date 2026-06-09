@@ -6,6 +6,7 @@ import '../../../../core/models/submission_model.dart';
 class SubmissionCard extends StatelessWidget {
   final SubmissionModel submission;
   final String studentName;
+  final String? studentPhotoUrl;
   final String assignmentTitle;
   final VoidCallback? onTap;
   final VoidCallback? onCancel;
@@ -14,6 +15,7 @@ class SubmissionCard extends StatelessWidget {
     super.key,
     required this.submission,
     required this.studentName,
+    this.studentPhotoUrl,
     required this.assignmentTitle,
     this.onTap,
     this.onCancel,
@@ -107,16 +109,21 @@ class SubmissionCard extends StatelessWidget {
                 CircleAvatar(
                   radius: 26,
                   backgroundColor: Colors.blue[100],
-                  child: Text(
-                    studentName.isNotEmpty
-                        ? studentName[0].toUpperCase()
-                        : '?',
-                    style: GoogleFonts.nunito(
-                      color: Colors.blueGrey,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  backgroundImage: studentPhotoUrl != null && studentPhotoUrl!.startsWith('http')
+                      ? NetworkImage(studentPhotoUrl!) as ImageProvider
+                      : null,
+                  child: studentPhotoUrl == null || !studentPhotoUrl!.startsWith('http')
+                      ? Text(
+                          studentName.isNotEmpty
+                              ? studentName[0].toUpperCase()
+                              : '?',
+                          style: GoogleFonts.nunito(
+                            color: Colors.blueGrey,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )
+                      : null,
                 ),
                 const SizedBox(width: 16),
                 Expanded(

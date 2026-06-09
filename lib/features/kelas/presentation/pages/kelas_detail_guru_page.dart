@@ -17,6 +17,8 @@ import '../../../../core/models/submission_model.dart';
 import '../widgets/submission_card.dart';
 import '../widgets/assignment_card.dart';
 import '../widgets/create_assignment_dialog.dart';
+import '../../../../core/local_storage/hive_service.dart';
+import '../../../../core/di/service_locator.dart';
 
 class KelasDetailGuruPage extends StatefulWidget {
   final String kelasId;
@@ -419,9 +421,13 @@ class _KelasDetailGuruPageState extends State<KelasDetailGuruPage> {
                 } catch (_) {}
               }
 
+              final studentUser = sl<HiveService>().userBoxInstance.get(sub.siswaId);
+              final studentName = studentUser?.nama ?? 'Student ${sub.siswaId.substring(0, 6)}';
+
               return SubmissionCard(
                 submission: sub,
-                studentName: "Student ${sub.siswaId.substring(0, 4)}",
+                studentName: studentName,
+                studentPhotoUrl: studentUser?.photoUrl,
                 assignmentTitle: taskTitle,
                 onTap: () {
                   context

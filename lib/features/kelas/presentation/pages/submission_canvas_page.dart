@@ -5,12 +5,15 @@ import 'package:flutter_blockly/flutter_blockly.dart' as blockly;
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../../../../core/models/submission_model.dart';
 import '../../../submission/presentation/bloc/submission_bloc.dart';
 import '../../../submission/presentation/bloc/submission_event.dart';
 import '../../../submission/presentation/bloc/submission_state.dart';
 import 'dart:ui';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/local_storage/hive_service.dart';
+import '../../../../core/di/service_locator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:xml/xml.dart' as xml;
@@ -286,6 +289,7 @@ class _SceneBg {
 class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with TickerProviderStateMixin {
   late final blockly.BlocklyOptions workspaceConfiguration;
   late final blockly.BlocklyEditor _editor;
+  final AudioPlayer _audioPlayer = AudioPlayer();
   late final AnimationController _bgController;
   int _blockCount = 0;
   
@@ -318,33 +322,40 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
   void initState() {
     super.initState();
     _bgController = AnimationController(vsync: this, duration: const Duration(seconds: 8))..repeat(reverse: true);
-    // 1. Kunci orientasi ke landscape
+    // 1. Lock orientation to landscape
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
     
-    // Load existing submission if any
+    // 2. Default object (will be replaced if we deserialize saved data)
+    _objects = [
+      SceneObject(name: 'Character 1', icon: Icons.person, baseColor: const Color(0xFF86AAC3)),
+    ];
+
+    // 3. Load existing submission if any
     if (widget.initialSubmission != null) {
+      // Directly use the provided submission (e.g. claimed guest draft)
       _existingSubmission = widget.initialSubmission;
       if (_existingSubmission!.storyDataJson.isNotEmpty) {
         _deserializeCanvasState(_existingSubmission!.storyDataJson);
       }
-    } else if (widget.studentId.isNotEmpty) {
+      // Do NOT fire LoadExistingSubmissionEvent — we already have the data
+    } else if (widget.studentId.isNotEmpty && widget.studentId != 'guest') {
+      // Online user: try to load from server/local
       context.read<SubmissionBloc>().add(
         LoadExistingSubmissionEvent(
           assignmentId: widget.assignmentId,
           studentId: widget.studentId,
         ),
       );
+    } else if (widget.studentId == 'guest') {
+      // Guest user: load from local Hive only
+      _loadGuestSubmissionFromLocal();
     }
-    // 2. Layar penuh (immersive)
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
-    // Default object
-    _objects = [
-      SceneObject(name: 'Character 1', icon: Icons.person, baseColor: const Color(0xFF86AAC3)),
-    ];
+    // 4. Fullscreen (immersive)
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
     // Konfigurasi Blockly DENGAN TOOLBOX untuk mendukung Drag & Drop Native
     workspaceConfiguration = blockly.BlocklyOptions(
@@ -436,9 +447,18 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
           _injectWorkspaceXml(_objects[_selectedObjectIndex].workspaceXml);
         }
       },
-      onChange: (data) {
-        // Kita tidak lagi mengandalkan data.xml dari callback ini karena sering kosong.
-        // Kita akan menarik XML secara on-demand saat tombol Play ditekan.
+      onChange: (data) async {
+        if (!kIsWeb && _isEditorReady) {
+           try {
+             final r = await (_editor as dynamic).blocklyController.runJavaScriptReturningResult('Blockly.getMainWorkspace().getAllBlocks(false).length');
+             if (r != null) {
+                int count = int.tryParse(r.toString()) ?? 0;
+                if (count != _blockCount && mounted) {
+                   setState(() => _blockCount = count);
+                }
+             }
+           } catch (_) {}
+        }
       },
     );
 
@@ -489,12 +509,22 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
     return BlocListener<SubmissionBloc, SubmissionState>(
       listener: (context, state) {
         if (state is ExistingSubmissionLoaded) {
-          _existingSubmission = state.submission;
-          if (state.submission.storyDataJson.isNotEmpty) {
-            _deserializeCanvasState(state.submission.storyDataJson);
+          // Only accept remote-loaded data if we don't have initialSubmission
+          // (initialSubmission means we already have the correct data, e.g. guest draft)
+          if (widget.initialSubmission == null) {
+            setState(() {
+              _existingSubmission = state.submission;
+            });
+            if (state.submission.storyDataJson.isNotEmpty) {
+              _deserializeCanvasState(state.submission.storyDataJson);
+            }
           }
         } else if (state is SubmissionSaved) {
-          _existingSubmission = state.submission;
+          // Update _existingSubmission with the saved result's metadata (ID, sync status)
+          // but keep our current canvas data intact — don't let stale remote data overwrite
+          setState(() {
+            _existingSubmission = state.submission;
+          });
           _showToast(
             state.submission.status == SubmissionStatus.submitted
                 ? "Submission sent to teacher!"
@@ -522,33 +552,31 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
                   children: [
           _buildTopBar(),
           Expanded(
-            child: Row(
+            child: Stack(
               children: [
                 if (!widget.isReviewMode)
-                  Expanded(
-                  child: Stack(
-                    children: [
-                      if (kIsWeb)
-                        const HtmlElementView(viewType: 'blocklyEditor')
-                      else
-                        WebViewWidget(controller: (_editor as dynamic).blocklyController),
-                      if (!_isPlaying)
-                        Positioned(
-                          bottom: 10, left: 10,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF272738),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: const Color(0xFF3A3A4E)),
-                            ),
-                            child: Text("$_blockCount blocks", style: const TextStyle(color: Color(0xFF8888AA), fontSize: 11, fontWeight: FontWeight.w500)),
-                          ),
-                        ),
-                    ],
+                  Positioned.fill(
+                    right: 270,
+                    child: Offstage(
+                      offstage: _isPlaying,
+                      child: Stack(
+                        children: [
+                          if (kIsWeb)
+                            const HtmlElementView(viewType: 'blocklyEditor')
+                          else
+                            WebViewWidget(controller: (_editor as dynamic).blocklyController),
+                        ],
+                      ),
+                    ),
                   ),
+                Positioned(
+                  top: 0,
+                  bottom: 0,
+                  right: 0,
+                  left: (widget.isReviewMode || _isPlaying) ? 0 : null,
+                  width: (widget.isReviewMode || _isPlaying) ? null : 270,
+                  child: _buildScenePanel(),
                 ),
-                _buildScenePanel(),
               ],
             ),
           ),
@@ -580,9 +608,27 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
     });
   }
 
+  // ── Guest Local Load ─────────────────────────────────────────────────────────
+  void _loadGuestSubmissionFromLocal() {
+    final hiveService = sl<HiveService>();
+    final allSubs = hiveService.submissionBoxInstance.values.toList();
+    try {
+      final existing = allSubs.firstWhere(
+        (s) => s.assignmentId == widget.assignmentId && s.siswaId == 'guest',
+      );
+      _existingSubmission = existing;
+      if (existing.storyDataJson.isNotEmpty) {
+        _deserializeCanvasState(existing.storyDataJson);
+      }
+    } catch (_) {
+      // No existing guest submission found — start fresh
+    }
+  }
+
   // ── JSON State Serialization ────────────────────────────────────────────────
   String _serializeCanvasState() {
     final Map<String, dynamic> state = {
+      'title': widget.assignmentTitle,
       'bgIndex': _bgIndex,
       'objects': _objects.map((o) => {
         'name': o.name,
@@ -640,11 +686,17 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
     } else {
       try {
         final r = await (_editor as dynamic).blocklyController.runJavaScriptReturningResult(
-            '(function(){return Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(Blockly.getMainWorkspace()));})();');
-        String x = r.toString();
-        if (x.startsWith('"') && x.endsWith('"')) x = jsonDecode(x) as String;
-        _sel.workspaceXml = x.replaceAll('\\"', '"').replaceAll('\\n', '');
-      } catch (_) {}
+            '(function(){try{return Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(Blockly.getMainWorkspace()));}catch(e){return "err";}})();');
+        if (r != null) {
+          String x = r.toString();
+          if (x.startsWith('"') && x.endsWith('"')) x = jsonDecode(x) as String;
+          if (x != "err" && x.isNotEmpty) {
+            _sel.workspaceXml = x.replaceAll('\\"', '"').replaceAll('\\n', '');
+          }
+        }
+      } catch (e) {
+        debugPrint("Error extracting Blockly XML: $e");
+      }
     }
   }
 
@@ -984,6 +1036,14 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
       }
       else if (type == 'story_play_sound') {
         setState(() => obj.speech = "🔊 ${a['sound'] ?? 'sound'}!");
+        
+        final soundName = a['sound'] ?? 'pop';
+        try {
+           await _audioPlayer.play(AssetSource('sounds/$soundName.wav'));
+        } catch (e) {
+           debugPrint("Local Audio error: $e");
+        }
+
         await Future.delayed(const Duration(milliseconds: 800));
         if (mounted) setState(() => obj.speech = "");
       }
@@ -1196,7 +1256,6 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
         child: Container(
-          width: widget.isReviewMode ? null : 270,
           decoration: BoxDecoration(
             color: AppColors.kometDarkGreen.withValues(alpha: 0.5),
             border: Border(left: BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1)),
@@ -1289,9 +1348,6 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
       ),
     );
 
-    if (widget.isReviewMode) {
-      return Expanded(child: panel);
-    }
     return panel;
   }
 

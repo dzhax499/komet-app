@@ -29,10 +29,24 @@ class SubmissionRepositoryImpl implements SubmissionRepository {
               updatedAt: DateTime.now(),
             );
 
-      final remoteResult = await remoteDataSource.saveSubmission(modelToSave);
-      final localResult = await localDataSource.saveSubmission(remoteResult);
+      // 1. Always save locally FIRST (offline-first guarantee)
+      final localResult = await localDataSource.saveSubmission(modelToSave);
 
-      return kometSuccess(localResult);
+      // 2. For guest users, skip remote sync entirely
+      if (modelToSave.siswaId == 'guest') {
+        return kometSuccess(localResult);
+      }
+
+      // 3. For online users, attempt remote sync (best-effort)
+      try {
+        final remoteResult = await remoteDataSource.saveSubmission(modelToSave);
+        // Update local with any server-side changes (e.g. timestamps)
+        final syncedResult = await localDataSource.saveSubmission(remoteResult);
+        return kometSuccess(syncedResult);
+      } catch (_) {
+        // Remote failed but local is saved — offline-first is satisfied
+        return kometSuccess(localResult);
+      }
     } catch (e) {
       return kometFailure(LocalStorageFailure(e.toString()));
     }
