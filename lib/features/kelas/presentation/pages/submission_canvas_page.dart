@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_blockly/flutter_blockly.dart' as blockly;
@@ -1094,106 +1094,159 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
   }
 
   void _onAddObject() {
-    final chars = [
-      {'name': 'Kid', 'icon': Icons.person, 'color': 0xFF86AAC3},
-      {'name': 'Teacher', 'icon': Icons.school, 'color': 0xFFE8A317},
-      {'name': 'Animal', 'icon': Icons.pets, 'color': 0xFF8BC34A},
-      {'name': 'Robot', 'icon': Icons.smart_toy, 'color': 0xFF9E9E9E},
-      {'name': 'Star', 'icon': Icons.star, 'color': 0xFFFFD700},
-      {'name': 'Ball', 'icon': Icons.sports_soccer, 'color': 0xFFFF5722},
-      {'name': 'Flower', 'icon': Icons.local_florist, 'color': 0xFFE91E63},
-      {'name': 'Car', 'icon': Icons.directions_car, 'color': 0xFF2196F3},
-    ];
-
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (ctx) => SafeArea(
-        child: ClipRRect(
-          borderRadius: const BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-            child: Container(
-              margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-              decoration: BoxDecoration(
-                color: AppColors.kometDarkGreen.withValues(alpha: 0.85),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(width: 48, height: 5, decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(3))),
-                  const SizedBox(height: 20),
-                  Row(children: [
-                    Text("Choose Character", style: GoogleFonts.nunito(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
-                    const Spacer(),
-                    Text("${_objects.length} active", style: GoogleFonts.nunito(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600)),
-                  ]),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.kometBlue,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                      ),
-                      icon: const Icon(Icons.camera_alt, color: Colors.white),
-                      label: Text("Buat dengan Kamera (AI)", style: GoogleFonts.nunito(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        _processCameraCharacter();
-                      },
-                    ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) {
+          final box = sl<HiveService>().authBoxInstance;
+          final List<dynamic> customCharsRaw = box.get('custom_characters', defaultValue: <dynamic>[]);
+          final customCharsList = List<Map<String, dynamic>>.from(customCharsRaw.map((e) => Map<String, dynamic>.from(e as Map)));
+
+          final chars = [
+            {'name': 'Kid', 'icon': Icons.person, 'color': 0xFF86AAC3},
+            {'name': 'Teacher', 'icon': Icons.school, 'color': 0xFFE8A317},
+            {'name': 'Animal', 'icon': Icons.pets, 'color': 0xFF8BC34A},
+            {'name': 'Robot', 'icon': Icons.smart_toy, 'color': 0xFF9E9E9E},
+            {'name': 'Star', 'icon': Icons.star, 'color': 0xFFFFD700},
+            {'name': 'Ball', 'icon': Icons.sports_soccer, 'color': 0xFFFF5722},
+            {'name': 'Flower', 'icon': Icons.local_florist, 'color': 0xFFE91E63},
+            {'name': 'Car', 'icon': Icons.directions_car, 'color': 0xFF2196F3},
+            ...customCharsList,
+          ];
+
+          return SafeArea(
+            child: ClipRRect(
+              borderRadius: const BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                child: Container(
+                  margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                  decoration: BoxDecoration(
+                    color: AppColors.kometDarkGreen.withValues(alpha: 0.85),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
                   ),
-                  const SizedBox(height: 16),
-                  Flexible(
-                    child: SingleChildScrollView(
-                      child: GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 0.85),
-                        itemCount: chars.length,
-                        itemBuilder: (_, i) {
-                          final c = chars[i];
-                          final clr = Color(c['color'] as int);
-                          return Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(16),
-                              onTap: () async {
-                                Navigator.pop(ctx);
-                                // Save current workspace
-                                await _triggerSaveWorkspace();
-                                // Add new object
-                                final newObj = SceneObject(name: '${c['name']} ${_objects.length+1}', icon: c['icon'] as IconData, baseColor: clr, spawnX: 20.0*_objects.length, spawnY: 20.0*_objects.length);
-                                setState(() { _objects.add(newObj); _selectedObjectIndex = _objects.length - 1; });
-                                // Load empty workspace
-                                _injectWorkspaceXml(newObj.workspaceXml);
-                                if (mounted) _showToast("${c['name']} added", Icons.person_add_alt_1_rounded, clr);
-                              },
-                              child: Container(
-                                decoration: BoxDecoration(color: clr.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(16), border: Border.all(color: clr.withValues(alpha: 0.3))),
-                                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                                  Container(width: 46, height: 46, decoration: BoxDecoration(shape: BoxShape.circle, color: clr, boxShadow: [BoxShadow(color: clr.withValues(alpha: 0.4), blurRadius: 8, offset: const Offset(0, 4))]), child: Icon(c['icon'] as IconData, color: Colors.white, size: 24)),
-                                  const SizedBox(height: 10),
-                                  Text(c['name'] as String, style: GoogleFonts.nunito(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
-                                ]),
-                              ),
-                            ),
-                          );
-                        },
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(width: 48, height: 5, decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(3))),
+                      const SizedBox(height: 20),
+                      Row(children: [
+                        Text("Choose Character", style: GoogleFonts.nunito(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
+                        const Spacer(),
+                        Text("${_objects.length} active", style: GoogleFonts.nunito(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600)),
+                      ]),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.kometBlue,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                          ),
+                          icon: const Icon(Icons.camera_alt, color: Colors.white),
+                          label: Text("Buat dengan Kamera (AI)", style: GoogleFonts.nunito(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            _processCameraCharacter();
+                          },
+                        ),
                       ),
-                    )
+                      const SizedBox(height: 16),
+                      Flexible(
+                        child: SingleChildScrollView(
+                          child: GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 0.85),
+                            itemCount: chars.length,
+                            itemBuilder: (_, i) {
+                              final c = chars[i];
+                              final clr = Color(c['color'] as int);
+                              final bool isCustom = c.containsKey('imagePath') && c['imagePath'] != null;
+                              return Material(
+                                color: Colors.transparent,
+                                child: GestureDetector(
+                                  onLongPress: isCustom ? () async {
+                                    final confirm = await showDialog<bool>(
+                                      context: context,
+                                      builder: (ctx2) => AlertDialog(
+                                        backgroundColor: AppColors.kometDarkGreen,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                        title: Text("Hapus dari Objek", style: GoogleFonts.nunito(color: Colors.white, fontWeight: FontWeight.bold)),
+                                        content: Text("Yakin ingin menghapus ${c['name']} dari objek?", style: const TextStyle(color: Colors.white70)),
+                                        actions: [
+                                          TextButton(onPressed: () => Navigator.pop(ctx2, false), child: const Text("Batal", style: TextStyle(color: Colors.white54))),
+                                          ElevatedButton(
+                                            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                            onPressed: () => Navigator.pop(ctx2, true), 
+                                            child: const Text("Hapus", style: TextStyle(color: Colors.white))
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                    if (confirm == true) {
+                                      final box = sl<HiveService>().authBoxInstance;
+                                      final List<dynamic> customCharsRaw = box.get('custom_characters', defaultValue: <dynamic>[]);
+                                      final customList = List<Map<String, dynamic>>.from(customCharsRaw.map((e) => Map<String, dynamic>.from(e as Map)));
+                                      customList.removeWhere((item) => item['imagePath'] == c['imagePath']);
+                                      await box.put('custom_characters', customList);
+                                      setModalState(() {});
+                                      if (mounted) _showToast("${c['name']} dihapus dari galeri", Icons.delete, Colors.red);
+                                    }
+                                  } : null,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(16),
+                                    onTap: () async {
+                                      Navigator.pop(ctx);
+                                      // Save current workspace
+                                      await _triggerSaveWorkspace();
+                                      // Add new object
+                                      final newObj = SceneObject(
+                                        name: '${c['name']} ${_objects.length+1}', 
+                                        icon: isCustom ? IconData(c['icon'] as int, fontFamily: 'MaterialIcons') : c['icon'] as IconData, 
+                                        baseColor: clr, 
+                                        imagePath: isCustom ? c['imagePath'] as String : null,
+                                        spawnX: 20.0*_objects.length, 
+                                        spawnY: 20.0*_objects.length
+                                      );
+                                      setState(() { _objects.add(newObj); _selectedObjectIndex = _objects.length - 1; });
+                                      // Load empty workspace
+                                      _injectWorkspaceXml(newObj.workspaceXml);
+                                      if (mounted) _showToast("${c['name']} added", Icons.person_add_alt_1_rounded, clr);
+                                    },
+                                    child: Container(
+                                      decoration: BoxDecoration(color: clr.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(16), border: Border.all(color: clr.withValues(alpha: 0.3))),
+                                      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                                        Container(
+                                          width: 46, height: 46, 
+                                          decoration: BoxDecoration(shape: BoxShape.circle, color: clr, boxShadow: [BoxShadow(color: clr.withValues(alpha: 0.4), blurRadius: 8, offset: const Offset(0, 4))]), 
+                                          child: isCustom
+                                            ? ClipOval(child: Image.file(File(c['imagePath'] as String), fit: BoxFit.cover, width: 46, height: 46))
+                                            : Icon(c['icon'] as IconData, color: Colors.white, size: 24)
+                                        ),
+                                        const SizedBox(height: 10),
+                                        Text(c['name'] as String, style: GoogleFonts.nunito(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
+                                      ]),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        )
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
-          ),
-        ),
+          );
+        }
       ),
     );
   }
@@ -1451,6 +1504,23 @@ class _SubmissionCanvasPageState extends State<SubmissionCanvasPage> with Ticker
         );
         setState(() { _objects.add(newObj); _selectedObjectIndex = _objects.length - 1; });
         _injectWorkspaceXml(newObj.workspaceXml);
+
+        // Simpan karakter ke galeri global (Hive)
+        try {
+          final box = sl<HiveService>().authBoxInstance;
+          final List<dynamic> customCharsRaw = box.get('custom_characters', defaultValue: <dynamic>[]);
+          final customList = List<Map<String, dynamic>>.from(customCharsRaw.map((e) => Map<String, dynamic>.from(e as Map)));
+          customList.add({
+            'name': name.trim(),
+            'imagePath': path,
+            'color': Colors.white.value,
+            'icon': Icons.person_pin.codePoint,
+          });
+          await box.put('custom_characters', customList);
+        } catch (e) {
+          debugPrint("Failed to save custom character to Hive: $e");
+        }
+
         if (mounted) _showToast("${name.trim()} berhasil ditambahkan!", Icons.check_circle, AppColors.kometOlive);
       }
     }
